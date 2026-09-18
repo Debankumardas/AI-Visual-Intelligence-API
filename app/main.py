@@ -2,25 +2,17 @@ from io import BytesIO
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
-from PIL import Image, UnidentifiedImageError
 
+from app.api.routes.prediction import router as prediction_router
+from app.api.routes.utils import (
+    ALLOWED_CONTENT_TYPES,
+    MAX_FILE_SIZE,
+    load_uploaded_image,
+)
 from app.models.analysis import AnalysisResponse
 from app.models.detection import DetectionResponse
 from app.services.detection_service import detection_service
 from app.services.prediction_service import predict_image
-
-
-# ============================================================
-# CONFIGURATION
-# ============================================================
-
-MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
-
-ALLOWED_CONTENT_TYPES = {
-    "image/jpeg",
-    "image/png",
-    "image/webp",
-}
 
 
 # ============================================================
@@ -36,78 +28,12 @@ app = FastAPI(
     version="1.0.0",
 )
 
+app.include_router(prediction_router)
+
 
 # ============================================================
 # HELPER FUNCTIONS
 # ============================================================
-
-async def load_uploaded_image(file: UploadFile) -> Image.Image:
-    """
-    Read, validate, and load an uploaded image.
-    """
-
-    # --------------------------------------------------------
-    # Validate content type
-    # --------------------------------------------------------
-
-    if file.content_type not in ALLOWED_CONTENT_TYPES:
-        raise HTTPException(
-            status_code=400,
-            detail=(
-                "Unsupported image format. "
-                "Use JPEG, PNG, or WebP."
-            ),
-        )
-
-    # --------------------------------------------------------
-    # Read file
-    # --------------------------------------------------------
-
-    contents = await file.read()
-
-    # --------------------------------------------------------
-    # Validate file size
-    # --------------------------------------------------------
-
-    if len(contents) > MAX_FILE_SIZE:
-        raise HTTPException(
-            status_code=413,
-            detail="Image file is too large. Maximum size is 10 MB.",
-        )
-
-    # --------------------------------------------------------
-    # Validate empty file
-    # --------------------------------------------------------
-
-    if not contents:
-        raise HTTPException(
-            status_code=400,
-            detail="Uploaded image is empty.",
-        )
-
-    # --------------------------------------------------------
-    # Validate actual image
-    # --------------------------------------------------------
-
-    try:
-        image = Image.open(BytesIO(contents))
-        image.load()
-        image = image.convert("RGB")
-
-    except UnidentifiedImageError:
-        raise HTTPException(
-            status_code=400,
-            detail="The uploaded file is not a valid image.",
-        )
-
-    except Exception as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Unable to process image: {str(e)}",
-        )
-
-    return image
-
 
 def get_detection_data(detection_result):
     """
@@ -129,11 +55,14 @@ def get_detection_data(detection_result):
 
     if isinstance(detection_result, dict):
 
-        detections = detection_result.get("detections", [])
+        detections = detection_result.get(
+            "detections",
+            []
+        )
 
         inference_time = detection_result.get(
             "inference_time_ms",
-            None,
+            None
         )
 
         return detections, inference_time
@@ -176,40 +105,6 @@ def health_check():
 
 
 # ============================================================
-# IMAGE CLASSIFICATION
-# ============================================================
-
-@app.post("/predict")
-async def predict(file: UploadFile = File(...)):
-    """
-    Upload an image and receive the top-5 predictions.
-    """
-
-    image = await load_uploaded_image(file)
-
-    try:
-
-        result = predict_image(
-            image,
-            top_k=5,
-        )
-
-        return {
-            "filename": file.filename or "unknown",
-            "content_type": file.content_type,
-            "predictions": result["predictions"],
-            "inference_time_ms": result["inference_time_ms"],
-        }
-
-    except Exception as e:
-
-        raise HTTPException(
-            status_code=500,
-            detail=f"Image classification failed: {str(e)}",
-        )
-
-
-# ============================================================
 # OBJECT DETECTION
 # ============================================================
 
@@ -226,7 +121,9 @@ async def detect(file: UploadFile = File(...)):
 
     try:
 
-        detection_result = detection_service.detect(image)
+        detection_result = detection_service.detect(
+            image
+        )
 
         detections, _ = get_detection_data(
             detection_result
@@ -286,10 +183,13 @@ async def detect_annotated(
         filename = file.filename or "image.jpg"
 
         if "." in filename:
+
             filename_without_extension = (
                 filename.rsplit(".", 1)[0]
             )
+
         else:
+
             filename_without_extension = filename
 
         output_filename = (
@@ -321,7 +221,10 @@ async def detect_annotated(
 # COMPLETE IMAGE ANALYSIS
 # ============================================================
 
-@app.post("/analyze",response_model=AnalysisResponse,)
+@app.post(
+    "/analyze",
+    response_model=AnalysisResponse,
+)
 async def analyze(
     file: UploadFile = File(...)
 ):
@@ -369,7 +272,9 @@ async def analyze(
         )
 
         detections, detection_time = (
-            get_detection_data(detection_result)
+            get_detection_data(
+                detection_result
+            )
         )
 
     except Exception as e:
@@ -407,8 +312,15 @@ async def analyze(
 
     return response
 
+
+# ============================================================
+# ANNOTATED COMPLETE IMAGE ANALYSIS
+# ============================================================
+
 @app.post("/analyze/annotated")
-async def analyze_annotated(file: UploadFile = File(...)):
+async def analyze_annotated(
+    file: UploadFile = File(...)
+):
     """
     Analyze an image and return an annotated image
     with YOLO object-detection bounding boxes.
@@ -419,9 +331,13 @@ async def analyze_annotated(file: UploadFile = File(...)):
     # --------------------------------------------------------
 
     if file.content_type not in ALLOWED_CONTENT_TYPES:
+
         raise HTTPException(
             status_code=400,
-            detail="Unsupported image format. Use JPEG, PNG, or WebP.",
+            detail=(
+                "Unsupported image format. "
+                "Use JPEG, PNG, or WebP."
+            ),
         )
 
     # --------------------------------------------------------
@@ -431,9 +347,10 @@ async def analyze_annotated(file: UploadFile = File(...)):
     contents = await file.read()
 
     if not contents:
+
         raise HTTPException(
             status_code=400,
-            detail="Uploaded image is empty.",
+            detail="Uploaded file is empty.",
         )
 
     # --------------------------------------------------------
@@ -441,9 +358,13 @@ async def analyze_annotated(file: UploadFile = File(...)):
     # --------------------------------------------------------
 
     if len(contents) > MAX_FILE_SIZE:
+
         raise HTTPException(
             status_code=413,
-            detail="Image file is too large. Maximum size is 10 MB.",
+            detail=(
+                "Image file is too large. "
+                "Maximum size is 10 MB."
+            ),
         )
 
     # --------------------------------------------------------
@@ -451,11 +372,17 @@ async def analyze_annotated(file: UploadFile = File(...)):
     # --------------------------------------------------------
 
     try:
-        image = Image.open(BytesIO(contents))
+
+        image = Image.open(
+            BytesIO(contents)
+        )
+
         image.load()
+
         image = image.convert("RGB")
 
     except UnidentifiedImageError:
+
         raise HTTPException(
             status_code=400,
             detail="The uploaded file is not a valid image.",
@@ -466,9 +393,15 @@ async def analyze_annotated(file: UploadFile = File(...)):
     # --------------------------------------------------------
 
     try:
-        annotated_image = detection_service.detect_and_annotate(image)
+
+        annotated_image = (
+            detection_service.detect_and_annotate(
+                image
+            )
+        )
 
         # Save annotated image into memory
+
         output = BytesIO()
 
         annotated_image.save(
@@ -486,11 +419,19 @@ async def analyze_annotated(file: UploadFile = File(...)):
         original_name = file.filename or "image.jpg"
 
         if "." in original_name:
-            name = original_name.rsplit(".", 1)[0]
+
+            name = original_name.rsplit(
+                ".",
+                1
+            )[0]
+
         else:
+
             name = original_name
 
-        output_filename = f"annotated_{name}.jpg"
+        output_filename = (
+            f"annotated_{name}.jpg"
+        )
 
         return StreamingResponse(
             output,
@@ -503,7 +444,11 @@ async def analyze_annotated(file: UploadFile = File(...)):
         )
 
     except Exception as e:
+
         raise HTTPException(
             status_code=500,
-            detail=f"Annotated image generation failed: {str(e)}",
+            detail=(
+                f"Annotated image generation failed: "
+                f"{str(e)}"
+            ),
         )
