@@ -14,75 +14,51 @@ router = APIRouter(
 )
 
 
-def get_detection_data(detection_result):
-    """
-    Normalize the result returned by detection_service.detect().
-
-    Supports both:
-
-        [
-            {...}
-        ]
-
-    and:
-
-        {
-            "detections": [...],
-            "inference_time_ms": 123.45
-        }
-    """
-
-    if isinstance(detection_result, dict):
-
-        detections = detection_result.get(
-            "detections",
-            []
-        )
-
-        inference_time = detection_result.get(
-            "inference_time_ms",
-            None
-        )
-
-        return detections, inference_time
-
-    return detection_result, None
-
+# ============================================================
+# OBJECT DETECTION
+# ============================================================
 
 @router.post(
     "",
     response_model=DetectionResponse,
 )
-async def detect(file: UploadFile = File(...)):
+async def detect(
+    file: UploadFile = File(...)
+):
     """
     Detect objects in an uploaded image.
+
+    Returns:
+        - Detected object labels
+        - Confidence scores
+        - Bounding boxes
     """
 
     image = await load_uploaded_image(file)
 
     try:
-
         detection_result = detection_service.detect(
             image
-        )
-
-        detections, _ = get_detection_data(
-            detection_result
         )
 
         return {
             "filename": file.filename or "unknown",
             "content_type": file.content_type,
-            "detections": detections,
+            "detections": detection_result[
+                "detections"
+            ],
         }
 
     except Exception as e:
-
         raise HTTPException(
             status_code=500,
             detail=f"Object detection failed: {str(e)}",
         )
 
+
+# ============================================================
+# OBJECT DETECTION + ANNOTATED IMAGE
+# ============================================================
 
 @router.post("/annotated")
 async def detect_annotated(
@@ -96,7 +72,6 @@ async def detect_annotated(
     image = await load_uploaded_image(file)
 
     try:
-
         annotated_image = (
             detection_service.detect_and_annotate(
                 image
@@ -116,13 +91,10 @@ async def detect_annotated(
         filename = file.filename or "image.jpg"
 
         if "." in filename:
-
             filename_without_extension = (
                 filename.rsplit(".", 1)[0]
             )
-
         else:
-
             filename_without_extension = filename
 
         output_filename = (
@@ -140,7 +112,6 @@ async def detect_annotated(
         )
 
     except Exception as e:
-
         raise HTTPException(
             status_code=500,
             detail=(
