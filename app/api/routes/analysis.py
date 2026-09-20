@@ -1,9 +1,10 @@
 from io import BytesIO
 
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, File, UploadFile
 from fastapi.responses import StreamingResponse
 
 from app.api.routes.utils import load_uploaded_image
+from app.core.exceptions import InferenceError
 from app.models.analysis import AnalysisResponse
 from app.services.detection_service import detection_service
 from app.services.prediction_service import predict_image
@@ -33,13 +34,11 @@ async def analyze(
             image,
             top_k=5,
         )
+
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=(
-                f"Image classification failed "
-                f"during analysis: {str(e)}"
-            ),
+        raise InferenceError(
+            f"Image classification failed "
+            f"during analysis: {str(e)}"
         )
 
     try:
@@ -58,12 +57,9 @@ async def analyze(
         )
 
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=(
-                f"Object detection failed "
-                f"during analysis: {str(e)}"
-            ),
+        raise InferenceError(
+            f"Object detection failed "
+            f"during analysis: {str(e)}"
         )
 
     return {
@@ -135,10 +131,7 @@ async def analyze_annotated(
         )
 
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=(
-                f"Annotated image generation failed: "
-                f"{str(e)}"
-            ),
+        raise InferenceError(
+            f"Annotated image generation failed: "
+            f"{str(e)}"
         )
