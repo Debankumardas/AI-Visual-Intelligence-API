@@ -1,7 +1,8 @@
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, File, UploadFile
 
-from app.services.prediction_service import predict_image
 from app.api.routes.utils import load_uploaded_image
+from app.core.exceptions import InferenceError
+from app.services.prediction_service import predict_image
 
 
 router = APIRouter(
@@ -11,7 +12,9 @@ router = APIRouter(
 
 
 @router.post("")
-async def predict(file: UploadFile = File(...)):
+async def predict(
+    file: UploadFile = File(...)
+):
     """
     Upload an image and receive the top-5 predictions.
     """
@@ -32,7 +35,6 @@ async def predict(file: UploadFile = File(...)):
         }
 
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Image classification failed: {str(e)}",
+        raise InferenceError(
+            f"Image classification failed: {str(e)}"
         )

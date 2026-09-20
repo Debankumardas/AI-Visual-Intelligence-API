@@ -1,9 +1,10 @@
 from io import BytesIO
 
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, File, UploadFile
 from fastapi.responses import StreamingResponse
 
 from app.api.routes.utils import load_uploaded_image
+from app.core.exceptions import InferenceError
 from app.models.detection import DetectionResponse
 from app.services.detection_service import detection_service
 
@@ -50,9 +51,8 @@ async def detect(
         }
 
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Object detection failed: {str(e)}",
+        raise InferenceError(
+            f"Object detection failed: {str(e)}"
         )
 
 
@@ -112,10 +112,7 @@ async def detect_annotated(
         )
 
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=(
-                f"Annotated object detection failed: "
-                f"{str(e)}"
-            ),
+        raise InferenceError(
+            f"Annotated object detection failed: "
+            f"{str(e)}"
         )
