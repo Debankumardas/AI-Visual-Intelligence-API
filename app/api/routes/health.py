@@ -6,6 +6,7 @@ from app.services.model_service import model_service
 
 
 router = APIRouter(
+    prefix="/health",
     tags=["Health"],
 )
 
@@ -14,7 +15,7 @@ router = APIRouter(
 # LIVENESS CHECK
 # ============================================================
 
-@router.get("/health")
+@router.get("")
 def health_check():
     """
     Check whether the API process is alive.
@@ -30,7 +31,7 @@ def health_check():
 # READINESS CHECK
 # ============================================================
 
-@router.get("/health/ready")
+@router.get("/ready")
 def readiness_check():
     """
     Check whether required AI models are loaded and ready.
