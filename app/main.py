@@ -6,6 +6,7 @@ from app.api.routes.detection import router as detection_router
 from app.api.routes.prediction import router as prediction_router
 from app.core.config import settings
 from app.core.exceptions import AppException
+from app.models.error import ErrorResponse
 
 
 # ============================================================
@@ -19,21 +20,43 @@ app = FastAPI(
         "and image analysis API."
     ),
     version=settings.app_version,
+    responses={
+        400: {
+            "model": ErrorResponse,
+            "description": "Invalid request or image.",
+        },
+        413: {
+            "model": ErrorResponse,
+            "description": "Uploaded image is too large.",
+        },
+        500: {
+            "model": ErrorResponse,
+            "description": "Internal inference or application error.",
+        },
+    },
 )
+
+
+# ============================================================
+# CENTRALIZED EXCEPTION HANDLER
+# ============================================================
 
 @app.exception_handler(AppException)
 async def app_exception_handler(
     request: Request,
     exc: AppException,
 ):
+    error_response = ErrorResponse(
+        error=exc.error,
+        detail=exc.detail,
+        status_code=exc.status_code,
+    )
+
     return JSONResponse(
         status_code=exc.status_code,
-        content={
-            "error": exc.error,
-            "detail": exc.detail,
-            "status_code": exc.status_code,
-        },
+        content=error_response.model_dump(),
     )
+
 
 # ============================================================
 # API ROUTERS
