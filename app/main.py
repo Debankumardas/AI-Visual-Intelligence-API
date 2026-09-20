@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
+from app.api.routes.health import router as health_router
 from app.api.v1.router import router as api_v1_router
 from app.core.config import settings
 from app.core.exceptions import AppException
@@ -61,6 +62,7 @@ async def app_exception_handler(
 # ============================================================
 
 app.include_router(api_v1_router)
+app.include_router(health_router)
 
 
 # ============================================================
@@ -78,20 +80,4 @@ def root():
         "status": "healthy",
         "version": settings.app_version,
         "docs": "/docs",
-    }
-
-
-# ============================================================
-# HEALTH CHECK
-# ============================================================
-
-@app.get("/health")
-def health_check():
-    """
-    Health check endpoint.
-    """
-
-    return {
-        "status": "healthy",
-        "service": settings.app_name,
     }
