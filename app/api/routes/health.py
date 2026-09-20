@@ -1,35 +1,80 @@
 from fastapi import APIRouter
+from fastapi.responses import JSONResponse
 
-from app.core.config import settings
+from app.services.detection_service import detection_service
+from app.services.model_service import model_service
 
 
 router = APIRouter(
-    prefix="/health",
     tags=["Health"],
 )
 
 
-@router.get("")
+# ============================================================
+# LIVENESS CHECK
+# ============================================================
+
+@router.get("/health")
 def health_check():
     """
-    Liveness check.
-
-    Confirms that the API process is running.
+    Check whether the API process is alive.
     """
+
     return {
         "status": "healthy",
-        "service": settings.app_name,
+        "service": "AI Visual Intelligence API",
     }
 
 
-@router.get("/ready")
+# ============================================================
+# READINESS CHECK
+# ============================================================
+
+@router.get("/health/ready")
 def readiness_check():
     """
-    Readiness check.
-
-    Confirms that the API is ready to accept inference requests.
+    Check whether required AI models are loaded and ready.
     """
-    return {
-        "status": "ready",
-        "service": settings.app_name,
+
+    yolo_ready = (
+        detection_service.model is not None
+    )
+
+    classification_ready = (
+        model_service.model is not None
+        and model_service.preprocess is not None
+        and bool(model_service.categories)
+    )
+
+    models_ready = (
+        yolo_ready
+        and classification_ready
+    )
+
+    response = {
+        "status": (
+            "ready"
+            if models_ready
+            else "not_ready"
+        ),
+        "models": {
+            "object_detection": (
+                "ready"
+                if yolo_ready
+                else "not_ready"
+            ),
+            "image_classification": (
+                "ready"
+                if classification_ready
+                else "not_ready"
+            ),
+        },
     }
+
+    if not models_ready:
+        return JSONResponse(
+            status_code=503,
+            content=response,
+        )
+
+    return response
