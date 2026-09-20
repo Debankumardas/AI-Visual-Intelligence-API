@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from app.api.routes.analysis import router as analysis_router
 from app.api.routes.detection import router as detection_router
 from app.api.routes.prediction import router as prediction_router
+from app.core.config import settings
 
 
 # ============================================================
@@ -10,12 +11,12 @@ from app.api.routes.prediction import router as prediction_router
 # ============================================================
 
 app = FastAPI(
-    title="AI Visual Intelligence API",
+    title=settings.app_name,
     description=(
         "AI-powered image classification, object detection, "
         "and image analysis API."
     ),
-    version="1.0.0",
+    version=settings.app_version,
 )
 
 
@@ -41,7 +42,7 @@ def root():
     return {
         "message": "AI Visual Intelligence API is running",
         "status": "healthy",
-        "version": "1.0.0",
+        "version": settings.app_version,
         "docs": "/docs",
     }
 
@@ -58,5 +59,5 @@ def health_check():
 
     return {
         "status": "healthy",
-        "service": "AI Visual Intelligence API",
+        "service": settings.app_name,
     }
