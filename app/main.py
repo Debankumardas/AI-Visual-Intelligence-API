@@ -1,12 +1,14 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from app.core.logging import configure_logging
 from app.api.routes.health import router as health_router
 from app.api.v1.router import router as api_v1_router
 from app.core.config import settings
 from app.core.exceptions import AppException
+from app.core.logging import configure_logging
 from app.models.error import ErrorResponse
+from app.middleware.request_id import request_id_middleware
+
 
 configure_logging()
 
@@ -37,6 +39,13 @@ app = FastAPI(
         },
     },
 )
+
+
+# ============================================================
+# REQUEST ID MIDDLEWARE
+# ============================================================
+
+app.middleware("http")(request_id_middleware)
 
 
 # ============================================================
