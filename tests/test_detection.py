@@ -1,5 +1,6 @@
 from io import BytesIO
 
+from app.services.detection_service import detection_service
 from fastapi.testclient import TestClient
 from PIL import Image
 
@@ -314,3 +315,68 @@ def test_count_handles_detection_error(monkeypatch):
 
     assert data["error"] == "Inference Error"
     assert "Object counting failed" in data["detail"]
+
+def test_tracking_success(monkeypatch):
+    def fake_track(image):
+        return {
+            "tracks": [
+                {
+                    "track_id": 1,
+                    "label": "person",
+                    "confidence": 0.92,
+                    "box": {
+                        "x1": 10.0,
+                        "y1": 20.0,
+                        "x2": 100.0,
+                        "y2": 200.0,
+                    },
+                }
+            ]
+        }
+
+    monkeypatch.setattr(
+        detection_service,
+        "track",
+        fake_track,
+    )
+
+    response = client.post(
+        "/api/v1/detect/track",
+        files={
+            "file": (
+                "test.jpg",
+                create_test_image(),
+                "image/jpeg",
+            )
+        },
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["tracks"][0]["track_id"] == 1
+    assert data["tracks"][0]["label"] == "person"
+
+def test_tracking_error(monkeypatch):
+    def fake_track(image):
+        raise RuntimeError("Tracking failed")
+
+    monkeypatch.setattr(
+        detection_service,
+        "track",
+        fake_track,
+    )
+
+    response = client.post(
+        "/api/v1/detect/track",
+        files={
+            "file": (
+                "test.jpg",
+                create_test_image(),
+                "image/jpeg",
+            )
+        },
+    )
+
+    assert response.status_code == 500
