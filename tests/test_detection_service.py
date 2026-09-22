@@ -332,3 +332,76 @@ def test_detection_uses_configured_inference_settings(
     assert captured["iou"] == 0.45
     assert captured["imgsz"] == 640
     assert captured["verbose"] is False
+def test_count_objects_returns_counts(
+    monkeypatch,
+):
+    image = create_test_image()
+
+    class MockBox:
+        def __init__(self, class_id):
+            self.cls = [class_id]
+
+    class MockBoxes:
+        def __iter__(self):
+            return iter(
+                [
+                    MockBox(0),
+                    MockBox(0),
+                    MockBox(1),
+                ]
+            )
+
+    class MockResult:
+        boxes = MockBoxes()
+
+    class MockModel:
+        names = {
+            0: "person",
+            1: "car",
+        }
+
+    monkeypatch.setattr(
+        detection_service,
+        "model",
+        MockModel(),
+    )
+
+    monkeypatch.setattr(
+        detection_service,
+        "_run_inference",
+        lambda image: [MockResult()],
+    )
+
+    result = detection_service.count_objects(image)
+
+    assert result["total_objects"] == 3
+    assert result["counts"] == [
+        {
+            "label": "car",
+            "count": 1,
+        },
+        {
+            "label": "person",
+            "count": 2,
+        },
+    ]
+
+
+def test_count_objects_handles_no_detections(
+    monkeypatch,
+):
+    image = create_test_image()
+
+    class MockResult:
+        boxes = None
+
+    monkeypatch.setattr(
+        detection_service,
+        "_run_inference",
+        lambda image: [MockResult()],
+    )
+
+    result = detection_service.count_objects(image)
+
+    assert result["total_objects"] == 0
+    assert result["counts"] == []

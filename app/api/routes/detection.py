@@ -5,7 +5,10 @@ from fastapi.responses import StreamingResponse
 
 from app.api.routes.utils import load_uploaded_image
 from app.core.exceptions import InferenceError
-from app.models.detection import DetectionResponse
+from app.models.detection import (
+    DetectionResponse,
+    ObjectCountResponse,
+)
 from app.services.detection_service import detection_service
 
 
@@ -55,6 +58,45 @@ async def detect(
             f"Object detection failed: {str(e)}"
         )
 
+# ============================================================
+# OBJECT COUNTING
+# ============================================================
+
+@router.post(
+    "/count",
+    response_model=ObjectCountResponse,
+)
+async def count_objects(
+    file: UploadFile = File(...)
+):
+    """
+    Count detected objects in an uploaded image.
+
+    Returns:
+        - Total number of detected objects
+        - Count grouped by object class
+    """
+
+    image = await load_uploaded_image(file)
+
+    try:
+        count_result = detection_service.count_objects(
+            image
+        )
+
+        return {
+            "filename": file.filename or "unknown",
+            "content_type": file.content_type,
+            "total_objects": count_result[
+                "total_objects"
+            ],
+            "counts": count_result["counts"],
+        }
+
+    except Exception as e:
+        raise InferenceError(
+            f"Object counting failed: {str(e)}"
+        )
 
 # ============================================================
 # OBJECT DETECTION + ANNOTATED IMAGE

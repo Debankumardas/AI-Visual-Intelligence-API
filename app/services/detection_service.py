@@ -119,6 +119,54 @@ class DetectionService:
             "inference_time_ms": elapsed_ms,
         }
 
+        # ============================================================
+    # OBJECT COUNTING
+    # ============================================================
+
+    def count_objects(self, image: Image.Image):
+        """
+        Count detected objects by class.
+
+        Returns:
+            {
+                "total_objects": int,
+                "counts": [
+                    {
+                        "label": str,
+                        "count": int
+                    }
+                ]
+            }
+        """
+
+        results = self._run_inference(image)
+
+        result = results[0]
+
+        counts = {}
+
+        if result.boxes is not None:
+            for box in result.boxes:
+                class_id = int(box.cls[0])
+                label = self.model.names[class_id]
+
+                counts[label] = counts.get(label, 0) + 1
+
+        total_objects = sum(counts.values())
+
+        return {
+            "total_objects": total_objects,
+            "counts": [
+                {
+                    "label": label,
+                    "count": count,
+                }
+                for label, count in sorted(
+                    counts.items()
+                )
+            ],
+        }
+
     # ============================================================
     # DETECTION + ANNOTATED IMAGE
     # ============================================================
