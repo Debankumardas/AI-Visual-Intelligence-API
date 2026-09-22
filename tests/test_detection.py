@@ -480,6 +480,7 @@ def test_segmentation_success(monkeypatch):
     ]
 
 
+
 def test_segmentation_error(monkeypatch):
     def mock_segment(image):
         raise RuntimeError("Segmentation failed")
@@ -507,3 +508,95 @@ def test_segmentation_error(monkeypatch):
 
     assert data["error"] == "Inference Error"
     assert "Image segmentation failed" in data["detail"]
+
+# ============================================================
+# OCR
+# ============================================================
+
+
+def test_ocr_success(monkeypatch):
+    def mock_ocr(image):
+        return {
+            "results": [
+                {
+                    "text": "Hello World",
+                    "confidence": 0.95,
+                    "box": {
+                        "x1": 10.0,
+                        "y1": 20.0,
+                        "x2": 150.0,
+                        "y2": 60.0,
+                    },
+                }
+            ]
+        }
+
+    monkeypatch.setattr(
+        detection_service,
+        "ocr",
+        mock_ocr,
+    )
+
+    response = client.post(
+        "/api/v1/detect/ocr",
+        files={
+            "file": (
+                "test.jpg",
+                create_test_image(),
+                "image/jpeg",
+            )
+        },
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["filename"] == "test.jpg"
+    assert data["content_type"] == "image/jpeg"
+
+    assert len(data["results"]) == 1
+
+    result = data["results"][0]
+
+    assert result["text"] == "Hello World"
+    assert result["confidence"] == 0.95
+
+    assert result["box"] == {
+        "x1": 10.0,
+        "y1": 20.0,
+        "x2": 150.0,
+        "y2": 60.0,
+    }
+
+
+def test_ocr_error(monkeypatch):
+    def mock_ocr(image):
+        raise RuntimeError("OCR engine failed")
+
+    monkeypatch.setattr(
+        detection_service,
+        "ocr",
+        mock_ocr,
+    )
+
+    response = client.post(
+        "/api/v1/detect/ocr",
+        files={
+            "file": (
+                "test.jpg",
+                create_test_image(),
+                "image/jpeg",
+            )
+        },
+    )
+
+    assert response.status_code == 500
+
+    data = response.json()
+
+    assert data["error"] == "Inference Error"
+    assert (
+        "OCR processing failed"
+        in data["detail"]
+    )

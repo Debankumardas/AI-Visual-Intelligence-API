@@ -7,6 +7,7 @@ from app.api.routes.utils import load_uploaded_image
 from app.core.exceptions import InferenceError
 from app.models.detection import (
     DetectionResponse,
+    OCRResponse,
     ObjectCountResponse,
     SegmentationResponse,
     TrackingResponse,
@@ -188,6 +189,37 @@ async def segment_objects(
             f"{str(e)}"
         )
 
+@router.post(
+    "/ocr",
+    response_model=OCRResponse,
+)
+async def extract_text(
+    file: UploadFile = File(...)
+):
+    """
+    Extract text from an uploaded image.
+
+    Returns:
+        - Detected text
+        - Confidence score
+        - Bounding box
+    """
+
+    image = await load_uploaded_image(file)
+
+    try:
+        ocr_result = detection_service.ocr(image)
+
+        return {
+            "filename": file.filename or "unknown",
+            "content_type": file.content_type,
+            "results": ocr_result["results"],
+        }
+
+    except Exception as e:
+        raise InferenceError(
+            f"OCR processing failed: {str(e)}"
+        )
 
 # ============================================================
 # OBJECT DETECTION + ANNOTATED IMAGE

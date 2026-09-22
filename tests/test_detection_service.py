@@ -698,3 +698,187 @@ def test_segment_without_boxes_or_masks(monkeypatch):
     assert result == {
         "segmentations": []
     }
+
+
+# ============================================================
+# OCR TESTS
+# ============================================================
+
+
+def test_ocr_success(monkeypatch):
+    image = create_test_image()
+
+    class MockPytesseract:
+        class Output:
+            DICT = "dict"
+
+        def image_to_data(
+            self,
+            image,
+            lang,
+            output_type,
+        ):
+            return {
+                "text": [
+                    "Hello",
+                    "",
+                    "World",
+                ],
+                "conf": [
+                    "95",
+                    "-1",
+                    "88",
+                ],
+                "left": [
+                    10,
+                    0,
+                    100,
+                ],
+                "top": [
+                    20,
+                    0,
+                    40,
+                ],
+                "width": [
+                    50,
+                    0,
+                    60,
+                ],
+                "height": [
+                    20,
+                    0,
+                    25,
+                ],
+            }
+
+    monkeypatch.setattr(
+        "app.services.detection_service.pytesseract",
+        MockPytesseract(),
+    )
+
+    result = detection_service.ocr(image)
+
+    assert len(result["results"]) == 2
+
+    assert result["results"][0] == {
+        "text": "Hello",
+        "confidence": 0.95,
+        "box": {
+            "x1": 10.0,
+            "y1": 20.0,
+            "x2": 60.0,
+            "y2": 40.0,
+        },
+    }
+
+    assert result["results"][1] == {
+        "text": "World",
+        "confidence": 0.88,
+        "box": {
+            "x1": 100.0,
+            "y1": 40.0,
+            "x2": 160.0,
+            "y2": 65.0,
+        },
+    }
+
+
+def test_ocr_filters_low_confidence_text(monkeypatch):
+    image = create_test_image()
+
+    class MockPytesseract:
+        class Output:
+            DICT = "dict"
+
+        def image_to_data(
+            self,
+            image,
+            lang,
+            output_type,
+        ):
+            return {
+                "text": [
+                    "Good",
+                    "Bad",
+                ],
+                "conf": [
+                    "90",
+                    "20",
+                ],
+                "left": [
+                    10,
+                    50,
+                ],
+                "top": [
+                    20,
+                    40,
+                ],
+                "width": [
+                    50,
+                    40,
+                ],
+                "height": [
+                    20,
+                    20,
+                ],
+            }
+
+    monkeypatch.setattr(
+        "app.services.detection_service.pytesseract",
+        MockPytesseract(),
+    )
+
+    class MockSettings:
+        ocr_language = "eng"
+        ocr_confidence = 0.5
+
+    monkeypatch.setattr(
+        "app.services.detection_service.settings",
+        MockSettings(),
+    )
+
+    result = detection_service.ocr(image)
+
+    assert len(result["results"]) == 1
+    assert result["results"][0]["text"] == "Good"
+
+
+def test_ocr_converts_image_to_rgb(monkeypatch):
+    image = Image.new(
+        "L",
+        (100, 100),
+        255,
+    )
+
+    captured = {}
+
+    class MockPytesseract:
+        class Output:
+            DICT = "dict"
+
+        def image_to_data(
+            self,
+            image,
+            lang,
+            output_type,
+        ):
+            captured["mode"] = image.mode
+
+            return {
+                "text": [],
+                "conf": [],
+                "left": [],
+                "top": [],
+                "width": [],
+                "height": [],
+            }
+
+    monkeypatch.setattr(
+        "app.services.detection_service.pytesseract",
+        MockPytesseract(),
+    )
+
+    result = detection_service.ocr(image)
+
+    assert captured["mode"] == "RGB"
+    assert result["results"] == []

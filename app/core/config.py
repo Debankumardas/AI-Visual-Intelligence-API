@@ -39,4 +39,10 @@ class Settings:
     segmentation_image_size: int = 640
     segmentation_device: str = "cpu"
 
+    # OCR configuration
+    ocr_language: str = "eng"
+    ocr_confidence: float = 0.0
+    ocr_image_size: int = 640
+    ocr_device: str = "cpu"
+
 settings = Settings()

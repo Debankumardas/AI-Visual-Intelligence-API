@@ -1,5 +1,6 @@
 import logging
 import time
+import pytesseract
 
 from PIL import Image
 from ultralytics import YOLO
@@ -347,6 +348,77 @@ class DetectionService:
 
         return {
             "segmentations": segmentations,
+        }
+
+    # ============================================================
+    # OCR
+    # ============================================================
+
+    def ocr(self, image: Image.Image):
+        """
+        Extract text from an image using Tesseract OCR.
+
+        Returns:
+            {
+                "results": [
+                    {
+                        "text": str,
+                        "confidence": float,
+                        "box": {
+                            "x1": float,
+                            "y1": float,
+                            "x2": float,
+                            "y2": float
+                        }
+                    }
+                ]
+            }
+        """
+
+        image = image.convert("RGB")
+
+        data = pytesseract.image_to_data(
+            image,
+            lang=settings.ocr_language,
+            output_type=pytesseract.Output.DICT,
+        )
+
+        results = []
+
+        for i, text in enumerate(data["text"]):
+            text = text.strip()
+
+            if not text:
+                continue
+
+            confidence = float(data["conf"][i])
+
+            if confidence < settings.ocr_confidence * 100:
+                continue
+
+            x = int(data["left"][i])
+            y = int(data["top"][i])
+            width = int(data["width"][i])
+            height = int(data["height"][i])
+
+            results.append(
+                {
+                    "text": text,
+                    "confidence": round(
+                        confidence / 100,
+                        4,
+                    ),
+                    "box": {
+                        "x1": float(x),
+                        "y1": float(y),
+                        "x2": float(x + width),
+                        "y2": float(y + height),
+                    },
+                }
+            )
+
+        return {
+            "results": results,
         }
 
     # ============================================================
