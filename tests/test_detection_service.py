@@ -1,8 +1,8 @@
 from PIL import Image
-
 import numpy as np
 
 from app.services.detection_service import detection_service
+from app.services.detection_service import DetectionService
 
 
 def create_test_image():
@@ -16,6 +16,7 @@ def create_test_image():
 # ============================================================
 # OBJECT DETECTION TESTS
 # ============================================================
+
 
 def test_detect_returns_detections(monkeypatch):
     image = create_test_image()
@@ -185,6 +186,7 @@ def test_detect_converts_image_to_rgb(monkeypatch):
 # ANNOTATED IMAGE TESTS
 # ============================================================
 
+
 def test_detect_and_annotate_returns_rgb_image(
     monkeypatch,
 ):
@@ -296,6 +298,7 @@ def test_detect_and_annotate_converts_image_to_rgb(
 # DETECTION CONFIGURATION TEST
 # ============================================================
 
+
 def test_detection_uses_configured_inference_settings(
     monkeypatch,
 ):
@@ -350,6 +353,7 @@ def test_detection_uses_configured_inference_settings(
 # ============================================================
 # OBJECT COUNTING TESTS
 # ============================================================
+
 
 def test_count_objects_returns_counts(
     monkeypatch,
@@ -430,6 +434,7 @@ def test_count_objects_handles_no_detections(
 # ============================================================
 # OBJECT TRACKING TESTS
 # ============================================================
+
 
 def test_run_tracking_uses_configured_tracking_settings(
     monkeypatch,
@@ -582,3 +587,114 @@ def test_track_without_track_id(monkeypatch):
     result = detection_service.track(image)
 
     assert result["tracks"] == []
+
+
+# ============================================================
+# IMAGE SEGMENTATION TESTS
+# ============================================================
+
+
+def test_segment_success(monkeypatch):
+    class MockBox:
+        cls = [0]
+        conf = [0.95]
+
+        class XYXY:
+            def __getitem__(self, index):
+                class Tensor:
+                    def tolist(self):
+                        return [
+                            10.0,
+                            20.0,
+                            100.0,
+                            200.0,
+                        ]
+
+                return Tensor()
+
+        xyxy = XYXY()
+
+    class MockMask:
+        xy = [
+            [
+                [10.0, 20.0],
+                [100.0, 20.0],
+                [100.0, 200.0],
+                [10.0, 200.0],
+            ]
+        ]
+
+    class MockResult:
+        boxes = [MockBox()]
+        masks = MockMask()
+
+    class MockModel:
+        names = {
+            0: "person",
+        }
+
+        def predict(self, **kwargs):
+            return [MockResult()]
+
+    monkeypatch.setattr(
+        "app.services.detection_service.YOLO",
+        lambda *args, **kwargs: MockModel(),
+    )
+
+    service = DetectionService()
+
+    image = Image.new(
+        "RGB",
+        (200, 200),
+    )
+
+    result = service.segment(image)
+
+    assert len(result["segmentations"]) == 1
+
+    segmentation = result["segmentations"][0]
+
+    assert segmentation["label"] == "person"
+    assert segmentation["confidence"] == 0.95
+
+    assert segmentation["box"] == {
+        "x1": 10.0,
+        "y1": 20.0,
+        "x2": 100.0,
+        "y2": 200.0,
+    }
+
+    assert segmentation["mask"] == [
+        [10.0, 20.0],
+        [100.0, 20.0],
+        [100.0, 200.0],
+        [10.0, 200.0],
+    ]
+
+
+def test_segment_without_boxes_or_masks(monkeypatch):
+    class MockResult:
+        boxes = None
+        masks = None
+
+    class MockModel:
+        def predict(self, **kwargs):
+            return [MockResult()]
+
+    monkeypatch.setattr(
+        "app.services.detection_service.YOLO",
+        lambda *args, **kwargs: MockModel(),
+    )
+
+    service = DetectionService()
+
+    image = Image.new(
+        "RGB",
+        (200, 200),
+    )
+
+    result = service.segment(image)
+
+    assert result == {
+        "segmentations": []
+    }

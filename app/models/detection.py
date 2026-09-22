@@ -53,6 +53,28 @@ class TrackingResponse(BaseModel):
 
     tracks: list[Track]
 
+# ============================================================
+# IMAGE SEGMENTATION MODELS
+# ============================================================
+
+class Segmentation(BaseModel):
+
+    label: str
+
+    confidence: float = Field(..., ge=0, le=1)
+
+    box: BoundingBox
+
+    mask: list[list[float]]
+
+
+class SegmentationResponse(BaseModel):
+
+    filename: str
+
+    content_type: str
+
+    segmentations: list[Segmentation]
 
 class ObjectCount(BaseModel):
 
