@@ -13,6 +13,10 @@ def create_test_image():
     )
 
 
+# ============================================================
+# OBJECT DETECTION TESTS
+# ============================================================
+
 def test_detect_returns_detections(monkeypatch):
     image = create_test_image()
 
@@ -177,6 +181,10 @@ def test_detect_converts_image_to_rgb(monkeypatch):
     assert captured["mode"] == "RGB"
 
 
+# ============================================================
+# ANNOTATED IMAGE TESTS
+# ============================================================
+
 def test_detect_and_annotate_returns_rgb_image(
     monkeypatch,
 ):
@@ -223,7 +231,6 @@ def test_detect_and_annotate_returns_rgb_image(
     )
 
     assert result.mode == "RGB"
-
     assert result.size == (100, 100)
 
 
@@ -283,6 +290,12 @@ def test_detect_and_annotate_converts_image_to_rgb(
     )
 
     assert result.mode == "RGB"
+
+
+# ============================================================
+# DETECTION CONFIGURATION TEST
+# ============================================================
+
 def test_detection_uses_configured_inference_settings(
     monkeypatch,
 ):
@@ -332,6 +345,12 @@ def test_detection_uses_configured_inference_settings(
     assert captured["iou"] == 0.45
     assert captured["imgsz"] == 640
     assert captured["verbose"] is False
+
+
+# ============================================================
+# OBJECT COUNTING TESTS
+# ============================================================
+
 def test_count_objects_returns_counts(
     monkeypatch,
 ):
@@ -375,6 +394,7 @@ def test_count_objects_returns_counts(
     result = detection_service.count_objects(image)
 
     assert result["total_objects"] == 3
+
     assert result["counts"] == [
         {
             "label": "car",
@@ -405,3 +425,160 @@ def test_count_objects_handles_no_detections(
 
     assert result["total_objects"] == 0
     assert result["counts"] == []
+
+
+# ============================================================
+# OBJECT TRACKING TESTS
+# ============================================================
+
+def test_run_tracking_uses_configured_tracking_settings(
+    monkeypatch,
+):
+    image = create_test_image()
+
+    captured = {}
+
+    class MockModel:
+        def track(
+            self,
+            source,
+            device,
+            conf,
+            iou,
+            imgsz,
+            persist,
+            verbose,
+        ):
+            captured["mode"] = source.mode
+            captured["device"] = device
+            captured["conf"] = conf
+            captured["iou"] = iou
+            captured["imgsz"] = imgsz
+            captured["persist"] = persist
+            captured["verbose"] = verbose
+
+            return []
+
+    monkeypatch.setattr(
+        detection_service,
+        "model",
+        MockModel(),
+    )
+
+    result = detection_service._run_tracking(
+        image
+    )
+
+    assert result == []
+
+    assert captured["mode"] == "RGB"
+    assert captured["device"] == "cpu"
+    assert captured["conf"] == 0.25
+    assert captured["iou"] == 0.45
+    assert captured["imgsz"] == 640
+    assert captured["persist"] is True
+    assert captured["verbose"] is False
+
+
+def test_track_success(monkeypatch):
+    image = create_test_image()
+
+    class MockTensor:
+        def __init__(self, values):
+            self.values = values
+
+        def tolist(self):
+            return self.values
+
+    class MockXYXY:
+        def __getitem__(self, index):
+            return MockTensor(
+                [
+                    10.0,
+                    20.0,
+                    100.0,
+                    200.0,
+                ]
+            )
+
+    class FakeBox:
+        def __init__(self):
+            self.id = [1]
+            self.cls = [0]
+            self.conf = [0.92]
+            self.xyxy = MockXYXY()
+
+    class FakeResult:
+        boxes = [FakeBox()]
+
+    def fake_tracking(image):
+        return [FakeResult()]
+
+    class MockModel:
+        names = {
+            0: "person",
+        }
+
+    monkeypatch.setattr(
+        detection_service,
+        "model",
+        MockModel(),
+    )
+
+    monkeypatch.setattr(
+        detection_service,
+        "_run_tracking",
+        fake_tracking,
+    )
+
+    result = detection_service.track(image)
+
+    assert len(result["tracks"]) == 1
+
+    track = result["tracks"][0]
+
+    assert track["track_id"] == 1
+    assert track["label"] == "person"
+    assert track["confidence"] == 0.92
+
+    assert track["box"]["x1"] == 10.0
+    assert track["box"]["y1"] == 20.0
+    assert track["box"]["x2"] == 100.0
+    assert track["box"]["y2"] == 200.0
+
+
+def test_track_without_track_id(monkeypatch):
+    image = create_test_image()
+
+    class FakeBox:
+        def __init__(self):
+            self.id = None
+            self.cls = [0]
+            self.conf = [0.92]
+
+    class FakeResult:
+        boxes = [FakeBox()]
+
+    def fake_tracking(image):
+        return [FakeResult()]
+
+    class MockModel:
+        names = {
+            0: "person",
+        }
+
+    monkeypatch.setattr(
+        detection_service,
+        "model",
+        MockModel(),
+    )
+
+    monkeypatch.setattr(
+        detection_service,
+        "_run_tracking",
+        fake_tracking,
+    )
+
+    result = detection_service.track(image)
+
+    assert result["tracks"] == []

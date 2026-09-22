@@ -43,6 +43,28 @@ class DetectionService:
         )
 
     # ============================================================
+    # INTERNAL YOLO TRACKING
+    # ============================================================
+
+    def _run_tracking(self, image: Image.Image):
+        """
+        Run YOLO tracking on a frame using application
+        configuration.
+        """
+
+        image = image.convert("RGB")
+
+        return self.model.track(
+            source=image,
+            device=settings.tracking_device,
+            conf=settings.tracking_confidence,
+            iou=settings.tracking_iou,
+            imgsz=settings.tracking_image_size,
+            persist=settings.tracking_persist,
+            verbose=False,
+        )
+
+    # ============================================================
     # OBJECT DETECTION
     # ============================================================
 
@@ -119,7 +141,7 @@ class DetectionService:
             "inference_time_ms": elapsed_ms,
         }
 
-        # ============================================================
+    # ============================================================
     # OBJECT COUNTING
     # ============================================================
 
@@ -165,6 +187,75 @@ class DetectionService:
                     counts.items()
                 )
             ],
+        }
+
+    # ============================================================
+    # OBJECT TRACKING
+    # ============================================================
+
+    def track(self, image: Image.Image):
+        """
+        Track objects in a frame.
+
+        Returns:
+            {
+                "tracks": [
+                    {
+                        "track_id": int,
+                        "label": str,
+                        "confidence": float,
+                        "box": {
+                            "x1": float,
+                            "y1": float,
+                            "x2": float,
+                            "y2": float
+                        }
+                    }
+                ]
+            }
+        """
+
+        results = self._run_tracking(image)
+
+        result = results[0]
+
+        tracks = []
+
+        if result.boxes is not None:
+            for box in result.boxes:
+
+                if box.id is None:
+                    continue
+
+                track_id = int(box.id[0])
+                class_id = int(box.cls[0])
+                confidence = float(box.conf[0])
+
+                x1, y1, x2, y2 = (
+                    box.xyxy[0].tolist()
+                )
+
+                label = self.model.names[class_id]
+
+                tracks.append(
+                    {
+                        "track_id": track_id,
+                        "label": label,
+                        "confidence": round(
+                            confidence,
+                            4,
+                        ),
+                        "box": {
+                            "x1": round(x1, 2),
+                            "y1": round(y1, 2),
+                            "x2": round(x2, 2),
+                            "y2": round(y2, 2),
+                        },
+                    }
+                )
+
+        return {
+            "tracks": tracks,
         }
 
     # ============================================================

@@ -8,6 +8,7 @@ from app.core.exceptions import InferenceError
 from app.models.detection import (
     DetectionResponse,
     ObjectCountResponse,
+    TrackingResponse,
 )
 from app.services.detection_service import detection_service
 
@@ -58,6 +59,7 @@ async def detect(
             f"Object detection failed: {str(e)}"
         )
 
+
 # ============================================================
 # OBJECT COUNTING
 # ============================================================
@@ -97,6 +99,47 @@ async def count_objects(
         raise InferenceError(
             f"Object counting failed: {str(e)}"
         )
+
+
+# ============================================================
+# OBJECT TRACKING
+# ============================================================
+
+@router.post(
+    "/track",
+    response_model=TrackingResponse,
+)
+async def track_objects(
+    file: UploadFile = File(...)
+):
+    """
+    Track objects in an uploaded image or frame.
+
+    Returns:
+        - Tracking ID
+        - Object label
+        - Confidence score
+        - Bounding box
+    """
+
+    image = await load_uploaded_image(file)
+
+    try:
+        tracking_result = detection_service.track(
+            image
+        )
+
+        return {
+            "filename": file.filename or "unknown",
+            "content_type": file.content_type,
+            "tracks": tracking_result["tracks"],
+        }
+
+    except Exception as e:
+        raise InferenceError(
+            f"Object tracking failed: {str(e)}"
+        )
+
 
 # ============================================================
 # OBJECT DETECTION + ANNOTATED IMAGE

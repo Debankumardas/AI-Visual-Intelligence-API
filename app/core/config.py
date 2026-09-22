@@ -26,5 +26,12 @@ class Settings:
     detection_image_size: int = 640
     detection_device: str = "cpu"
 
+    # Object tracking configuration
+    tracking_confidence: float = 0.25
+    tracking_iou: float = 0.45
+    tracking_image_size: int = 640
+    tracking_device: str = "cpu"
+    tracking_persist: bool = True
+
 
 settings = Settings()
