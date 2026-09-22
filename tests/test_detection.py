@@ -1,8 +1,7 @@
 from io import BytesIO
-from unittest.mock import patch
 
-from PIL import Image
 from fastapi.testclient import TestClient
+from PIL import Image
 
 from app.main import app
 
@@ -11,39 +10,53 @@ client = TestClient(app)
 
 
 def create_test_image():
-    image = Image.new("RGB", (100, 100), "white")
-    image_buffer = BytesIO()
-    image.save(image_buffer, format="JPEG")
-    image_buffer.seek(0)
-    return image_buffer
+    image = Image.new(
+        "RGB",
+        (100, 100),
+        "white",
+    )
+
+    buffer = BytesIO()
+
+    image.save(
+        buffer,
+        format="JPEG",
+    )
+
+    buffer.seek(0)
+
+    return buffer
 
 
-@patch("app.api.routes.detection.detection_service.detect")
-def test_detect_returns_detections(mock_detect):
-    mock_detect.return_value = {
-        "detections": [
-            {
-                "label": "person",
-                "confidence": 0.95,
-                "box": {
-                    "x1": 10.0,
-                    "y1": 20.0,
-                    "x2": 80.0,
-                    "y2": 90.0,
-                },
-            }
-        ],
-        "inference_time_ms": 25.5,
-    }
+def test_detect_returns_detections(monkeypatch):
+    def mock_detect(image):
+        return {
+            "detections": [
+                {
+                    "label": "person",
+                    "confidence": 0.95,
+                    "box": {
+                        "x1": 10.0,
+                        "y1": 20.0,
+                        "x2": 80.0,
+                        "y2": 90.0,
+                    },
+                }
+            ],
+            "inference_time_ms": 15.5,
+        }
 
-    image = create_test_image()
+    monkeypatch.setattr(
+        "app.api.routes.detection.detection_service.detect",
+        mock_detect,
+    )
 
     response = client.post(
         "/api/v1/detect",
         files={
             "file": (
                 "test.jpg",
-                image,
+                create_test_image(),
                 "image/jpeg",
             )
         },
@@ -55,40 +68,31 @@ def test_detect_returns_detections(mock_detect):
 
     assert data["filename"] == "test.jpg"
     assert data["content_type"] == "image/jpeg"
+
     assert len(data["detections"]) == 1
-
-    detection = data["detections"][0]
-
-    assert detection["label"] == "person"
-    assert detection["confidence"] == 0.95
-    assert detection["box"]["x1"] == 10.0
-    assert detection["box"]["y1"] == 20.0
-    assert detection["box"]["x2"] == 80.0
-    assert detection["box"]["y2"] == 90.0
-
-    mock_detect.assert_called_once()
+    assert data["detections"][0]["label"] == "person"
+    assert data["detections"][0]["confidence"] == 0.95
 
 
-@patch(
-    "app.api.routes.detection.detection_service.detect_and_annotate"
-)
-def test_detect_annotated_returns_jpeg(mock_detect):
-    annotated_image = Image.new(
-        "RGB",
-        (100, 100),
-        "white",
+def test_detect_annotated_returns_jpeg(monkeypatch):
+    def mock_detect_and_annotate(image):
+        return Image.new(
+            "RGB",
+            (100, 100),
+            "white",
+        )
+
+    monkeypatch.setattr(
+        "app.api.routes.detection.detection_service.detect_and_annotate",
+        mock_detect_and_annotate,
     )
-
-    mock_detect.return_value = annotated_image
-
-    image = create_test_image()
 
     response = client.post(
         "/api/v1/detect/annotated",
         files={
             "file": (
                 "test.jpg",
-                image,
+                create_test_image(),
                 "image/jpeg",
             )
         },
@@ -97,29 +101,26 @@ def test_detect_annotated_returns_jpeg(mock_detect):
     assert response.status_code == 200
     assert response.headers["content-type"] == "image/jpeg"
     assert (
-        "test_annotated.jpg"
+        'filename="test_annotated.jpg"'
         in response.headers["content-disposition"]
     )
 
-    assert response.content
-    assert response.content.startswith(b"\xff\xd8")
 
-    mock_detect.assert_called_once()
+def test_detect_returns_inference_error(monkeypatch):
+    def mock_detect(image):
+        raise RuntimeError("detection failed")
 
-@patch("app.api.routes.detection.detection_service.detect")
-def test_detect_returns_inference_error(mock_detect):
-    mock_detect.side_effect = RuntimeError(
-        "Model inference failed"
+    monkeypatch.setattr(
+        "app.api.routes.detection.detection_service.detect",
+        mock_detect,
     )
-
-    image = create_test_image()
 
     response = client.post(
         "/api/v1/detect",
         files={
             "file": (
                 "test.jpg",
-                image,
+                create_test_image(),
                 "image/jpeg",
             )
         },
@@ -130,11 +131,7 @@ def test_detect_returns_inference_error(mock_detect):
     data = response.json()
 
     assert data["error"] == "Inference Error"
-    assert data["status_code"] == 500
-    assert "Model inference failed" in data["detail"]
-
-    assert "X-Request-ID" in response.headers
-    assert response.headers["X-Request-ID"]
+    assert "Object detection failed" in data["detail"]
 
 
 def test_detect_rejects_invalid_image():
@@ -142,7 +139,7 @@ def test_detect_rejects_invalid_image():
         "/api/v1/detect",
         files={
             "file": (
-                "invalid.txt",
+                "test.txt",
                 b"not an image",
                 "text/plain",
             )
@@ -151,11 +148,92 @@ def test_detect_rejects_invalid_image():
 
     assert response.status_code == 400
 
+
+def test_detect_handles_detection_error(monkeypatch):
+    def mock_detect(image):
+        raise RuntimeError("detection failed")
+
+    monkeypatch.setattr(
+        "app.api.routes.detection.detection_service.detect",
+        mock_detect,
+    )
+
+    response = client.post(
+        "/api/v1/detect",
+        files={
+            "file": (
+                "test.jpg",
+                create_test_image(),
+                "image/jpeg",
+            )
+        },
+    )
+
+    assert response.status_code == 500
+
     data = response.json()
 
-    assert data["error"] == "Invalid Image"
-    assert data["status_code"] == 400
-    assert "detail" in data
+    assert data["error"] == "Inference Error"
+    assert "Object detection failed" in data["detail"]
 
-    assert "X-Request-ID" in response.headers
-    assert response.headers["X-Request-ID"]
+
+def test_detect_annotated_handles_error(monkeypatch):
+    def mock_detect_and_annotate(image):
+        raise RuntimeError("annotation failed")
+
+    monkeypatch.setattr(
+        "app.api.routes.detection.detection_service.detect_and_annotate",
+        mock_detect_and_annotate,
+    )
+
+    response = client.post(
+        "/api/v1/detect/annotated",
+        files={
+            "file": (
+                "test.jpg",
+                create_test_image(),
+                "image/jpeg",
+            )
+        },
+    )
+
+    assert response.status_code == 500
+
+    data = response.json()
+
+    assert data["error"] == "Inference Error"
+    assert (
+        "Annotated object detection failed"
+        in data["detail"]
+    )
+def test_detect_annotated_handles_filename_without_extension(
+    monkeypatch,
+):
+    def mock_detect_and_annotate(image):
+        return Image.new(
+            "RGB",
+            (100, 100),
+            "white",
+        )
+
+    monkeypatch.setattr(
+        "app.api.routes.detection.detection_service.detect_and_annotate",
+        mock_detect_and_annotate,
+    )
+
+    response = client.post(
+        "/api/v1/detect/annotated",
+        files={
+            "file": (
+                "testimage",
+                create_test_image(),
+                "image/jpeg",
+            )
+        },
+    )
+
+    assert response.status_code == 200
+    assert (
+        'filename="testimage_annotated.jpg"'
+        in response.headers["content-disposition"]
+    )

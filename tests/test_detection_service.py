@@ -1,5 +1,7 @@
 from PIL import Image
 
+import numpy as np
+
 from app.services.detection_service import detection_service
 
 
@@ -26,7 +28,9 @@ def test_detect_returns_detections(monkeypatch):
             self.values = values
 
         def __getitem__(self, index):
-            return MockTensor(self.values[index])
+            return MockTensor(
+                self.values[index]
+            )
 
     class MockBox:
         cls = [0]
@@ -162,3 +166,105 @@ def test_detect_converts_image_to_rgb(monkeypatch):
     detection_service.detect(image)
 
     assert captured["mode"] == "RGB"
+
+
+def test_detect_and_annotate_returns_rgb_image(
+    monkeypatch,
+):
+    image = create_test_image()
+
+    class MockResult:
+        def plot(self):
+            return np.zeros(
+                (100, 100, 3),
+                dtype=np.uint8,
+            )
+
+    class MockModel:
+        def predict(
+            self,
+            source,
+            device,
+            verbose,
+        ):
+            return [MockResult()]
+
+    monkeypatch.setattr(
+        detection_service,
+        "model",
+        MockModel(),
+    )
+
+    monkeypatch.setattr(
+        detection_service,
+        "device",
+        "cpu",
+    )
+
+    result = detection_service.detect_and_annotate(
+        image
+    )
+
+    assert isinstance(
+        result,
+        Image.Image,
+    )
+
+    assert result.mode == "RGB"
+
+    assert result.size == (100, 100)
+
+
+def test_detect_and_annotate_converts_image_to_rgb(
+    monkeypatch,
+):
+    image = Image.new(
+        "L",
+        (100, 100),
+        255,
+    )
+
+    captured = {}
+
+    class MockResult:
+        def plot(self):
+            return np.zeros(
+                (100, 100, 3),
+                dtype=np.uint8,
+            )
+
+    class MockModel:
+        def predict(
+            self,
+            source,
+            device,
+            verbose,
+        ):
+            captured["mode"] = source.mode
+
+            return [MockResult()]
+
+    monkeypatch.setattr(
+        detection_service,
+        "model",
+        MockModel(),
+    )
+
+    monkeypatch.setattr(
+        detection_service,
+        "device",
+        "cpu",
+    )
+
+    result = detection_service.detect_and_annotate(
+        image
+    )
+
+    assert captured["mode"] == "RGB"
+
+    assert isinstance(
+        result,
+        Image.Image,
+    )
+
+    assert result.mode == "RGB"

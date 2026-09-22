@@ -25,4 +25,6 @@ annotated_sample.jpg
 Thumbs.db
 
 # Logs
-*.log
+*.log.coverage
+
+.coverage
