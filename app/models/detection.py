@@ -76,6 +76,21 @@ class SegmentationResponse(BaseModel):
 
     segmentations: list[Segmentation]
 
+# ============================================================
+# OCR MODELS
+# ============================================================
+
+class OCRResult(BaseModel):
+    text: str
+    confidence: float = Field(..., ge=0, le=1)
+    box: BoundingBox
+
+
+class OCRResponse(BaseModel):
+    filename: str
+    content_type: str
+    results: list[OCRResult]
+
 class ObjectCount(BaseModel):
 
     label: str
