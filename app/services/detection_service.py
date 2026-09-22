@@ -259,6 +259,97 @@ class DetectionService:
         }
 
     # ============================================================
+    # IMAGE SEGMENTATION
+    # ============================================================
+
+    def segment(self, image: Image.Image):
+        """
+        Segment objects in an image.
+
+        Returns:
+            {
+                "segmentations": [
+                    {
+                        "label": str,
+                        "confidence": float,
+                        "box": {
+                            "x1": float,
+                            "y1": float,
+                            "x2": float,
+                            "y2": float
+                        },
+                        "mask": [
+                            [x, y],
+                            ...
+                        ]
+                    }
+                ]
+            }
+        """
+
+        image = image.convert("RGB")
+
+        model = YOLO("yolo11n-seg.pt")
+
+        results = model.predict(
+            source=image,
+            device=settings.segmentation_device,
+            conf=settings.segmentation_confidence,
+            iou=settings.segmentation_iou,
+            imgsz=settings.segmentation_image_size,
+            verbose=False,
+        )
+
+        result = results[0]
+
+        segmentations = []
+
+        if result.boxes is None or result.masks is None:
+            return {
+                "segmentations": []
+            }
+
+        for box, mask in zip(
+            result.boxes,
+            result.masks.xy,
+        ):
+            class_id = int(box.cls[0])
+            confidence = float(box.conf[0])
+
+            x1, y1, x2, y2 = box.xyxy[0].tolist()
+
+            label = model.names[class_id]
+
+            polygon = [
+                [
+                    round(float(point[0]), 2),
+                    round(float(point[1]), 2),
+                ]
+                for point in mask
+            ]
+
+            segmentations.append(
+                {
+                    "label": label,
+                    "confidence": round(
+                        confidence,
+                        4,
+                    ),
+                    "box": {
+                        "x1": round(x1, 2),
+                        "y1": round(y1, 2),
+                        "x2": round(x2, 2),
+                        "y2": round(y2, 2),
+                    },
+                    "mask": polygon,
+                }
+            )
+
+        return {
+            "segmentations": segmentations,
+        }
+
+    # ============================================================
     # DETECTION + ANNOTATED IMAGE
     # ============================================================
 

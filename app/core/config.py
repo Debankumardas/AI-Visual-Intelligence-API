@@ -33,5 +33,10 @@ class Settings:
     tracking_device: str = "cpu"
     tracking_persist: bool = True
 
+    # Image segmentation configuration
+    segmentation_confidence: float = 0.25
+    segmentation_iou: float = 0.45
+    segmentation_image_size: int = 640
+    segmentation_device: str = "cpu"
 
 settings = Settings()

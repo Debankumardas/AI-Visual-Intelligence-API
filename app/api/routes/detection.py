@@ -8,6 +8,7 @@ from app.core.exceptions import InferenceError
 from app.models.detection import (
     DetectionResponse,
     ObjectCountResponse,
+    SegmentationResponse,
     TrackingResponse,
 )
 from app.services.detection_service import detection_service
@@ -142,6 +143,53 @@ async def track_objects(
 
 
 # ============================================================
+# IMAGE SEGMENTATION
+# ============================================================
+
+@router.post(
+    "/segment",
+    response_model=SegmentationResponse,
+)
+async def segment_objects(
+    file: UploadFile = File(...)
+):
+    """
+    Segment objects in an uploaded image.
+
+    Returns:
+        - Object label
+        - Confidence score
+        - Bounding box
+        - Segmentation mask polygon
+    """
+
+    image = await load_uploaded_image(file)
+
+    try:
+        segmentation_result = (
+            detection_service.segment(
+                image
+            )
+        )
+
+        return {
+            "filename": file.filename or "unknown",
+            "content_type": file.content_type,
+            "segmentations": (
+                segmentation_result[
+                    "segmentations"
+                ]
+            ),
+        }
+
+    except Exception as e:
+        raise InferenceError(
+            f"Image segmentation failed: "
+            f"{str(e)}"
+        )
+
+
+# ============================================================
 # OBJECT DETECTION + ANNOTATED IMAGE
 # ============================================================
 
@@ -198,6 +246,6 @@ async def detect_annotated(
 
     except Exception as e:
         raise InferenceError(
-            f"Annotated object detection failed: "
+            "Annotated object detection failed: "
             f"{str(e)}"
         )
