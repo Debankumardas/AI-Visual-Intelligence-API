@@ -1,21 +1,46 @@
+import logging
 import time
 
 from PIL import Image
 from ultralytics import YOLO
 
+from app.core.config import settings
+
+
+logger = logging.getLogger(__name__)
+
 
 class DetectionService:
 
     def __init__(self):
-        print("Loading YOLO object detection model...")
+        logger.info("Loading YOLO object detection model...")
+
+        self.device = settings.detection_device
 
         self.model = YOLO("yolo11n.pt")
 
-        # We are using the CPU version of PyTorch
-        self.device = "cpu"
+        logger.info("YOLO model loaded successfully.")
+        logger.info("Device: %s", self.device)
 
-        print("YOLO model loaded successfully.")
-        print(f"Device: {self.device}")
+    # ============================================================
+    # INTERNAL YOLO INFERENCE
+    # ============================================================
+
+    def _run_inference(self, image: Image.Image):
+        """
+        Run YOLO inference using application configuration.
+        """
+
+        image = image.convert("RGB")
+
+        return self.model.predict(
+            source=image,
+            device=self.device,
+            conf=settings.detection_confidence,
+            iou=settings.detection_iou,
+            imgsz=settings.detection_image_size,
+            verbose=False,
+        )
 
     # ============================================================
     # OBJECT DETECTION
@@ -43,60 +68,33 @@ class DetectionService:
             }
         """
 
-        # --------------------------------------------------------
-        # Start timer
-        # --------------------------------------------------------
-
         start_time = time.perf_counter()
 
-        # --------------------------------------------------------
-        # Make sure image is RGB
-        # --------------------------------------------------------
-
-        image = image.convert("RGB")
-
-        # --------------------------------------------------------
-        # Run YOLO inference
-        # --------------------------------------------------------
-
-        results = self.model.predict(
-            source=image,
-            device=self.device,
-            verbose=False,
-        )
-
-        # --------------------------------------------------------
-        # Store detections
-        # --------------------------------------------------------
+        results = self._run_inference(image)
 
         detections = []
 
         result = results[0]
 
-        # --------------------------------------------------------
-        # Extract bounding boxes
-        # --------------------------------------------------------
-
         if result.boxes is not None:
-
             for box in result.boxes:
 
-                # Class ID
                 class_id = int(box.cls[0])
-
-                # Confidence
                 confidence = float(box.conf[0])
 
-                # Bounding box coordinates
-                x1, y1, x2, y2 = box.xyxy[0].tolist()
+                x1, y1, x2, y2 = (
+                    box.xyxy[0].tolist()
+                )
 
-                # Class label
                 label = self.model.names[class_id]
 
                 detections.append(
                     {
                         "label": label,
-                        "confidence": round(confidence, 4),
+                        "confidence": round(
+                            confidence,
+                            4,
+                        ),
                         "box": {
                             "x1": round(x1, 2),
                             "y1": round(y1, 2),
@@ -106,21 +104,15 @@ class DetectionService:
                     }
                 )
 
-        # --------------------------------------------------------
-        # Calculate inference time
-        # --------------------------------------------------------
-
-        elapsed_ms = (time.perf_counter() - start_time) * 1000
-
-        elapsed_ms = round(elapsed_ms, 2)
-
-        print(
-            f"Detection completed in {elapsed_ms:.2f} ms"
+        elapsed_ms = round(
+            (time.perf_counter() - start_time) * 1000,
+            2,
         )
 
-        # --------------------------------------------------------
-        # Return result
-        # --------------------------------------------------------
+        logger.info(
+            "Detection completed in %.2f ms",
+            elapsed_ms,
+        )
 
         return {
             "detections": detections,
@@ -141,34 +133,11 @@ class DetectionService:
         - Confidence scores
         """
 
-        # --------------------------------------------------------
-        # Make sure image is RGB
-        # --------------------------------------------------------
-
-        image = image.convert("RGB")
-
-        # --------------------------------------------------------
-        # Run YOLO inference
-        # --------------------------------------------------------
-
-        results = self.model.predict(
-            source=image,
-            device=self.device,
-            verbose=False,
-        )
+        results = self._run_inference(image)
 
         result = results[0]
 
-        # --------------------------------------------------------
-        # Generate annotated image
-        # --------------------------------------------------------
-
         annotated_array = result.plot()
-
-        # --------------------------------------------------------
-        # YOLO returns BGR NumPy array.
-        # Convert BGR → RGB.
-        # --------------------------------------------------------
 
         annotated_image = Image.fromarray(
             annotated_array[..., ::-1]

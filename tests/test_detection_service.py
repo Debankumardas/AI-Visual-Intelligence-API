@@ -59,6 +59,9 @@ def test_detect_returns_detections(monkeypatch):
             self,
             source,
             device,
+            conf,
+            iou,
+            imgsz,
             verbose,
         ):
             return [MockResult()]
@@ -105,6 +108,9 @@ def test_detect_returns_empty_when_no_boxes(monkeypatch):
             self,
             source,
             device,
+            conf,
+            iou,
+            imgsz,
             verbose,
         ):
             return [MockResult()]
@@ -146,6 +152,9 @@ def test_detect_converts_image_to_rgb(monkeypatch):
             self,
             source,
             device,
+            conf,
+            iou,
+            imgsz,
             verbose,
         ):
             captured["mode"] = source.mode
@@ -185,6 +194,9 @@ def test_detect_and_annotate_returns_rgb_image(
             self,
             source,
             device,
+            conf,
+            iou,
+            imgsz,
             verbose,
         ):
             return [MockResult()]
@@ -238,6 +250,9 @@ def test_detect_and_annotate_converts_image_to_rgb(
             self,
             source,
             device,
+            conf,
+            iou,
+            imgsz,
             verbose,
         ):
             captured["mode"] = source.mode
@@ -268,3 +283,52 @@ def test_detect_and_annotate_converts_image_to_rgb(
     )
 
     assert result.mode == "RGB"
+def test_detection_uses_configured_inference_settings(
+    monkeypatch,
+):
+    image = create_test_image()
+
+    captured = {}
+
+    class MockResult:
+        boxes = None
+
+    class MockModel:
+        names = {}
+
+        def predict(
+            self,
+            source,
+            device,
+            conf,
+            iou,
+            imgsz,
+            verbose,
+        ):
+            captured["device"] = device
+            captured["conf"] = conf
+            captured["iou"] = iou
+            captured["imgsz"] = imgsz
+            captured["verbose"] = verbose
+
+            return [MockResult()]
+
+    monkeypatch.setattr(
+        detection_service,
+        "model",
+        MockModel(),
+    )
+
+    monkeypatch.setattr(
+        detection_service,
+        "device",
+        "cpu",
+    )
+
+    detection_service.detect(image)
+
+    assert captured["device"] == "cpu"
+    assert captured["conf"] == 0.25
+    assert captured["iou"] == 0.45
+    assert captured["imgsz"] == 640
+    assert captured["verbose"] is False

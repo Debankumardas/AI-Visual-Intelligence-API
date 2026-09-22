@@ -20,5 +20,11 @@ class Settings:
         }
     )
 
+    # Object detection configuration
+    detection_confidence: float = 0.25
+    detection_iou: float = 0.45
+    detection_image_size: int = 640
+    detection_device: str = "cpu"
+
 
 settings = Settings()
