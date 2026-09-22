@@ -18,3 +18,15 @@ class DetectionResponse(BaseModel):
     filename: str
     content_type: str
     detections: list[Detection]
+
+
+class ObjectCount(BaseModel):
+    label: str
+    count: int = Field(..., ge=0)
+
+
+class ObjectCountResponse(BaseModel):
+    filename: str
+    content_type: str
+    total_objects: int = Field(..., ge=0)
+    counts: list[ObjectCount]

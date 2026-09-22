@@ -206,6 +206,7 @@ def test_detect_annotated_handles_error(monkeypatch):
         "Annotated object detection failed"
         in data["detail"]
     )
+
 def test_detect_annotated_handles_filename_without_extension(
     monkeypatch,
 ):
@@ -237,3 +238,79 @@ def test_detect_annotated_handles_filename_without_extension(
         'filename="testimage_annotated.jpg"'
         in response.headers["content-disposition"]
     )
+def test_count_returns_object_counts(monkeypatch):
+    def mock_count_objects(image):
+        return {
+            "total_objects": 3,
+            "counts": [
+                {
+                    "label": "car",
+                    "count": 1,
+                },
+                {
+                    "label": "person",
+                    "count": 2,
+                },
+            ],
+        }
+
+    monkeypatch.setattr(
+        "app.api.routes.detection.detection_service.count_objects",
+        mock_count_objects,
+    )
+
+    response = client.post(
+        "/api/v1/detect/count",
+        files={
+            "file": (
+                "test.jpg",
+                create_test_image(),
+                "image/jpeg",
+            )
+        },
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["filename"] == "test.jpg"
+    assert data["content_type"] == "image/jpeg"
+    assert data["total_objects"] == 3
+    assert data["counts"] == [
+        {
+            "label": "car",
+            "count": 1,
+        },
+        {
+            "label": "person",
+            "count": 2,
+        },
+    ]
+
+def test_count_handles_detection_error(monkeypatch):
+    def mock_count_objects(image):
+        raise RuntimeError("counting failed")
+
+    monkeypatch.setattr(
+        "app.api.routes.detection.detection_service.count_objects",
+        mock_count_objects,
+    )
+
+    response = client.post(
+        "/api/v1/detect/count",
+        files={
+            "file": (
+                "test.jpg",
+                create_test_image(),
+                "image/jpeg",
+            )
+        },
+    )
+
+    assert response.status_code == 500
+
+    data = response.json()
+
+    assert data["error"] == "Inference Error"
+    assert "Object counting failed" in data["detail"]
