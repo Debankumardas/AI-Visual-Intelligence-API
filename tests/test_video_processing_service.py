@@ -251,3 +251,102 @@ def test_track_video_preserves_track_ids_across_frames():
     ]
 
     assert track_ids == [7, 7, 7]
+
+def test_count_tracked_objects_success():
+    tracking_results = [
+        {
+            "frame_index": 0,
+            "tracks": [
+                {"track_id": 1},
+                {"track_id": 2},
+                {"track_id": 3},
+            ],
+            "inference_time_ms": 10.0,
+        },
+        {
+            "frame_index": 1,
+            "tracks": [
+                {"track_id": 1},
+                {"track_id": 2},
+                {"track_id": 3},
+            ],
+            "inference_time_ms": 11.0,
+        },
+        {
+            "frame_index": 2,
+            "tracks": [
+                {"track_id": 1},
+                {"track_id": 2},
+                {"track_id": 3},
+                {"track_id": 4},
+            ],
+            "inference_time_ms": 12.0,
+        },
+    ]
+
+    with patch.object(
+        video_processing_service,
+        "track_video",
+        return_value=iter(tracking_results),
+    ):
+        results = list(
+            video_processing_service.count_tracked_objects(
+                "test.mp4"
+            )
+        )
+
+    assert results == [
+        {
+            "frame_index": 0,
+            "object_count": 3,
+            "unique_object_count": 3,
+            "inference_time_ms": 10.0,
+        },
+        {
+            "frame_index": 1,
+            "object_count": 3,
+            "unique_object_count": 3,
+            "inference_time_ms": 11.0,
+        },
+        {
+            "frame_index": 2,
+            "object_count": 4,
+            "unique_object_count": 4,
+            "inference_time_ms": 12.0,
+        },
+    ]
+
+
+def test_count_tracked_objects_handles_empty_video():
+    with patch.object(
+        video_processing_service,
+        "track_video",
+        return_value=iter([]),
+    ):
+        results = list(
+            video_processing_service.count_tracked_objects(
+                "empty.mp4"
+            )
+        )
+
+    assert results == []
+
+
+def test_count_tracked_objects_passes_stride():
+    with patch.object(
+        video_processing_service,
+        "track_video",
+        return_value=iter([]),
+    ) as track_video_mock:
+
+        list(
+            video_processing_service.count_tracked_objects(
+                "test.mp4",
+                frame_stride=5,
+            )
+        )
+
+    track_video_mock.assert_called_once_with(
+        "test.mp4",
+        frame_stride=5,
+    )
