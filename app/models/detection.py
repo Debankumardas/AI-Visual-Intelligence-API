@@ -90,6 +90,7 @@ class OCRResponse(BaseModel):
     filename: str
     content_type: str
     results: list[OCRResult]
+    
 
 class ObjectCount(BaseModel):
 
@@ -107,3 +108,22 @@ class ObjectCountResponse(BaseModel):
     total_objects: int = Field(..., ge=0)
 
     counts: list[ObjectCount]
+
+# ============================================================
+# VIDEO MODELS
+# ============================================================
+
+class VideoMetadata(BaseModel):
+    filename: str
+    content_type: str
+    frame_count: int
+    fps: float
+    width: int
+    height: int
+    duration: float
+
+
+class VideoAnalysisResponse(BaseModel):
+    filename: str
+    content_type: str
+    metadata: VideoMetadata
