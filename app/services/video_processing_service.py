@@ -53,5 +53,34 @@ class VideoProcessingService:
                 ],
             }
 
+    def count_tracked_objects(
+        self,
+        video_path: str,
+        frame_stride: int = 1,
+    ):
+        """Count visible and unique tracked objects across a video."""
+
+        unique_track_ids = set()
+
+        for frame_result in self.track_video(
+            video_path,
+            frame_stride=frame_stride,
+        ):
+            track_ids = {
+                track["track_id"]
+                for track in frame_result["tracks"]
+            }
+
+            unique_track_ids.update(track_ids)
+
+            yield {
+                "frame_index": frame_result["frame_index"],
+                "object_count": len(track_ids),
+                "unique_object_count": len(unique_track_ids),
+                "inference_time_ms": frame_result[
+                    "inference_time_ms"
+                ],
+            }
+
 
 video_processing_service = VideoProcessingService()
