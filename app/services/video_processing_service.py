@@ -30,5 +30,28 @@ class VideoProcessingService:
                 ],
             }
 
+    def track_video(
+        self,
+        video_path: str,
+        frame_stride: int = 1,
+    ):
+        """Track objects across consecutive video frames."""
+
+        for frame_index, frame in video_service.read_frames(
+            video_path,
+            frame_stride=frame_stride,
+        ):
+            image = Image.fromarray(frame)
+
+            tracking = detection_service.track(image)
+
+            yield {
+                "frame_index": frame_index,
+                "tracks": tracking["tracks"],
+                "inference_time_ms": tracking[
+                    "inference_time_ms"
+                ],
+            }
+
 
 video_processing_service = VideoProcessingService()

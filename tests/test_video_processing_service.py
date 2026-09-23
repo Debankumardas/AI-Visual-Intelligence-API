@@ -101,3 +101,153 @@ def test_process_frames_passes_stride():
         "test.mp4",
         frame_stride=3,
     )
+
+def test_track_video_success():
+    frames = [
+        (0, np.zeros((10, 10, 3), dtype=np.uint8)),
+        (1, np.zeros((10, 10, 3), dtype=np.uint8)),
+    ]
+
+    tracking_result = {
+        "tracks": [
+            {
+                "track_id": 1,
+                "label": "person",
+                "confidence": 0.91,
+                "box": {
+                    "x1": 10.0,
+                    "y1": 20.0,
+                    "x2": 100.0,
+                    "y2": 200.0,
+                },
+            }
+        ],
+        "inference_time_ms": 14.2,
+    }
+
+    with patch(
+        "app.services.video_processing_service.video_service.read_frames",
+        return_value=iter(frames),
+    ), patch(
+        "app.services.video_processing_service.detection_service.track",
+        return_value=tracking_result,
+    ) as track_mock:
+
+        results = list(
+            video_processing_service.track_video(
+                "test.mp4"
+            )
+        )
+
+    assert results == [
+        {
+            "frame_index": 0,
+            "tracks": tracking_result["tracks"],
+            "inference_time_ms": 14.2,
+        },
+        {
+            "frame_index": 1,
+            "tracks": tracking_result["tracks"],
+            "inference_time_ms": 14.2,
+        },
+    ]
+
+    assert track_mock.call_count == 2
+
+
+def test_track_video_passes_stride():
+    with patch(
+        "app.services.video_processing_service.video_service.read_frames",
+        return_value=iter([]),
+    ) as read_frames_mock:
+
+        list(
+            video_processing_service.track_video(
+                "test.mp4",
+                frame_stride=3,
+            )
+        )
+
+    read_frames_mock.assert_called_once_with(
+        "test.mp4",
+        frame_stride=3,
+    )
+
+def test_track_video_preserves_track_ids_across_frames():
+    frames = [
+        (0, np.zeros((10, 10, 3), dtype=np.uint8)),
+        (1, np.zeros((10, 10, 3), dtype=np.uint8)),
+        (2, np.zeros((10, 10, 3), dtype=np.uint8)),
+    ]
+
+    tracking_results = [
+        {
+            "tracks": [
+                {
+                    "track_id": 7,
+                    "label": "person",
+                    "confidence": 0.92,
+                    "box": {
+                        "x1": 10.0,
+                        "y1": 20.0,
+                        "x2": 100.0,
+                        "y2": 200.0,
+                    },
+                }
+            ],
+            "inference_time_ms": 14.0,
+        },
+        {
+            "tracks": [
+                {
+                    "track_id": 7,
+                    "label": "person",
+                    "confidence": 0.90,
+                    "box": {
+                        "x1": 12.0,
+                        "y1": 22.0,
+                        "x2": 102.0,
+                        "y2": 202.0,
+                    },
+                }
+            ],
+            "inference_time_ms": 13.5,
+        },
+        {
+            "tracks": [
+                {
+                    "track_id": 7,
+                    "label": "person",
+                    "confidence": 0.89,
+                    "box": {
+                        "x1": 15.0,
+                        "y1": 25.0,
+                        "x2": 105.0,
+                        "y2": 205.0,
+                    },
+                }
+            ],
+            "inference_time_ms": 13.2,
+        },
+    ]
+
+    with patch(
+        "app.services.video_processing_service.video_service.read_frames",
+        return_value=iter(frames),
+    ), patch(
+        "app.services.video_processing_service.detection_service.track",
+        side_effect=tracking_results,
+    ):
+
+        results = list(
+            video_processing_service.track_video(
+                "test.mp4"
+            )
+        )
+
+    track_ids = [
+        result["tracks"][0]["track_id"]
+        for result in results
+    ]
+
+    assert track_ids == [7, 7, 7]
