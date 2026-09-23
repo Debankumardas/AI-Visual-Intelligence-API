@@ -46,5 +46,41 @@ class VideoService:
             "duration": round(duration, 3),
         }
 
+    def read_frames(
+        self,
+        video_path: str,
+        frame_stride: int = 1,
+    ):
+        """Read video frames sequentially using a frame stride."""
+
+        if frame_stride < 1:
+            raise ValueError(
+                "Frame stride must be at least 1"
+            )
+
+        capture = cv2.VideoCapture(video_path)
+
+        if not capture.isOpened():
+            raise ValueError(
+                "Unable to open video file"
+            )
+
+        try:
+            frame_index = 0
+
+            while True:
+                success, frame = capture.read()
+
+                if not success:
+                    break
+
+                if frame_index % frame_stride == 0:
+                    yield frame_index, frame
+
+                frame_index += 1
+
+        finally:
+            capture.release()
+
 
 video_service = VideoService()
