@@ -45,4 +45,18 @@ class Settings:
     ocr_image_size: int = 640
     ocr_device: str = "cpu"
 
+    # ============================================================
+    # VIDEO CONFIGURATION
+    # ============================================================
+
+    video_max_file_size: int = 50 * 1024 * 1024
+    video_allowed_content_types: tuple[str, ...] = (
+        "video/mp4",
+        "video/avi",
+        "video/quicktime",
+        "video/x-msvideo",
+    )
+    video_frame_stride: int = 1
+    video_device: str = "cpu"
+
 settings = Settings()
