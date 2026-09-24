@@ -1,146 +1,239 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock
 
-from fastapi import UploadFile
+from fastapi.testclient import TestClient
 
-from app.core.exceptions import (
-    InvalidVideoError,
-    VideoTooLargeError,
-)
 from app.main import app
+from app.api.routes import video as video_route
 
 
-def test_video_metadata_success():
+client = TestClient(app)
 
-    mock_metadata = {
-        "frame_count": 300,
-        "fps": 30.0,
-        "width": 1920,
-        "height": 1080,
-        "duration": 10.0,
-    }
 
-    with patch(
-        "app.api.routes.video.load_uploaded_video",
-        return_value="fake_video.mp4",
-    ), patch(
-        "app.api.routes.video.video_service.get_metadata",
-        return_value=mock_metadata,
-    ), patch(
-        "app.api.routes.video.os.path.exists",
-        return_value=True,
-    ), patch(
-        "app.api.routes.video.os.remove",
-    ) as remove_mock:
+def test_video_metadata_success(monkeypatch):
+    monkeypatch.setattr(
+        video_route.video_service,
+        "get_metadata",
+        lambda path: {
+            "frame_count": 100,
+            "fps": 25.0,
+            "width": 640,
+            "height": 480,
+            "duration": 4.0,
+        },
+    )
 
-        from fastapi.testclient import TestClient
-
-        client = TestClient(app)
-
-        response = client.post(
-            "/api/v1/video/metadata",
-            files={
-                "file": (
-                    "test.mp4",
-                    b"fake-video-data",
-                    "video/mp4",
-                )
-            },
-        )
+    response = client.post(
+        "/api/v1/video/metadata",
+        files={
+            "file": (
+                "test.mp4",
+                b"fake video",
+                "video/mp4",
+            )
+        },
+    )
 
     assert response.status_code == 200
 
-    assert response.json() == {
-        "filename": "test.mp4",
-        "content_type": "video/mp4",
-        "metadata": {
-            "filename": "test.mp4",
-            "content_type": "video/mp4",
-            **mock_metadata,
+    data = response.json()
+
+    assert data["filename"] == "test.mp4"
+    assert data["content_type"] == "video/mp4"
+    assert data["metadata"]["frame_count"] == 100
+    assert data["metadata"]["fps"] == 25.0
+    assert data["metadata"]["width"] == 640
+    assert data["metadata"]["height"] == 480
+    assert data["metadata"]["duration"] == 4.0
+
+
+def test_video_metadata_invalid_video(monkeypatch):
+    def fake_get_metadata(path):
+        raise ValueError("Unable to open video file")
+
+    monkeypatch.setattr(
+        video_route.video_service,
+        "get_metadata",
+        fake_get_metadata,
+    )
+
+    response = client.post(
+        "/api/v1/video/metadata",
+        files={
+            "file": (
+                "broken.mp4",
+                b"fake video",
+                "video/mp4",
+            )
         },
-    }
+    )
 
-    remove_mock.assert_called_once_with("fake_video.mp4")
+    assert response.status_code == 400
+    assert response.json()["error"] == "Invalid Video"
 
 
-def test_video_metadata_service_failure_cleanup():
-    with patch(
-        "app.api.routes.video.load_uploaded_video",
-        return_value="fake_video.mp4",
-    ), patch(
-        "app.api.routes.video.video_service.get_metadata",
-        side_effect=ValueError("Unable to open video file"),
-    ), patch(
-        "app.api.routes.video.os.path.exists",
-        return_value=True,
-    ), patch(
-        "app.api.routes.video.os.remove",
-    ) as remove_mock:
+def test_video_metadata_unsupported_format():
+    response = client.post(
+        "/api/v1/video/metadata",
+        files={
+            "file": (
+                "test.txt",
+                b"not a video",
+                "text/plain",
+            )
+        },
+    )
 
-        from fastapi.testclient import TestClient
+    assert response.status_code == 400
+    assert response.json()["error"] == "Invalid Video"
 
-        client = TestClient(app)
 
-        response = client.post(
-            "/api/v1/video/metadata",
+def test_video_metadata_empty_file():
+    response = client.post(
+        "/api/v1/video/metadata",
+        files={
+            "file": (
+                "empty.mp4",
+                b"",
+                "video/mp4",
+            )
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["error"] == "Invalid Video"
+
+
+def test_annotate_video_success(monkeypatch):
+    def fake_generate(video_path, output_path):
+        with open(output_path, "wb") as file:
+            file.write(b"annotated video")
+
+    monkeypatch.setattr(
+        video_route.video_processing_service,
+        "generate_annotated_video",
+        fake_generate,
+    )
+
+    response = client.post(
+        "/api/v1/video/annotate",
+        files={
+            "file": (
+                "input.mp4",
+                b"fake video data",
+                "video/mp4",
+            )
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "video/mp4"
+    assert response.content == b"annotated video"
+    assert response.headers["content-disposition"] == (
+        'attachment; filename="annotated_input.mp4"'
+    )
+
+
+def test_annotate_video_processing_failure(monkeypatch):
+    def fake_generate(video_path, output_path):
+        raise ValueError("Processing failed")
+
+    monkeypatch.setattr(
+        video_route.video_processing_service,
+        "generate_annotated_video",
+        fake_generate,
+    )
+
+    response = client.post(
+        "/api/v1/video/annotate",
+        files={
+            "file": (
+                "input.mp4",
+                b"fake video data",
+                "video/mp4",
+            )
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["error"] == "Invalid Video"
+
+def test_annotate_video_unexpected_exception_cleanup(monkeypatch):
+    def fake_generate(video_path, output_path):
+        with open(output_path, "wb") as file:
+            file.write(b"partial output")
+        raise RuntimeError("Unexpected processing error")
+
+    monkeypatch.setattr(
+        video_route.video_processing_service,
+        "generate_annotated_video",
+        fake_generate,
+    )
+
+    try:
+        client.post(
+            "/api/v1/video/annotate",
             files={
                 "file": (
-                    "broken.mp4",
-                    b"fake-video-data",
+                    "input.mp4",
+                    b"fake video data",
                     "video/mp4",
                 )
             },
         )
+    except RuntimeError as exc:
+        assert str(exc) == "Unexpected processing error"
+    else:
+        raise AssertionError("Expected RuntimeError")
+
+def test_annotate_video_output_missing(monkeypatch):
+    monkeypatch.setattr(
+        video_route.video_processing_service,
+        "generate_annotated_video",
+        MagicMock(),
+    )
+
+    response = client.post(
+        "/api/v1/video/annotate",
+        files={
+            "file": (
+                "test.mp4",
+                b"fake video",
+                "video/mp4",
+            )
+        },
+    )
 
     assert response.status_code == 400
+    assert response.json()["error"] == "Invalid Video"
 
-    remove_mock.assert_called_once_with("fake_video.mp4")
 
-
-def test_video_metadata_invalid_format():
-    with patch(
-        "app.api.routes.video.load_uploaded_video",
-        side_effect=InvalidVideoError(
-            "Unsupported video format."
-        ),
-    ):
-        from fastapi.testclient import TestClient
-
-        client = TestClient(app)
-
-        response = client.post(
-            "/api/v1/video/metadata",
-            files={
-                "file": (
-                    "test.txt",
-                    b"fake-data",
-                    "text/plain",
-                )
-            },
-        )
+def test_annotate_video_unsupported_format():
+    response = client.post(
+        "/api/v1/video/annotate",
+        files={
+            "file": (
+                "test.txt",
+                b"not a video",
+                "text/plain",
+            )
+        },
+    )
 
     assert response.status_code == 400
+    assert response.json()["error"] == "Invalid Video"
 
 
-def test_video_metadata_too_large():
-    with patch(
-        "app.api.routes.video.load_uploaded_video",
-        side_effect=VideoTooLargeError(
-            "Video file is too large."
-        ),
-    ):
-        from fastapi.testclient import TestClient
+def test_annotate_video_empty_file():
+    response = client.post(
+        "/api/v1/video/annotate",
+        files={
+            "file": (
+                "empty.mp4",
+                b"",
+                "video/mp4",
+            )
+        },
+    )
 
-        client = TestClient(app)
-
-        response = client.post(
-            "/api/v1/video/metadata",
-            files={
-                "file": (
-                    "large.mp4",
-                    b"fake-data",
-                    "video/mp4",
-                )
-            },
-        )
-
-    assert response.status_code == 413
+    assert response.status_code == 400
+    assert response.json()["error"] == "Invalid Video"

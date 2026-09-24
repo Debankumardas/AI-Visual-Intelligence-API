@@ -1,3 +1,5 @@
+import os
+import cv2
 from PIL import Image
 
 from app.services.annotation_service import annotation_service
@@ -92,23 +94,37 @@ class VideoProcessingService:
     ):
         """Generate an annotated video with tracked objects."""
 
-        metadata = video_service.get_metadata(video_path)
+        if frame_stride < 1:
+            raise ValueError("Frame stride must be at least 1")
 
-        writer = video_writer_service.create_writer(
-            output_path=output_path,
-            fps=metadata["fps"],
-            width=metadata["width"],
-            height=metadata["height"],
-        )
+        writer = None
+        success = False
+        frames_written = 0
 
         try:
+            metadata = video_service.get_metadata(video_path)
+
+            output_fps = metadata["fps"] / frame_stride
+
+            if output_fps <= 0:
+                raise ValueError("Invalid output FPS")
+
+            writer = video_writer_service.create_writer(
+                output_path=output_path,
+                fps=output_fps,
+                width=metadata["width"],
+                height=metadata["height"],
+            )
+
             for frame_index, frame in video_service.read_frames(
                 video_path,
                 frame_stride=frame_stride,
             ):
-                tracking = detection_service.track(
-                    Image.fromarray(frame)
+                image = Image.fromarray(
+                    cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 )
+
+                tracking = detection_service.track(image)
 
                 annotated_frame = frame.copy()
 
@@ -126,10 +142,21 @@ class VideoProcessingService:
                     annotated_frame,
                 )
 
+                frames_written += 1
+
+            if frames_written == 0:
+                raise ValueError(
+                    "No frames were processed from the video."
+                )
+
+            success = True
             return output_path
 
         finally:
             video_writer_service.release(writer)
+
+            if not success and os.path.exists(output_path):
+                os.remove(output_path)
 
 
 video_processing_service = VideoProcessingService()
