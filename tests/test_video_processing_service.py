@@ -1,6 +1,13 @@
 import numpy as np
+import pytest
 
+from unittest.mock import MagicMock
 from unittest.mock import patch
+
+from app.services.annotation_service import annotation_service
+from app.services.detection_service import detection_service
+from app.services.video_service import video_service
+from app.services.video_writer_service import video_writer_service
 
 from app.services.video_processing_service import (
     video_processing_service,
@@ -102,6 +109,7 @@ def test_process_frames_passes_stride():
         frame_stride=3,
     )
 
+
 def test_track_video_success():
     frames = [
         (0, np.zeros((10, 10, 3), dtype=np.uint8)),
@@ -172,6 +180,7 @@ def test_track_video_passes_stride():
         "test.mp4",
         frame_stride=3,
     )
+
 
 def test_track_video_preserves_track_ids_across_frames():
     frames = [
@@ -251,6 +260,7 @@ def test_track_video_preserves_track_ids_across_frames():
     ]
 
     assert track_ids == [7, 7, 7]
+
 
 def test_count_tracked_objects_success():
     tracking_results = [
@@ -350,3 +360,73 @@ def test_count_tracked_objects_passes_stride():
         "test.mp4",
         frame_stride=5,
     )
+
+
+def test_generate_annotated_video(monkeypatch, tmp_path):
+    output_path = str(tmp_path / "annotated.mp4")
+
+    monkeypatch.setattr(
+        video_service,
+        "get_metadata",
+        lambda path: {
+            "frame_count": 2,
+            "fps": 30.0,
+            "width": 640,
+            "height": 480,
+            "duration": 0.067,
+        },
+    )
+
+    frames = [
+        (0, np.zeros((480, 640, 3), dtype=np.uint8)),
+        (1, np.zeros((480, 640, 3), dtype=np.uint8)),
+    ]
+
+    monkeypatch.setattr(
+        video_service,
+        "read_frames",
+        lambda path, frame_stride=1: iter(frames),
+    )
+
+    monkeypatch.setattr(
+        detection_service,
+        "track",
+        lambda image: {
+            "tracks": [
+                {
+                    "track_id": 1,
+                    "label": "person",
+                    "confidence": 0.95,
+                    "box": {
+                        "x1": 100,
+                        "y1": 100,
+                        "x2": 300,
+                        "y2": 300,
+                    },
+                }
+            ]
+        },
+    )
+
+    writer = MagicMock()
+
+    monkeypatch.setattr(
+        video_writer_service,
+        "create_writer",
+        lambda **kwargs: writer,
+    )
+
+    monkeypatch.setattr(
+        annotation_service,
+        "draw_track",
+        lambda **kwargs: kwargs["frame"],
+    )
+
+    result = video_processing_service.generate_annotated_video(
+        video_path="input.mp4",
+        output_path=output_path,
+    )
+
+    assert result == output_path
+    assert writer.write.call_count == 2
+    writer.release.assert_called_once()
