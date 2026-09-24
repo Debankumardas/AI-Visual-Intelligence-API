@@ -430,3 +430,195 @@ def test_generate_annotated_video(monkeypatch, tmp_path):
     assert result == output_path
     assert writer.write.call_count == 2
     writer.release.assert_called_once()
+
+def test_generate_annotated_video_removes_partial_output_on_failure(
+    monkeypatch,
+    tmp_path,
+):
+    output_path = tmp_path / "partial.mp4"
+    output_path.write_bytes(b"partial video")
+
+    monkeypatch.setattr(
+        video_service,
+        "get_metadata",
+        lambda path: {
+            "frame_count": 1,
+            "fps": 30.0,
+            "width": 640,
+            "height": 480,
+            "duration": 0.033,
+        },
+    )
+
+    monkeypatch.setattr(
+        video_service,
+        "read_frames",
+        lambda path, frame_stride=1: iter(
+            [
+                (
+                    0,
+                    np.zeros(
+                        (480, 640, 3),
+                        dtype=np.uint8,
+                    ),
+                )
+            ]
+        ),
+    )
+
+    monkeypatch.setattr(
+        detection_service,
+        "track",
+        lambda image: {
+            "tracks": []
+        },
+    )
+
+    writer = MagicMock()
+
+    monkeypatch.setattr(
+        video_writer_service,
+        "create_writer",
+        lambda **kwargs: writer,
+    )
+
+    def raise_write_error(*args, **kwargs):
+        raise RuntimeError("Video write failed")
+
+    monkeypatch.setattr(
+        video_writer_service,
+        "write_frame",
+        raise_write_error,
+    )
+
+    with pytest.raises(
+        RuntimeError,
+        match="Video write failed",
+    ):
+        video_processing_service.generate_annotated_video(
+            video_path="input.mp4",
+            output_path=str(output_path),
+        )
+
+    writer.release.assert_called_once()
+    assert not output_path.exists()
+
+def test_generate_annotated_video_removes_output_when_writer_creation_fails(
+    monkeypatch,
+    tmp_path,
+):
+    output_path = tmp_path / "failed.mp4"
+    output_path.write_bytes(b"invalid output")
+
+    monkeypatch.setattr(
+        video_service,
+        "get_metadata",
+        lambda path: {
+            "frame_count": 1,
+            "fps": 30.0,
+            "width": 640,
+            "height": 480,
+            "duration": 0.033,
+        },
+    )
+
+    def raise_writer_error(**kwargs):
+        raise ValueError("Unable to create video writer")
+
+    monkeypatch.setattr(
+        video_writer_service,
+        "create_writer",
+        raise_writer_error,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="Unable to create video writer",
+    ):
+        video_processing_service.generate_annotated_video(
+            video_path="input.mp4",
+            output_path=str(output_path),
+        )
+
+    assert not output_path.exists()
+
+def test_generate_annotated_video_rejects_invalid_stride():
+    with pytest.raises(
+        ValueError,
+        match="Frame stride must be at least 1",
+    ):
+        video_processing_service.generate_annotated_video(
+            video_path="input.mp4",
+            output_path="output.mp4",
+            frame_stride=0,
+        )
+
+
+def test_generate_annotated_video_rejects_invalid_output_fps(
+    monkeypatch,
+    tmp_path,
+):
+    output_path = str(tmp_path / "invalid_fps.mp4")
+
+    monkeypatch.setattr(
+        video_service,
+        "get_metadata",
+        lambda path: {
+            "frame_count": 1,
+            "fps": 0.0,
+            "width": 640,
+            "height": 480,
+            "duration": 0.0,
+        },
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="Invalid output FPS",
+    ):
+        video_processing_service.generate_annotated_video(
+            video_path="input.mp4",
+            output_path=output_path,
+        )
+
+
+def test_generate_annotated_video_rejects_empty_video(
+    monkeypatch,
+    tmp_path,
+):
+    output_path = str(tmp_path / "empty.mp4")
+
+    monkeypatch.setattr(
+        video_service,
+        "get_metadata",
+        lambda path: {
+            "frame_count": 0,
+            "fps": 30.0,
+            "width": 640,
+            "height": 480,
+            "duration": 0.0,
+        },
+    )
+
+    monkeypatch.setattr(
+        video_service,
+        "read_frames",
+        lambda path, frame_stride=1: iter([]),
+    )
+
+    writer = MagicMock()
+
+    monkeypatch.setattr(
+        video_writer_service,
+        "create_writer",
+        lambda **kwargs: writer,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="No frames were processed from the video",
+    ):
+        video_processing_service.generate_annotated_video(
+            video_path="input.mp4",
+            output_path=output_path,
+        )
