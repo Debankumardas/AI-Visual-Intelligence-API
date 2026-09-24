@@ -1,5 +1,7 @@
 from PIL import Image
 
+from app.services.annotation_service import annotation_service
+from app.services.video_writer_service import video_writer_service
 from app.services.detection_service import detection_service
 from app.services.video_service import video_service
 
@@ -81,6 +83,53 @@ class VideoProcessingService:
                     "inference_time_ms"
                 ],
             }
+
+    def generate_annotated_video(
+        self,
+        video_path: str,
+        output_path: str,
+        frame_stride: int = 1,
+    ):
+        """Generate an annotated video with tracked objects."""
+
+        metadata = video_service.get_metadata(video_path)
+
+        writer = video_writer_service.create_writer(
+            output_path=output_path,
+            fps=metadata["fps"],
+            width=metadata["width"],
+            height=metadata["height"],
+        )
+
+        try:
+            for frame_index, frame in video_service.read_frames(
+                video_path,
+                frame_stride=frame_stride,
+            ):
+                tracking = detection_service.track(
+                    Image.fromarray(frame)
+                )
+
+                annotated_frame = frame.copy()
+
+                for track in tracking["tracks"]:
+                    annotated_frame = annotation_service.draw_track(
+                        frame=annotated_frame,
+                        box=track["box"],
+                        label=track["label"],
+                        confidence=track["confidence"],
+                        track_id=track["track_id"],
+                    )
+
+                video_writer_service.write_frame(
+                    writer,
+                    annotated_frame,
+                )
+
+            return output_path
+
+        finally:
+            video_writer_service.release(writer)
 
 
 video_processing_service = VideoProcessingService()
