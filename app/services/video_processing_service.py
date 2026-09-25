@@ -1,7 +1,12 @@
 import os
+import time
+
 import cv2
 from PIL import Image
 
+from app.services.video_analytics_service import (
+    video_analytics_service,
+)
 from app.services.annotation_service import annotation_service
 from app.services.video_writer_service import video_writer_service
 from app.services.detection_service import detection_service
@@ -86,6 +91,34 @@ class VideoProcessingService:
                 ],
             }
 
+    def analyze_video(
+        self,
+        video_path: str,
+        frame_stride: int = 1,
+    ):
+        """Process a video and calculate performance analytics."""
+
+        start_time = time.perf_counter()
+
+        inference_times_ms = []
+
+        for frame_result in self.process_frames(
+            video_path,
+            frame_stride=frame_stride,
+        ):
+            inference_times_ms.append(
+                frame_result["inference_time_ms"]
+            )
+
+        processing_time_seconds = (
+            time.perf_counter() - start_time
+        )
+
+        return video_analytics_service.calculate_metrics(
+            inference_times_ms=inference_times_ms,
+            processing_time_seconds=processing_time_seconds,
+        )
+
     def generate_annotated_video(
         self,
         video_path: str,
@@ -95,19 +128,27 @@ class VideoProcessingService:
         """Generate an annotated video with tracked objects."""
 
         if frame_stride < 1:
-            raise ValueError("Frame stride must be at least 1")
+            raise ValueError(
+                "Frame stride must be at least 1"
+            )
 
         writer = None
         success = False
         frames_written = 0
 
         try:
-            metadata = video_service.get_metadata(video_path)
+            metadata = video_service.get_metadata(
+                video_path
+            )
 
-            output_fps = metadata["fps"] / frame_stride
+            output_fps = (
+                metadata["fps"] / frame_stride
+            )
 
             if output_fps <= 0:
-                raise ValueError("Invalid output FPS")
+                raise ValueError(
+                    "Invalid output FPS"
+                )
 
             writer = video_writer_service.create_writer(
                 output_path=output_path,
@@ -121,20 +162,27 @@ class VideoProcessingService:
                 frame_stride=frame_stride,
             ):
                 image = Image.fromarray(
-                    cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    cv2.cvtColor(
+                        frame,
+                        cv2.COLOR_BGR2RGB,
+                    )
                 )
 
-                tracking = detection_service.track(image)
+                tracking = detection_service.track(
+                    image
+                )
 
                 annotated_frame = frame.copy()
 
                 for track in tracking["tracks"]:
-                    annotated_frame = annotation_service.draw_track(
-                        frame=annotated_frame,
-                        box=track["box"],
-                        label=track["label"],
-                        confidence=track["confidence"],
-                        track_id=track["track_id"],
+                    annotated_frame = (
+                        annotation_service.draw_track(
+                            frame=annotated_frame,
+                            box=track["box"],
+                            label=track["label"],
+                            confidence=track["confidence"],
+                            track_id=track["track_id"],
+                        )
                     )
 
                 video_writer_service.write_frame(
@@ -150,12 +198,16 @@ class VideoProcessingService:
                 )
 
             success = True
+
             return output_path
 
         finally:
             video_writer_service.release(writer)
 
-            if not success and os.path.exists(output_path):
+            if (
+                not success
+                and os.path.exists(output_path)
+            ):
                 os.remove(output_path)
 
 
