@@ -635,9 +635,31 @@ def test_analyze_video():
         "process_frames",
         return_value=iter(
             [
-                {"inference_time_ms": 10.0},
-                {"inference_time_ms": 20.0},
-                {"inference_time_ms": 30.0},
+                {
+                    "inference_time_ms": 10.0,
+                    "detections": [{}, {}],
+                    "tracks": [
+                        {"track_id": 1},
+                        {"track_id": 2},
+                    ],
+                },
+                {
+                    "inference_time_ms": 20.0,
+                    "detections": [{}, {}, {}, {}],
+                    "tracks": [
+                        {"track_id": 1},
+                        {"track_id": 2},
+                    ],
+                },
+                {
+                    "inference_time_ms": 30.0,
+                    "detections": [{}],
+                    "tracks": [
+                        {"track_id": 1},
+                        {"track_id": 2},
+                        {"track_id": 3},
+                    ],
+                },
             ]
         ),
     ):
@@ -652,6 +674,15 @@ def test_analyze_video():
     assert result["max_inference_time_ms"] == 30.0
     assert result["processing_time_seconds"] >= 0
     assert result["effective_fps"] > 0
+
+    assert result["total_detections"] == 7
+    assert result["max_detections_per_frame"] == 4
+    assert result["average_detections_per_frame"] == 2.333
+
+    assert result["total_track_observations"] == 7
+    assert result["unique_track_ids"] == 3
+    assert result["max_tracks_per_frame"] == 3
+    assert result["average_tracks_per_frame"] == 2.333
 
 
 def test_analyze_video_empty():

@@ -101,6 +101,8 @@ class VideoProcessingService:
         start_time = time.perf_counter()
 
         inference_times_ms = []
+        detection_counts = []
+        track_ids_per_frame = []
 
         for frame_result in self.process_frames(
             video_path,
@@ -110,14 +112,45 @@ class VideoProcessingService:
                 frame_result["inference_time_ms"]
             )
 
+            detection_counts.append(
+                len(frame_result["detections"])
+            )
+
+            track_ids_per_frame.append(
+                [
+                    track["track_id"]
+                    for track in frame_result.get("tracks", [])
+                ]
+            )
+
         processing_time_seconds = (
             time.perf_counter() - start_time
         )
 
-        return video_analytics_service.calculate_metrics(
-            inference_times_ms=inference_times_ms,
-            processing_time_seconds=processing_time_seconds,
+        performance_metrics = (
+            video_analytics_service.calculate_metrics(
+                inference_times_ms=inference_times_ms,
+                processing_time_seconds=processing_time_seconds,
+            )
         )
+
+        detection_metrics = (
+            video_analytics_service.calculate_detection_metrics(
+                detection_counts=detection_counts,
+            )
+        )
+
+        tracking_metrics = (
+            video_analytics_service.calculate_tracking_metrics(
+                track_ids_per_frame=track_ids_per_frame,
+            )
+        )
+
+        return {
+            **performance_metrics,
+            **detection_metrics,
+            **tracking_metrics,
+        }
 
     def generate_annotated_video(
         self,
