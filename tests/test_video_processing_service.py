@@ -4,6 +4,10 @@ import pytest
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
+from app.services.video_processing_service import (
+    VideoProcessingService,
+)
+
 from app.services.annotation_service import annotation_service
 from app.services.detection_service import detection_service
 from app.services.video_service import video_service
@@ -622,3 +626,50 @@ def test_generate_annotated_video_rejects_empty_video(
             video_path="input.mp4",
             output_path=output_path,
         )
+
+def test_analyze_video():
+    service = VideoProcessingService()
+
+    with patch.object(
+        service,
+        "process_frames",
+        return_value=iter(
+            [
+                {"inference_time_ms": 10.0},
+                {"inference_time_ms": 20.0},
+                {"inference_time_ms": 30.0},
+            ]
+        ),
+    ):
+        result = service.analyze_video(
+            "sample.mp4",
+        )
+
+    assert result["frames_processed"] == 3
+    assert result["total_inference_time_ms"] == 60.0
+    assert result["average_inference_time_ms"] == 20.0
+    assert result["min_inference_time_ms"] == 10.0
+    assert result["max_inference_time_ms"] == 30.0
+    assert result["processing_time_seconds"] >= 0
+    assert result["effective_fps"] > 0
+
+
+def test_analyze_video_empty():
+    service = VideoProcessingService()
+
+    with patch.object(
+        service,
+        "process_frames",
+        return_value=iter([]),
+    ):
+        result = service.analyze_video(
+            "sample.mp4",
+        )
+
+    assert result["frames_processed"] == 0
+    assert result["processing_time_seconds"] >= 0
+    assert result["effective_fps"] == 0.0
+    assert result["total_inference_time_ms"] == 0.0
+    assert result["average_inference_time_ms"] == 0.0
+    assert result["min_inference_time_ms"] == 0.0
+    assert result["max_inference_time_ms"] == 0.0
