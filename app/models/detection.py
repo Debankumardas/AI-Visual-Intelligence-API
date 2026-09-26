@@ -212,3 +212,7 @@ class VideoAnalyticsResponse(BaseModel):
 
     # TRACK DURATION ANALYTICS
     track_duration_frames: dict[int, int]
+
+    # TRACK PERSISTENCE ANALYTICS
+    track_observed_frames: dict[int, int]
+    track_persistence_ratio: dict[int, float]

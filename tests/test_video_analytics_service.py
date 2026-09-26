@@ -409,3 +409,81 @@ def test_calculate_temporal_detection_metrics_mismatched_lengths():
             "Detection frames and frame indices "
             "must have the same length"
         )
+
+def test_calculate_track_persistence_metrics():
+    service = VideoAnalyticsService()
+
+    result = service.calculate_track_persistence_metrics(
+        track_ids_per_frame=[
+            [1, 2],
+            [1],
+            [1, 2],
+            [2],
+        ],
+        frame_indices=[0, 1, 2, 3],
+    )
+
+    assert result == {
+        "track_observed_frames": {
+            1: 3,
+            2: 3,
+        },
+        "track_persistence_ratio": {
+            1: 1.0,
+            2: 0.75,
+        },
+    }
+
+
+def test_calculate_track_persistence_with_missing_frames():
+    service = VideoAnalyticsService()
+
+    result = service.calculate_track_persistence_metrics(
+        track_ids_per_frame=[
+            [5],
+            [],
+            [5],
+            [],
+            [5],
+        ],
+        frame_indices=[0, 1, 2, 3, 4],
+    )
+
+    assert result == {
+        "track_observed_frames": {
+            5: 3,
+        },
+        "track_persistence_ratio": {
+            5: 0.6,
+        },
+    }
+
+
+def test_calculate_track_persistence_metrics_empty():
+    service = VideoAnalyticsService()
+
+    result = service.calculate_track_persistence_metrics(
+        track_ids_per_frame=[],
+        frame_indices=[],
+    )
+
+    assert result == {
+        "track_observed_frames": {},
+        "track_persistence_ratio": {},
+    }
+
+
+def test_calculate_track_persistence_metrics_mismatched_lengths():
+    service = VideoAnalyticsService()
+
+    with pytest.raises(
+        ValueError,
+        match="Track frames and frame indices must have the same length",
+    ):
+        service.calculate_track_persistence_metrics(
+            track_ids_per_frame=[
+                [1],
+                [1],
+            ],
+            frame_indices=[0],
+        )

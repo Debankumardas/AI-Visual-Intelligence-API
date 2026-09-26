@@ -308,6 +308,14 @@ def test_video_analyze_success(monkeypatch):
                 1: 100,
                 2: 75,
             },
+            "track_observed_frames": {
+                1: 95,
+                2: 60,
+            },
+            "track_persistence_ratio": {
+                1: 0.95,
+                2: 0.8,
+            }
         },
     )
 
