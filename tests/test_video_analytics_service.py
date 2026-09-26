@@ -487,3 +487,83 @@ def test_calculate_track_persistence_metrics_mismatched_lengths():
             ],
             frame_indices=[0],
         )
+
+def test_calculate_track_gap_metrics():
+    track_ids_per_frame = [
+        [1],
+        [1],
+        [],
+        [],
+        [1],
+        [1],
+    ]
+
+    result = video_analytics_service.calculate_track_gap_metrics(
+        track_ids_per_frame
+    )
+
+    assert result["track_gap_count"] == {1: 1}
+    assert result["track_total_gap_frames"] == {1: 2}
+    assert result["track_max_gap_frames"] == {1: 2}
+
+
+def test_calculate_track_gap_metrics_multiple_gaps():
+    track_ids_per_frame = [
+        [1],
+        [],
+        [1],
+        [],
+        [],
+        [1],
+    ]
+
+    result = video_analytics_service.calculate_track_gap_metrics(
+        track_ids_per_frame
+    )
+
+    assert result["track_gap_count"] == {1: 2}
+    assert result["track_total_gap_frames"] == {1: 3}
+    assert result["track_max_gap_frames"] == {1: 2}
+
+
+def test_calculate_track_gap_metrics_multiple_tracks():
+    track_ids_per_frame = [
+        [1, 2],
+        [1],
+        [2],
+        [],
+        [1, 2],
+    ]
+
+    result = video_analytics_service.calculate_track_gap_metrics(
+        track_ids_per_frame
+    )
+
+    assert result["track_gap_count"] == {1: 1, 2: 2}
+    assert result["track_total_gap_frames"] == {1: 2, 2: 2}
+    assert result["track_max_gap_frames"] == {1: 2, 2: 1}
+
+
+def test_calculate_track_gap_metrics_empty():
+    result = video_analytics_service.calculate_track_gap_metrics([])
+
+    assert result["track_gap_count"] == {}
+    assert result["track_total_gap_frames"] == {}
+    assert result["track_max_gap_frames"] == {}
+
+def test_calculate_track_gap_metrics_track_ends_during_gap():
+    track_ids_per_frame = [
+        [1],
+        [1],
+        [1],
+        [],
+        [],
+    ]
+
+    result = video_analytics_service.calculate_track_gap_metrics(
+        track_ids_per_frame
+    )
+
+    assert result["track_gap_count"] == {}
+    assert result["track_total_gap_frames"] == {}
+    assert result["track_max_gap_frames"] == {}

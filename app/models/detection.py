@@ -216,3 +216,8 @@ class VideoAnalyticsResponse(BaseModel):
     # TRACK PERSISTENCE ANALYTICS
     track_observed_frames: dict[int, int]
     track_persistence_ratio: dict[int, float]
+
+    # TRACK GAP ANALYTICS
+    track_gap_count: dict[int, int]
+    track_total_gap_frames: dict[int, int]
+    track_max_gap_frames: dict[int, int]
