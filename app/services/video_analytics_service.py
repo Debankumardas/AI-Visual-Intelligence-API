@@ -88,6 +88,64 @@ class VideoAnalyticsService:
             ),
         }
 
+    def calculate_class_detection_metrics(
+        self,
+        detections_per_frame: list[list[dict]],
+    ):
+        """Calculate detection statistics grouped by object class."""
+
+        if not detections_per_frame:
+            return {
+                "class_detection_counts": {},
+                "max_detections_by_class": {},
+                "average_detections_by_class": {},
+            }
+
+        class_counts: dict[str, int] = {}
+        frame_counts: dict[str, int] = {}
+
+        for detections in detections_per_frame:
+            classes_seen_in_frame: set[str] = set()
+
+            for detection in detections:
+                label = str(detection.get("label", "unknown"))
+
+                class_counts[label] = class_counts.get(label, 0) + 1
+                classes_seen_in_frame.add(label)
+
+            for label in classes_seen_in_frame:
+                frame_counts[label] = frame_counts.get(label, 0) + 1
+
+        max_detections_by_class: dict[str, int] = {}
+
+        for detections in detections_per_frame:
+            frame_class_counts: dict[str, int] = {}
+
+            for detection in detections:
+                label = str(detection.get("label", "unknown"))
+                frame_class_counts[label] = (
+                    frame_class_counts.get(label, 0) + 1
+                )
+
+            for label, count in frame_class_counts.items():
+                max_detections_by_class[label] = max(
+                    max_detections_by_class.get(label, 0),
+                    count,
+                )
+
+        frame_count = len(detections_per_frame)
+
+        average_detections_by_class = {
+            label: round(count / frame_count, 3)
+            for label, count in class_counts.items()
+        }
+
+        return {
+            "class_detection_counts": class_counts,
+            "max_detections_by_class": max_detections_by_class,
+            "average_detections_by_class": average_detections_by_class,
+        }
+
     def calculate_tracking_metrics(
         self,
         track_ids_per_frame: list[list[int]],

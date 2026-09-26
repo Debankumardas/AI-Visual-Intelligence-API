@@ -88,3 +88,53 @@ def test_calculate_tracking_metrics_empty():
         "max_tracks_per_frame": 0,
         "average_tracks_per_frame": 0.0,
     }
+
+def test_calculate_class_detection_metrics():
+    service = VideoAnalyticsService()
+
+    detections_per_frame = [
+        [
+            {"label": "person"},
+            {"label": "person"},
+            {"label": "car"},
+        ],
+        [
+            {"label": "person"},
+            {"label": "car"},
+            {"label": "car"},
+        ],
+        [
+            {"label": "car"},
+        ],
+    ]
+
+    result = service.calculate_class_detection_metrics(
+        detections_per_frame
+    )
+
+    assert result["class_detection_counts"] == {
+        "person": 3,
+        "car": 4,
+    }
+
+    assert result["max_detections_by_class"] == {
+        "person": 2,
+        "car": 2,
+    }
+
+    assert result["average_detections_by_class"] == {
+        "person": 1.0,
+        "car": 1.333,
+    }
+
+
+def test_calculate_class_detection_metrics_empty():
+    service = VideoAnalyticsService()
+
+    result = service.calculate_class_detection_metrics([])
+
+    assert result == {
+        "class_detection_counts": {},
+        "max_detections_by_class": {},
+        "average_detections_by_class": {},
+    }
