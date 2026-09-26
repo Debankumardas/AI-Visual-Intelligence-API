@@ -212,15 +212,18 @@ class DetectionService:
                             "y2": float
                         }
                     }
-                ]
+                ],
+                "inference_time_ms": float
             }
         """
 
+        start_time = time.perf_counter()
+
         results = self._run_tracking(image)
 
-        result = results[0]
-
         tracks = []
+
+        result = results[0]
 
         if result.boxes is not None:
             for box in result.boxes:
@@ -255,8 +258,19 @@ class DetectionService:
                     }
                 )
 
+        elapsed_ms = round(
+            (time.perf_counter() - start_time) * 1000,
+            2,
+        )
+
+        logger.info(
+            "Tracking completed in %.2f ms",
+            elapsed_ms,
+        )
+
         return {
             "tracks": tracks,
+            "inference_time_ms": elapsed_ms,
         }
 
     # ============================================================
