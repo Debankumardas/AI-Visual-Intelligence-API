@@ -157,6 +157,7 @@ def test_annotate_video_processing_failure(monkeypatch):
     assert response.status_code == 400
     assert response.json()["error"] == "Invalid Video"
 
+
 def test_annotate_video_unexpected_exception_cleanup(monkeypatch):
     def fake_generate(video_path, output_path):
         with open(output_path, "wb") as file:
@@ -184,6 +185,7 @@ def test_annotate_video_unexpected_exception_cleanup(monkeypatch):
         assert str(exc) == "Unexpected processing error"
     else:
         raise AssertionError("Expected RuntimeError")
+
 
 def test_annotate_video_output_missing(monkeypatch):
     monkeypatch.setattr(
@@ -238,6 +240,7 @@ def test_annotate_video_empty_file():
     assert response.status_code == 400
     assert response.json()["error"] == "Invalid Video"
 
+
 def test_video_analyze_success(monkeypatch):
     monkeypatch.setattr(
         video_route.video_processing_service,
@@ -253,6 +256,18 @@ def test_video_analyze_success(monkeypatch):
             "total_detections": 150,
             "max_detections_per_frame": 4,
             "average_detections_per_frame": 1.5,
+            "class_detection_counts": {
+                "person": 100,
+                "car": 50,
+            },
+            "max_detections_by_class": {
+                "person": 3,
+                "car": 2,
+            },
+            "average_detections_by_class": {
+                "person": 1.0,
+                "car": 0.5,
+            },
             "total_track_observations": 120,
             "unique_track_ids": 20,
             "max_tracks_per_frame": 3,
@@ -291,10 +306,26 @@ def test_video_analyze_success(monkeypatch):
     assert data["max_detections_per_frame"] == 4
     assert data["average_detections_per_frame"] == 1.5
 
+    assert data["class_detection_counts"] == {
+        "person": 100,
+        "car": 50,
+    }
+
+    assert data["max_detections_by_class"] == {
+        "person": 3,
+        "car": 2,
+    }
+
+    assert data["average_detections_by_class"] == {
+        "person": 1.0,
+        "car": 0.5,
+    }
+
     assert data["total_track_observations"] == 120
     assert data["unique_track_ids"] == 20
     assert data["max_tracks_per_frame"] == 3
     assert data["average_tracks_per_frame"] == 1.2
+
 
 def test_video_analyze_processing_failure(monkeypatch):
     def fake_analyze(video_path):
@@ -320,6 +351,7 @@ def test_video_analyze_processing_failure(monkeypatch):
     assert response.status_code == 400
     assert response.json()["error"] == "Invalid Video"
 
+
 def test_video_analyze_unsupported_format():
     response = client.post(
         "/api/v1/video/analyze",
@@ -335,6 +367,7 @@ def test_video_analyze_unsupported_format():
     assert response.status_code == 400
     assert response.json()["error"] == "Invalid Video"
 
+
 def test_video_analyze_empty_file():
     response = client.post(
         "/api/v1/video/analyze",
@@ -349,4 +382,3 @@ def test_video_analyze_empty_file():
 
     assert response.status_code == 400
     assert response.json()["error"] == "Invalid Video"
-

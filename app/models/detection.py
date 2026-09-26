@@ -145,6 +145,10 @@ class VideoAnalyticsResponse(BaseModel):
     total_detections: int = Field(..., ge=0)
     max_detections_per_frame: int = Field(..., ge=0)
     average_detections_per_frame: float = Field(..., ge=0)
+    
+    class_detection_counts: dict[str, int]
+    max_detections_by_class: dict[str, int]
+    average_detections_by_class: dict[str, float]
 
     total_track_observations: int = Field(..., ge=0)
     unique_track_ids: int = Field(..., ge=0)
