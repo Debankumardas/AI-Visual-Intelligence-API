@@ -107,6 +107,7 @@ class VideoProcessingService:
         detection_counts = []
         detections_per_frame = []
         track_ids_per_frame = []
+        tracks_per_frame = []
 
         for frame_index, frame in video_service.read_frames(
             video_path,
@@ -132,6 +133,10 @@ class VideoProcessingService:
 
             detections_per_frame.append(
                 detection["detections"]
+            )
+
+            tracks_per_frame.append(
+                tracking["tracks"]
             )
 
             track_ids_per_frame.append(
@@ -170,11 +175,18 @@ class VideoProcessingService:
             )
         )
 
+        class_tracking_metrics = (
+            video_analytics_service.calculate_class_tracking_metrics(
+                tracks_per_frame=tracks_per_frame,
+            )
+        )
+
         return {
             **performance_metrics,
             **detection_metrics,
             **class_detection_metrics,
             **tracking_metrics,
+            **class_tracking_metrics,
         }
 
     def generate_annotated_video(

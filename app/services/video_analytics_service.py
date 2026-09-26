@@ -146,6 +146,70 @@ class VideoAnalyticsService:
             "average_detections_by_class": average_detections_by_class,
         }
 
+    def calculate_class_tracking_metrics(
+        self,
+        tracks_per_frame: list[list[dict]],
+    ):
+        """Calculate tracking statistics grouped by object class."""
+
+        if not tracks_per_frame:
+            return {
+                "class_tracking_counts": {},
+                "unique_track_ids_by_class": {},
+                "max_tracks_by_class": {},
+                "average_tracks_by_class": {},
+            }
+
+        class_counts: dict[str, int] = {}
+        class_track_ids: dict[str, set[int]] = {}
+        max_tracks_by_class: dict[str, int] = {}
+
+        for tracks in tracks_per_frame:
+            frame_class_counts: dict[str, int] = {}
+
+            for track in tracks:
+                label = str(track.get("label", "unknown"))
+                track_id = int(track["track_id"])
+
+                class_counts[label] = (
+                    class_counts.get(label, 0) + 1
+                )
+
+                class_track_ids.setdefault(
+                    label,
+                    set(),
+                ).add(track_id)
+
+                frame_class_counts[label] = (
+                    frame_class_counts.get(label, 0) + 1
+                )
+
+            for label, count in frame_class_counts.items():
+                max_tracks_by_class[label] = max(
+                    max_tracks_by_class.get(label, 0),
+                    count,
+                )
+
+        frame_count = len(tracks_per_frame)
+
+        average_tracks_by_class = {
+            label: round(
+                count / frame_count,
+                3,
+            )
+            for label, count in class_counts.items()
+        }
+
+        return {
+            "class_tracking_counts": class_counts,
+            "unique_track_ids_by_class": {
+                label: len(track_ids)
+                for label, track_ids in class_track_ids.items()
+            },
+            "max_tracks_by_class": max_tracks_by_class,
+            "average_tracks_by_class": average_tracks_by_class,
+        }
+
     def calculate_tracking_metrics(
         self,
         track_ids_per_frame: list[list[int]],

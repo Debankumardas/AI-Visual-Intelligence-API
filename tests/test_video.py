@@ -268,6 +268,24 @@ def test_video_analyze_success(monkeypatch):
                 "person": 1.0,
                 "car": 0.5,
             },
+
+            "class_tracking_counts": {
+                "person": 90,
+                "car": 30,
+            },
+            "unique_track_ids_by_class": {
+                "person": 15,
+                "car": 5,
+            },
+            "max_tracks_by_class": {
+                "person": 3,
+                "car": 2,
+            },
+            "average_tracks_by_class": {
+                "person": 0.9,
+                "car": 0.3,
+            },
+
             "total_track_observations": 120,
             "unique_track_ids": 20,
             "max_tracks_per_frame": 3,
@@ -319,6 +337,26 @@ def test_video_analyze_success(monkeypatch):
     assert data["average_detections_by_class"] == {
         "person": 1.0,
         "car": 0.5,
+    }
+
+    assert data["class_tracking_counts"] == {
+        "person": 90,
+        "car": 30,
+    }
+
+    assert data["unique_track_ids_by_class"] == {
+        "person": 15,
+        "car": 5,
+    }
+
+    assert data["max_tracks_by_class"] == {
+        "person": 3,
+        "car": 2,
+    }
+
+    assert data["average_tracks_by_class"] == {
+        "person": 0.9,
+        "car": 0.3,
     }
 
     assert data["total_track_observations"] == 120

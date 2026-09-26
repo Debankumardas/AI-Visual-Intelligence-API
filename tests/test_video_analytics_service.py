@@ -1,6 +1,9 @@
 from app.services.video_analytics_service import (
     VideoAnalyticsService,
 )
+from app.services.video_analytics_service import (
+    video_analytics_service,
+)
 
 
 def test_calculate_metrics():
@@ -137,4 +140,64 @@ def test_calculate_class_detection_metrics_empty():
         "class_detection_counts": {},
         "max_detections_by_class": {},
         "average_detections_by_class": {},
+    }
+
+def test_calculate_class_tracking_metrics():
+    tracks_per_frame = [
+        [
+            {"track_id": 1, "label": "person"},
+            {"track_id": 2, "label": "person"},
+            {"track_id": 3, "label": "car"},
+        ],
+        [
+            {"track_id": 1, "label": "person"},
+            {"track_id": 2, "label": "person"},
+            {"track_id": 3, "label": "car"},
+            {"track_id": 4, "label": "car"},
+        ],
+        [
+            {"track_id": 1, "label": "person"},
+            {"track_id": 3, "label": "car"},
+        ],
+    ]
+
+    result = (
+        video_analytics_service.calculate_class_tracking_metrics(
+            tracks_per_frame
+        )
+    )
+
+    assert result["class_tracking_counts"] == {
+        "person": 5,
+        "car": 4,
+    }
+
+    assert result["unique_track_ids_by_class"] == {
+        "person": 2,
+        "car": 2,
+    }
+
+    assert result["max_tracks_by_class"] == {
+        "person": 2,
+        "car": 2,
+    }
+
+    assert result["average_tracks_by_class"] == {
+        "person": 1.667,
+        "car": 1.333,
+    }
+
+
+def test_calculate_class_tracking_metrics_empty():
+    result = (
+        video_analytics_service.calculate_class_tracking_metrics(
+            []
+        )
+    )
+
+    assert result == {
+        "class_tracking_counts": {},
+        "unique_track_ids_by_class": {},
+        "max_tracks_by_class": {},
+        "average_tracks_by_class": {},
     }

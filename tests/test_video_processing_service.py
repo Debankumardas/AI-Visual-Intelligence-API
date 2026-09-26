@@ -6,16 +6,13 @@ from unittest.mock import patch
 
 from app.services.video_processing_service import (
     VideoProcessingService,
+    video_processing_service,
 )
 
 from app.services.annotation_service import annotation_service
 from app.services.detection_service import detection_service
 from app.services.video_service import video_service
 from app.services.video_writer_service import video_writer_service
-
-from app.services.video_processing_service import (
-    video_processing_service,
-)
 
 
 def test_process_frames_success():
@@ -435,6 +432,7 @@ def test_generate_annotated_video(monkeypatch, tmp_path):
     assert writer.write.call_count == 2
     writer.release.assert_called_once()
 
+
 def test_generate_annotated_video_removes_partial_output_on_failure(
     monkeypatch,
     tmp_path,
@@ -507,6 +505,7 @@ def test_generate_annotated_video_removes_partial_output_on_failure(
     writer.release.assert_called_once()
     assert not output_path.exists()
 
+
 def test_generate_annotated_video_removes_output_when_writer_creation_fails(
     monkeypatch,
     tmp_path,
@@ -545,6 +544,7 @@ def test_generate_annotated_video_removes_output_when_writer_creation_fails(
         )
 
     assert not output_path.exists()
+
 
 def test_generate_annotated_video_rejects_invalid_stride():
     with pytest.raises(
@@ -627,6 +627,7 @@ def test_generate_annotated_video_rejects_empty_video(
             output_path=output_path,
         )
 
+
 def test_analyze_video():
     service = VideoProcessingService()
 
@@ -655,23 +656,44 @@ def test_analyze_video():
         {
             "inference_time_ms": 5.0,
             "tracks": [
-                {"track_id": 1},
-                {"track_id": 2},
+                {
+                    "track_id": 1,
+                    "label": "person",
+                },
+                {
+                    "track_id": 2,
+                    "label": "person",
+                },
             ],
         },
         {
             "inference_time_ms": 6.0,
             "tracks": [
-                {"track_id": 1},
-                {"track_id": 2},
+                {
+                    "track_id": 1,
+                    "label": "person",
+                },
+                {
+                    "track_id": 2,
+                    "label": "person",
+                },
             ],
         },
         {
             "inference_time_ms": 7.0,
             "tracks": [
-                {"track_id": 1},
-                {"track_id": 2},
-                {"track_id": 3},
+                {
+                    "track_id": 1,
+                    "label": "person",
+                },
+                {
+                    "track_id": 2,
+                    "label": "person",
+                },
+                {
+                    "track_id": 3,
+                    "label": "car",
+                },
             ],
         },
     ]
@@ -708,6 +730,26 @@ def test_analyze_video():
     assert result["max_tracks_per_frame"] == 3
     assert result["average_tracks_per_frame"] == 2.333
 
+    assert result["class_tracking_counts"] == {
+        "person": 6,
+        "car": 1,
+    }
+
+    assert result["unique_track_ids_by_class"] == {
+        "person": 2,
+        "car": 1,
+    }
+
+    assert result["max_tracks_by_class"] == {
+        "person": 2,
+        "car": 1,
+    }
+
+    assert result["average_tracks_by_class"] == {
+        "person": 2.0,
+        "car": 0.333,
+    }
+
     assert result["total_inference_time_ms"] == 60.0
     assert result["average_inference_time_ms"] == 20.0
     assert result["min_inference_time_ms"] == 10.0
@@ -739,10 +781,19 @@ def test_analyze_video_empty():
     assert result["max_detections_per_frame"] == 0
     assert result["average_detections_per_frame"] == 0.0
 
+    assert result["class_detection_counts"] == {}
+    assert result["max_detections_by_class"] == {}
+    assert result["average_detections_by_class"] == {}
+
     assert result["total_track_observations"] == 0
     assert result["unique_track_ids"] == 0
     assert result["max_tracks_per_frame"] == 0
     assert result["average_tracks_per_frame"] == 0.0
+
+    assert result["class_tracking_counts"] == {}
+    assert result["unique_track_ids_by_class"] == {}
+    assert result["max_tracks_by_class"] == {}
+    assert result["average_tracks_by_class"] == {}
 
 
 def test_analyze_video_invalid_frame_stride():
