@@ -319,5 +319,48 @@ class VideoAnalyticsService:
             ),
         }
 
+    def calculate_track_duration_metrics(
+        self,
+        track_ids_per_frame: list[list[int]],
+        frame_indices: list[int],
+    ):
+        """Calculate duration statistics for each tracked object."""
+
+        if not track_ids_per_frame:
+            return {
+                "track_duration_frames": {},
+            }
+
+        if len(track_ids_per_frame) != len(frame_indices):
+            raise ValueError(
+                "Track frames and frame indices must have the same length"
+            )
+
+        first_frame_by_track: dict[int, int] = {}
+        last_frame_by_track: dict[int, int] = {}
+
+        for track_ids, frame_index in zip(
+            track_ids_per_frame,
+            frame_indices,
+        ):
+            for track_id in track_ids:
+                if track_id not in first_frame_by_track:
+                    first_frame_by_track[track_id] = frame_index
+
+                last_frame_by_track[track_id] = frame_index
+
+        track_duration_frames = {
+            track_id: (
+                last_frame_by_track[track_id]
+                - first_frame_by_track[track_id]
+                + 1
+            )
+            for track_id in first_frame_by_track
+        }
+
+        return {
+            "track_duration_frames": track_duration_frames,
+        }
+
 
 video_analytics_service = VideoAnalyticsService()

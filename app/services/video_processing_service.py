@@ -186,6 +186,13 @@ class VideoProcessingService:
             )
         )
 
+        track_duration_metrics = (
+            video_analytics_service.calculate_track_duration_metrics(
+                track_ids_per_frame=track_ids_per_frame,
+                frame_indices=detection_frame_indices,
+            )
+        )
+
         class_tracking_metrics = (
             video_analytics_service.calculate_class_tracking_metrics(
                 tracks_per_frame=tracks_per_frame,
@@ -196,6 +203,8 @@ class VideoProcessingService:
             **performance_metrics,
             **detection_metrics,
             **class_detection_metrics,
+            **track_duration_metrics,
+
             **temporal_detection_metrics,
             **tracking_metrics,
             **class_tracking_metrics,
