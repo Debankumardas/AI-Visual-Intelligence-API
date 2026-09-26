@@ -315,7 +315,19 @@ def test_video_analyze_success(monkeypatch):
             "track_persistence_ratio": {
                 1: 0.95,
                 2: 0.8,
-            }
+            },
+            "track_gap_count": {
+                1: 2,
+                2: 1,
+            },
+            "track_total_gap_frames": {
+                1: 5,
+                2: 3,
+            },
+            "track_max_gap_frames": {
+                1: 3,
+                2: 3,
+            },
         },
     )
 
@@ -413,6 +425,31 @@ def test_video_analyze_success(monkeypatch):
     assert data["track_duration_frames"] == {
         "1": 100,
         "2": 75,
+    }
+
+    assert data["track_observed_frames"] == {
+        "1": 95,
+        "2": 60,
+    }
+
+    assert data["track_persistence_ratio"] == {
+        "1": 0.95,
+        "2": 0.8,
+    }
+
+    assert data["track_gap_count"] == {
+        "1": 2,
+        "2": 1,
+    }
+
+    assert data["track_total_gap_frames"] == {
+        "1": 5,
+        "2": 3,
+    }
+
+    assert data["track_max_gap_frames"] == {
+        "1": 3,
+        "2": 3,
     }
 
 

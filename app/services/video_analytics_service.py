@@ -419,4 +419,61 @@ class VideoAnalyticsService:
             "track_persistence_ratio": track_persistence_ratio,
         }
 
+    def calculate_track_gap_metrics(
+        self,
+        track_ids_per_frame: list[list[int]],
+    ):
+        """Calculate gap statistics for each tracked object."""
+
+        if not track_ids_per_frame:
+            return {
+                "track_gap_count": {},
+                "track_total_gap_frames": {},
+                "track_max_gap_frames": {},
+            }
+
+        first_seen: dict[int, bool] = {}
+        current_gap: dict[int, int] = {}
+        gap_count: dict[int, int] = {}
+        total_gap_frames: dict[int, int] = {}
+        max_gap_frames: dict[int, int] = {}
+
+        for track_ids in track_ids_per_frame:
+            current_track_ids = set(track_ids)
+
+            all_track_ids = set(first_seen) | current_track_ids
+
+            for track_id in all_track_ids:
+                if track_id in current_track_ids:
+                    if first_seen.get(track_id, False):
+                        gap = current_gap.get(track_id, 0)
+
+                        if gap > 0:
+                            gap_count[track_id] = (
+                                gap_count.get(track_id, 0) + 1
+                            )
+
+                            total_gap_frames[track_id] = (
+                                total_gap_frames.get(track_id, 0) + gap
+                            )
+
+                            max_gap_frames[track_id] = max(
+                                max_gap_frames.get(track_id, 0),
+                                gap,
+                            )
+
+                    first_seen[track_id] = True
+                    current_gap[track_id] = 0
+
+                elif first_seen.get(track_id, False):
+                    current_gap[track_id] = (
+                        current_gap.get(track_id, 0) + 1
+                    )
+
+        return {
+            "track_gap_count": gap_count,
+            "track_total_gap_frames": total_gap_frames,
+            "track_max_gap_frames": max_gap_frames,
+        }
+
 video_analytics_service = VideoAnalyticsService()
