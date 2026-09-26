@@ -362,5 +362,61 @@ class VideoAnalyticsService:
             "track_duration_frames": track_duration_frames,
         }
 
+    def calculate_track_persistence_metrics(
+        self,
+        track_ids_per_frame: list[list[int]],
+        frame_indices: list[int],
+    ):
+        """Calculate persistence statistics for each tracked object."""
+
+        if not track_ids_per_frame:
+            return {
+                "track_observed_frames": {},
+                "track_persistence_ratio": {},
+            }
+
+        if len(track_ids_per_frame) != len(frame_indices):
+            raise ValueError(
+                "Track frames and frame indices must have the same length"
+            )
+
+        first_frame_by_track: dict[int, int] = {}
+        last_frame_by_track: dict[int, int] = {}
+        observed_frames_by_track: dict[int, int] = {}
+
+        for track_ids, frame_index in zip(
+            track_ids_per_frame,
+            frame_indices,
+        ):
+            for track_id in set(track_ids):
+                if track_id not in first_frame_by_track:
+                    first_frame_by_track[track_id] = frame_index
+
+                last_frame_by_track[track_id] = frame_index
+
+                observed_frames_by_track[track_id] = (
+                    observed_frames_by_track.get(track_id, 0) + 1
+                )
+
+        track_persistence_ratio = {}
+
+        for track_id in first_frame_by_track:
+            duration_span = (
+                last_frame_by_track[track_id]
+                - first_frame_by_track[track_id]
+                + 1
+            )
+
+            observed_frames = observed_frames_by_track[track_id]
+
+            track_persistence_ratio[track_id] = round(
+                observed_frames / duration_span,
+                3,
+            )
+
+        return {
+            "track_observed_frames": observed_frames_by_track,
+            "track_persistence_ratio": track_persistence_ratio,
+        }
 
 video_analytics_service = VideoAnalyticsService()
