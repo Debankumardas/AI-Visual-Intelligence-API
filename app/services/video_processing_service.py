@@ -106,9 +106,9 @@ class VideoProcessingService:
         inference_times_ms = []
         detection_counts = []
         detections_per_frame = []
+        detection_frame_indices = []
         track_ids_per_frame = []
         tracks_per_frame = []
-
         for frame_index, frame in video_service.read_frames(
             video_path,
             frame_stride=frame_stride,
@@ -133,6 +133,10 @@ class VideoProcessingService:
 
             detections_per_frame.append(
                 detection["detections"]
+            )
+
+            detection_frame_indices.append(
+                frame_index
             )
 
             tracks_per_frame.append(
@@ -169,6 +173,13 @@ class VideoProcessingService:
             )
         )
 
+        temporal_detection_metrics = (
+            video_analytics_service.calculate_temporal_detection_metrics(
+                detections_per_frame=detections_per_frame,
+                frame_indices=detection_frame_indices,
+            )
+        )
+
         tracking_metrics = (
             video_analytics_service.calculate_tracking_metrics(
                 track_ids_per_frame=track_ids_per_frame,
@@ -185,6 +196,7 @@ class VideoProcessingService:
             **performance_metrics,
             **detection_metrics,
             **class_detection_metrics,
+            **temporal_detection_metrics,
             **tracking_metrics,
             **class_tracking_metrics,
         }

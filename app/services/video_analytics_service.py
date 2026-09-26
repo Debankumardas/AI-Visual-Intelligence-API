@@ -146,6 +146,70 @@ class VideoAnalyticsService:
             "average_detections_by_class": average_detections_by_class,
         }
 
+    def calculate_temporal_detection_metrics(
+        self,
+        detections_per_frame: list[list[dict]],
+        frame_indices: list[int],
+    ):
+        """Calculate temporal detection statistics by object class."""
+
+        if not detections_per_frame:
+            return {
+                "first_detection_frame": {},
+                "last_detection_frame": {},
+                "active_frames_by_class": {},
+                "class_presence_ratio": {},
+            }
+
+        if len(detections_per_frame) != len(frame_indices):
+            raise ValueError(
+                "Detection frames and frame indices must have the same length"
+            )
+
+        first_detection_frame: dict[str, int] = {}
+        last_detection_frame: dict[str, int] = {}
+        active_frames_by_class: dict[str, int] = {}
+
+        for detections, frame_index in zip(
+            detections_per_frame,
+            frame_indices,
+        ):
+            classes_seen_in_frame: set[str] = set()
+
+            for detection in detections:
+                label = str(
+                    detection.get("label", "unknown")
+                )
+
+                classes_seen_in_frame.add(label)
+
+                if label not in first_detection_frame:
+                    first_detection_frame[label] = frame_index
+
+                last_detection_frame[label] = frame_index
+
+            for label in classes_seen_in_frame:
+                active_frames_by_class[label] = (
+                    active_frames_by_class.get(label, 0) + 1
+                )
+
+        processed_frames = len(detections_per_frame)
+
+        class_presence_ratio = {
+            label: round(
+                count / processed_frames,
+                3,
+            )
+            for label, count in active_frames_by_class.items()
+        }
+
+        return {
+            "first_detection_frame": first_detection_frame,
+            "last_detection_frame": last_detection_frame,
+            "active_frames_by_class": active_frames_by_class,
+            "class_presence_ratio": class_presence_ratio,
+        }
+
     def calculate_class_tracking_metrics(
         self,
         tracks_per_frame: list[list[dict]],

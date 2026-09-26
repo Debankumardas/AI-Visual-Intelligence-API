@@ -269,6 +269,23 @@ def test_video_analyze_success(monkeypatch):
                 "car": 0.5,
             },
 
+            "first_detection_frame": {
+                "person": 0,
+                "car": 10,
+            },
+            "last_detection_frame": {
+                "person": 80,
+                "car": 95,
+            },
+            "active_frames_by_class": {
+                "person": 75,
+                "car": 60,
+            },
+            "class_presence_ratio": {
+                "person": 0.75,
+                "car": 0.6,
+            },
+
             "class_tracking_counts": {
                 "person": 90,
                 "car": 30,
@@ -339,6 +356,25 @@ def test_video_analyze_success(monkeypatch):
         "car": 0.5,
     }
 
+    assert data["first_detection_frame"] == {
+        "person": 0,
+        "car": 10,
+    }
+
+    assert data["last_detection_frame"] == {
+        "person": 80,
+        "car": 95,
+    }
+
+    assert data["active_frames_by_class"] == {
+        "person": 75,
+        "car": 60,
+    }
+
+    assert data["class_presence_ratio"] == {
+        "person": 0.75,
+        "car": 0.6,
+    }
     assert data["class_tracking_counts"] == {
         "person": 90,
         "car": 30,

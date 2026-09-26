@@ -1,6 +1,7 @@
 from app.services.video_analytics_service import (
     VideoAnalyticsService,
 )
+
 from app.services.video_analytics_service import (
     video_analytics_service,
 )
@@ -39,6 +40,7 @@ def test_calculate_metrics_empty_results():
     assert metrics["min_inference_time_ms"] == 0.0
     assert metrics["max_inference_time_ms"] == 0.0
 
+
 def test_calculate_detection_metrics():
     service = VideoAnalyticsService()
 
@@ -62,6 +64,7 @@ def test_calculate_detection_metrics_empty():
     assert metrics["max_detections_per_frame"] == 0
     assert metrics["average_detections_per_frame"] == 0.0
 
+
 def test_calculate_tracking_metrics():
     service = VideoAnalyticsService()
 
@@ -80,6 +83,7 @@ def test_calculate_tracking_metrics():
     assert result["max_tracks_per_frame"] == 4
     assert result["average_tracks_per_frame"] == 3.333
 
+
 def test_calculate_tracking_metrics_empty():
     service = VideoAnalyticsService()
 
@@ -91,6 +95,7 @@ def test_calculate_tracking_metrics_empty():
         "max_tracks_per_frame": 0,
         "average_tracks_per_frame": 0.0,
     }
+
 
 def test_calculate_class_detection_metrics():
     service = VideoAnalyticsService()
@@ -141,6 +146,7 @@ def test_calculate_class_detection_metrics_empty():
         "max_detections_by_class": {},
         "average_detections_by_class": {},
     }
+
 
 def test_calculate_class_tracking_metrics():
     tracks_per_frame = [
@@ -201,3 +207,136 @@ def test_calculate_class_tracking_metrics_empty():
         "max_tracks_by_class": {},
         "average_tracks_by_class": {},
     }
+
+
+def test_calculate_temporal_detection_metrics():
+    service = VideoAnalyticsService()
+
+    detections_per_frame = [
+        [
+            {"label": "person"},
+            {"label": "car"},
+        ],
+        [
+            {"label": "person"},
+        ],
+        [
+            {"label": "person"},
+            {"label": "car"},
+        ],
+        [],
+        [
+            {"label": "car"},
+        ],
+    ]
+
+    frame_indices = [0, 1, 2, 3, 4]
+
+    result = service.calculate_temporal_detection_metrics(
+        detections_per_frame=detections_per_frame,
+        frame_indices=frame_indices,
+    )
+
+    assert result["first_detection_frame"] == {
+        "person": 0,
+        "car": 0,
+    }
+
+    assert result["last_detection_frame"] == {
+        "person": 2,
+        "car": 4,
+    }
+
+    assert result["active_frames_by_class"] == {
+        "person": 3,
+        "car": 3,
+    }
+
+    assert result["class_presence_ratio"] == {
+        "person": 0.6,
+        "car": 0.6,
+    }
+
+
+def test_calculate_temporal_detection_metrics_with_frame_stride():
+    service = VideoAnalyticsService()
+
+    detections_per_frame = [
+        [
+            {"label": "person"},
+        ],
+        [],
+        [
+            {"label": "person"},
+            {"label": "car"},
+        ],
+        [
+            {"label": "car"},
+        ],
+    ]
+
+    frame_indices = [0, 4, 8, 12]
+
+    result = service.calculate_temporal_detection_metrics(
+        detections_per_frame=detections_per_frame,
+        frame_indices=frame_indices,
+    )
+
+    assert result["first_detection_frame"] == {
+        "person": 0,
+        "car": 8,
+    }
+
+    assert result["last_detection_frame"] == {
+        "person": 8,
+        "car": 12,
+    }
+
+    assert result["active_frames_by_class"] == {
+        "person": 2,
+        "car": 2,
+    }
+
+    assert result["class_presence_ratio"] == {
+        "person": 0.5,
+        "car": 0.5,
+    }
+
+
+def test_calculate_temporal_detection_metrics_empty():
+    service = VideoAnalyticsService()
+
+    result = service.calculate_temporal_detection_metrics(
+        detections_per_frame=[],
+        frame_indices=[],
+    )
+
+    assert result == {
+        "first_detection_frame": {},
+        "last_detection_frame": {},
+        "active_frames_by_class": {},
+        "class_presence_ratio": {},
+    }
+
+
+def test_calculate_temporal_detection_metrics_mismatched_lengths():
+    service = VideoAnalyticsService()
+
+    detections_per_frame = [
+        [{"label": "person"}],
+        [{"label": "car"}],
+    ]
+
+    frame_indices = [0]
+
+    try:
+        service.calculate_temporal_detection_metrics(
+            detections_per_frame=detections_per_frame,
+            frame_indices=frame_indices,
+        )
+        assert False, "Expected ValueError"
+    except ValueError as exc:
+        assert str(exc) == (
+            "Detection frames and frame indices "
+            "must have the same length"
+        )
