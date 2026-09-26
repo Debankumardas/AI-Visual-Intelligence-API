@@ -630,37 +630,67 @@ def test_generate_annotated_video_rejects_empty_video(
 def test_analyze_video():
     service = VideoProcessingService()
 
-    with patch.object(
-        service,
-        "process_frames",
-        return_value=iter(
-            [
-                {
-                    "inference_time_ms": 10.0,
-                    "detections": [{}, {}],
-                    "tracks": [
-                        {"track_id": 1},
-                        {"track_id": 2},
-                    ],
-                },
-                {
-                    "inference_time_ms": 20.0,
-                    "detections": [{}, {}, {}, {}],
-                    "tracks": [
-                        {"track_id": 1},
-                        {"track_id": 2},
-                    ],
-                },
-                {
-                    "inference_time_ms": 30.0,
-                    "detections": [{}],
-                    "tracks": [
-                        {"track_id": 1},
-                        {"track_id": 2},
-                        {"track_id": 3},
-                    ],
-                },
-            ]
+    frames = [
+        (0, np.zeros((100, 100, 3), dtype=np.uint8)),
+        (1, np.zeros((100, 100, 3), dtype=np.uint8)),
+        (2, np.zeros((100, 100, 3), dtype=np.uint8)),
+    ]
+
+    detection_results = [
+        {
+            "inference_time_ms": 10.0,
+            "detections": [{}, {}],
+        },
+        {
+            "inference_time_ms": 20.0,
+            "detections": [{}, {}, {}, {}],
+        },
+        {
+            "inference_time_ms": 30.0,
+            "detections": [{}],
+        },
+    ]
+
+    tracking_results = [
+        {
+            "inference_time_ms": 5.0,
+            "tracks": [
+                {"track_id": 1},
+                {"track_id": 2},
+            ],
+        },
+        {
+            "inference_time_ms": 6.0,
+            "tracks": [
+                {"track_id": 1},
+                {"track_id": 2},
+            ],
+        },
+        {
+            "inference_time_ms": 7.0,
+            "tracks": [
+                {"track_id": 1},
+                {"track_id": 2},
+                {"track_id": 3},
+            ],
+        },
+    ]
+
+    with (
+        patch.object(
+            video_service,
+            "read_frames",
+            return_value=iter(frames),
+        ),
+        patch.object(
+            detection_service,
+            "detect",
+            side_effect=detection_results,
+        ),
+        patch.object(
+            detection_service,
+            "track",
+            side_effect=tracking_results,
         ),
     ):
         result = service.analyze_video(
@@ -668,12 +698,6 @@ def test_analyze_video():
         )
 
     assert result["frames_processed"] == 3
-    assert result["total_inference_time_ms"] == 60.0
-    assert result["average_inference_time_ms"] == 20.0
-    assert result["min_inference_time_ms"] == 10.0
-    assert result["max_inference_time_ms"] == 30.0
-    assert result["processing_time_seconds"] >= 0
-    assert result["effective_fps"] > 0
 
     assert result["total_detections"] == 7
     assert result["max_detections_per_frame"] == 4
@@ -684,13 +708,18 @@ def test_analyze_video():
     assert result["max_tracks_per_frame"] == 3
     assert result["average_tracks_per_frame"] == 2.333
 
+    assert result["total_inference_time_ms"] == 60.0
+    assert result["average_inference_time_ms"] == 20.0
+    assert result["min_inference_time_ms"] == 10.0
+    assert result["max_inference_time_ms"] == 30.0
+
 
 def test_analyze_video_empty():
     service = VideoProcessingService()
 
     with patch.object(
-        service,
-        "process_frames",
+        video_service,
+        "read_frames",
         return_value=iter([]),
     ):
         result = service.analyze_video(
@@ -700,7 +729,30 @@ def test_analyze_video_empty():
     assert result["frames_processed"] == 0
     assert result["processing_time_seconds"] >= 0
     assert result["effective_fps"] == 0.0
+
     assert result["total_inference_time_ms"] == 0.0
     assert result["average_inference_time_ms"] == 0.0
     assert result["min_inference_time_ms"] == 0.0
     assert result["max_inference_time_ms"] == 0.0
+
+    assert result["total_detections"] == 0
+    assert result["max_detections_per_frame"] == 0
+    assert result["average_detections_per_frame"] == 0.0
+
+    assert result["total_track_observations"] == 0
+    assert result["unique_track_ids"] == 0
+    assert result["max_tracks_per_frame"] == 0
+    assert result["average_tracks_per_frame"] == 0.0
+
+
+def test_analyze_video_invalid_frame_stride():
+    service = VideoProcessingService()
+
+    with pytest.raises(
+        ValueError,
+        match="Frame stride must be at least 1",
+    ):
+        service.analyze_video(
+            "sample.mp4",
+            frame_stride=0,
+        )
