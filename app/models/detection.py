@@ -127,3 +127,26 @@ class VideoAnalysisResponse(BaseModel):
     filename: str
     content_type: str
     metadata: VideoMetadata
+
+class VideoAnalyticsResponse(BaseModel):
+    filename: str
+    content_type: str
+
+    frames_processed: int = Field(..., ge=0)
+
+    processing_time_seconds: float = Field(..., ge=0)
+    effective_fps: float = Field(..., ge=0)
+
+    total_inference_time_ms: float = Field(..., ge=0)
+    average_inference_time_ms: float = Field(..., ge=0)
+    min_inference_time_ms: float = Field(..., ge=0)
+    max_inference_time_ms: float = Field(..., ge=0)
+
+    total_detections: int = Field(..., ge=0)
+    max_detections_per_frame: int = Field(..., ge=0)
+    average_detections_per_frame: float = Field(..., ge=0)
+
+    total_track_observations: int = Field(..., ge=0)
+    unique_track_ids: int = Field(..., ge=0)
+    max_tracks_per_frame: int = Field(..., ge=0)
+    average_tracks_per_frame: float = Field(..., ge=0)

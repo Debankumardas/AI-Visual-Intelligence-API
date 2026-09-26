@@ -6,7 +6,10 @@ from fastapi.responses import FileResponse
 
 from app.api.routes.utils import load_uploaded_video
 from app.core.exceptions import InvalidVideoError
-from app.models.detection import VideoAnalysisResponse
+from app.models.detection import (
+    VideoAnalysisResponse,
+    VideoAnalyticsResponse,
+)
 from app.services.video_processing_service import video_processing_service
 from app.services.video_service import video_service
 
@@ -45,6 +48,35 @@ async def analyze_video_metadata(
         if os.path.exists(video_path):
             os.remove(video_path)
 
+@router.post(
+    "/analyze",
+    response_model=VideoAnalyticsResponse,
+)
+async def analyze_video(
+    file: UploadFile = File(...),
+):
+    video_path = await load_uploaded_video(file)
+
+    try:
+        try:
+            analytics = video_processing_service.analyze_video(
+                video_path=video_path,
+            )
+
+        except ValueError as exc:
+            raise InvalidVideoError(
+                "Unable to analyze video."
+            ) from exc
+
+        return VideoAnalyticsResponse(
+            filename=file.filename or "unknown",
+            content_type=file.content_type or "unknown",
+            **analytics,
+        )
+
+    finally:
+        if os.path.exists(video_path):
+            os.remove(video_path)
 
 @router.post("/annotate")
 async def annotate_video(
@@ -100,3 +132,4 @@ async def annotate_video(
             os.remove(input_path)
 
         raise
+    

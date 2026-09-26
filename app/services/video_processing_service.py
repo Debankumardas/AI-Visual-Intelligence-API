@@ -96,7 +96,12 @@ class VideoProcessingService:
         video_path: str,
         frame_stride: int = 1,
     ):
-        """Process a video and calculate performance analytics."""
+        """Process a video once and calculate detection and tracking analytics."""
+
+        if frame_stride < 1:
+            raise ValueError(
+                "Frame stride must be at least 1"
+            )
 
         start_time = time.perf_counter()
 
@@ -104,22 +109,33 @@ class VideoProcessingService:
         detection_counts = []
         track_ids_per_frame = []
 
-        for frame_result in self.process_frames(
+        for frame_index, frame in video_service.read_frames(
             video_path,
             frame_stride=frame_stride,
         ):
+            image = Image.fromarray(
+                cv2.cvtColor(
+                    frame,
+                    cv2.COLOR_BGR2RGB,
+                )
+            )
+
+            detection = detection_service.detect(image)
+
+            tracking = detection_service.track(image)
+
             inference_times_ms.append(
-                frame_result["inference_time_ms"]
+                detection["inference_time_ms"]
             )
 
             detection_counts.append(
-                len(frame_result["detections"])
+                len(detection["detections"])
             )
 
             track_ids_per_frame.append(
                 [
                     track["track_id"]
-                    for track in frame_result.get("tracks", [])
+                    for track in tracking["tracks"]
                 ]
             )
 
