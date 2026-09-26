@@ -204,14 +204,11 @@ class VideoAnalyticsResponse(BaseModel):
 
     average_tracks_by_class: dict[str, float]
 
-    # ========================================================
     # AGGREGATE TRACKING ANALYTICS
-    # ========================================================
-
     total_track_observations: int = Field(..., ge=0)
-
     unique_track_ids: int = Field(..., ge=0)
-
     max_tracks_per_frame: int = Field(..., ge=0)
-
     average_tracks_per_frame: float = Field(..., ge=0)
+
+    # TRACK DURATION ANALYTICS
+    track_duration_frames: dict[int, int]
