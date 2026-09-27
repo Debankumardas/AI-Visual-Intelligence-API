@@ -567,3 +567,49 @@ def test_calculate_track_gap_metrics_track_ends_during_gap():
     assert result["track_gap_count"] == {}
     assert result["track_total_gap_frames"] == {}
     assert result["track_max_gap_frames"] == {}
+
+def test_calculate_track_cooccurrence_metrics():
+    service = VideoAnalyticsService()
+
+    result = service.calculate_track_cooccurrence_metrics(
+        track_ids_per_frame=[
+            [1, 2],
+            [1, 2],
+            [1],
+            [1, 3],
+        ]
+    )
+
+    assert result == {
+        "track_cooccurrence_counts": {
+            (1, 2): 2,
+            (1, 3): 1,
+        },
+    }
+
+
+def test_calculate_track_cooccurrence_metrics_empty():
+    service = VideoAnalyticsService()
+
+    result = service.calculate_track_cooccurrence_metrics([])
+
+    assert result == {
+        "track_cooccurrence_counts": {},
+    }
+
+
+def test_calculate_track_cooccurrence_metrics_duplicate_ids():
+    service = VideoAnalyticsService()
+
+    result = service.calculate_track_cooccurrence_metrics(
+        track_ids_per_frame=[
+            [1, 1, 2, 2],
+            [1, 2],
+        ]
+    )
+
+    assert result == {
+        "track_cooccurrence_counts": {
+            (1, 2): 2,
+        },
+    }

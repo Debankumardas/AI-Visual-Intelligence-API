@@ -476,4 +476,32 @@ class VideoAnalyticsService:
             "track_max_gap_frames": max_gap_frames,
         }
 
+    def calculate_track_cooccurrence_metrics(
+        self,
+        track_ids_per_frame: list[list[int]],
+    ):
+        """Calculate co-occurrence statistics between tracked objects."""
+
+        if not track_ids_per_frame:
+            return {
+                "track_cooccurrence_counts": {},
+            }
+
+        cooccurrence_counts: dict[tuple[int, int], int] = {}
+
+        for track_ids in track_ids_per_frame:
+            unique_track_ids = sorted(set(track_ids))
+
+            for index, track_id_a in enumerate(unique_track_ids):
+                for track_id_b in unique_track_ids[index + 1:]:
+                    pair = (track_id_a, track_id_b)
+
+                    cooccurrence_counts[pair] = (
+                        cooccurrence_counts.get(pair, 0) + 1
+                    )
+
+        return {
+            "track_cooccurrence_counts": cooccurrence_counts,
+        }
+
 video_analytics_service = VideoAnalyticsService()

@@ -199,6 +199,12 @@ class VideoProcessingService:
             )
         )
 
+        track_cooccurrence_metrics = (
+            video_analytics_service.calculate_track_cooccurrence_metrics(
+                track_ids_per_frame=track_ids_per_frame,
+            )
+        )
+
         track_persistence_metrics = (
             video_analytics_service.calculate_track_persistence_metrics(
                 track_ids_per_frame=track_ids_per_frame,
