@@ -659,10 +659,24 @@ def test_analyze_video():
                 {
                     "track_id": 1,
                     "label": "person",
+                    "confidence": 0.95,
+                    "box": {
+                        "x1": 0.0,
+                        "y1": 0.0,
+                        "x2": 10.0,
+                        "y2": 10.0,
+                    },
                 },
                 {
                     "track_id": 2,
                     "label": "person",
+                    "confidence": 0.90,
+                    "box": {
+                        "x1": 20.0,
+                        "y1": 0.0,
+                        "x2": 30.0,
+                        "y2": 10.0,
+                    },
                 },
             ],
         },
@@ -672,10 +686,24 @@ def test_analyze_video():
                 {
                     "track_id": 1,
                     "label": "person",
+                    "confidence": 0.95,
+                    "box": {
+                        "x1": 0.0,
+                        "y1": 0.0,
+                        "x2": 10.0,
+                        "y2": 10.0,
+                    },
                 },
                 {
                     "track_id": 2,
                     "label": "person",
+                    "confidence": 0.90,
+                    "box": {
+                        "x1": 20.0,
+                        "y1": 0.0,
+                        "x2": 30.0,
+                        "y2": 10.0,
+                    },
                 },
             ],
         },
@@ -685,14 +713,35 @@ def test_analyze_video():
                 {
                     "track_id": 1,
                     "label": "person",
+                    "confidence": 0.95,
+                    "box": {
+                        "x1": 0.0,
+                        "y1": 0.0,
+                        "x2": 10.0,
+                        "y2": 10.0,
+                    },
                 },
                 {
                     "track_id": 2,
                     "label": "person",
+                    "confidence": 0.90,
+                    "box": {
+                        "x1": 20.0,
+                        "y1": 0.0,
+                        "x2": 30.0,
+                        "y2": 10.0,
+                    },
                 },
                 {
                     "track_id": 3,
                     "label": "car",
+                    "confidence": 0.88,
+                    "box": {
+                        "x1": 40.0,
+                        "y1": 0.0,
+                        "x2": 50.0,
+                        "y2": 10.0,
+                    },
                 },
             ],
         },

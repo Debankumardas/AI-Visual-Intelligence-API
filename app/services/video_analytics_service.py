@@ -595,4 +595,61 @@ class VideoAnalyticsService:
             "track_max_speed": max_speed,
         }
 
+    def calculate_track_proximity_metrics(
+        self,
+        tracks_per_frame: list[list[dict]],
+        distance_threshold: float,
+    ):
+        """Calculate proximity statistics between tracked objects."""
+
+        if distance_threshold < 0:
+            raise ValueError(
+                "Distance threshold must be non-negative"
+            )
+
+        if not tracks_per_frame:
+            return {
+                "track_proximity_counts": {},
+            }
+
+        proximity_counts: dict[str, int] = {}
+
+        for tracks in tracks_per_frame:
+            track_positions: dict[int, tuple[float, float]] = {}
+
+            for track in tracks:
+                track_id = int(track["track_id"])
+                box = track["box"]
+
+                center_x = (box["x1"] + box["x2"]) / 2
+                center_y = (box["y1"] + box["y2"]) / 2
+
+                track_positions[track_id] = (
+                    center_x,
+                    center_y,
+                )
+
+            track_ids = sorted(track_positions)
+
+            for index, track_id_a in enumerate(track_ids):
+                for track_id_b in track_ids[index + 1:]:
+                    position_a = track_positions[track_id_a]
+                    position_b = track_positions[track_id_b]
+
+                    distance = (
+                        (position_a[0] - position_b[0]) ** 2
+                        + (position_a[1] - position_b[1]) ** 2
+                    ) ** 0.5
+
+                    if distance <= distance_threshold:
+                        pair = f"{track_id_a},{track_id_b}"
+
+                        proximity_counts[pair] = (
+                            proximity_counts.get(pair, 0) + 1
+                        )
+
+        return {
+            "track_proximity_counts": proximity_counts,
+        }
+
 video_analytics_service = VideoAnalyticsService()

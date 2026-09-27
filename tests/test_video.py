@@ -346,6 +346,10 @@ def test_video_analyze_success(monkeypatch):
                 1: 5.0,
                 2: 4.0,
             },
+            "track_proximity_counts": {
+                "1,2": 40,
+                "1,3": 15,
+            },
         },
     )
 
@@ -488,6 +492,10 @@ def test_video_analyze_success(monkeypatch):
     assert data["track_max_gap_frames"] == {
         "1": 3,
         "2": 3,
+    }
+    assert response.json()["track_proximity_counts"] == {
+        "1,2": 40,
+        "1,3": 15,
     }
 
 

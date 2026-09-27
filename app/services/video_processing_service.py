@@ -218,16 +218,33 @@ class VideoProcessingService:
             )
         )
 
+        track_movement_metrics = (
+            video_analytics_service.calculate_track_movement_metrics(
+                tracks_per_frame=tracks_per_frame,
+                frame_indices=detection_frame_indices,
+            )
+        )
+
+        track_proximity_metrics = (
+            video_analytics_service.calculate_track_proximity_metrics(
+                tracks_per_frame=tracks_per_frame,
+                distance_threshold=50.0,
+            )
+        )
+
         return {
             **performance_metrics,
             **detection_metrics,
             **class_detection_metrics,
+            **track_movement_metrics,
+            **track_proximity_metrics,
             **track_duration_metrics,
 
             **temporal_detection_metrics,
             **tracking_metrics,
             **track_persistence_metrics,
             **track_gap_metrics,
+            **track_cooccurrence_metrics,
             **class_tracking_metrics,
         }
 

@@ -740,3 +740,128 @@ def test_calculate_track_movement_metrics_mismatched_lengths():
             tracks_per_frame=[[]],
             frame_indices=[],
         )
+
+
+def test_calculate_track_proximity_metrics():
+    service = VideoAnalyticsService()
+
+    tracks_per_frame = [
+        [
+            {
+                "track_id": 1,
+                "box": {
+                    "x1": 0,
+                    "y1": 0,
+                    "x2": 10,
+                    "y2": 10,
+                },
+            },
+            {
+                "track_id": 2,
+                "box": {
+                    "x1": 10,
+                    "y1": 0,
+                    "x2": 20,
+                    "y2": 10,
+                },
+            },
+            {
+                "track_id": 3,
+                "box": {
+                    "x1": 100,
+                    "y1": 100,
+                    "x2": 110,
+                    "y2": 110,
+                },
+            },
+        ],
+        [
+            {
+                "track_id": 1,
+                "box": {
+                    "x1": 0,
+                    "y1": 0,
+                    "x2": 10,
+                    "y2": 10,
+                },
+            },
+            {
+                "track_id": 2,
+                "box": {
+                    "x1": 10,
+                    "y1": 0,
+                    "x2": 20,
+                    "y2": 10,
+                },
+            },
+        ],
+    ]
+
+    result = service.calculate_track_proximity_metrics(
+        tracks_per_frame=tracks_per_frame,
+        distance_threshold=10,
+    )
+
+    assert result["track_proximity_counts"] == {
+        "1,2": 2,
+    }
+
+
+def test_calculate_track_proximity_metrics_empty():
+    service = VideoAnalyticsService()
+
+    result = service.calculate_track_proximity_metrics(
+        tracks_per_frame=[],
+        distance_threshold=10,
+    )
+
+    assert result["track_proximity_counts"] == {}
+
+
+def test_calculate_track_proximity_metrics_negative_threshold():
+    service = VideoAnalyticsService()
+
+    with pytest.raises(
+        ValueError,
+        match="Distance threshold must be non-negative",
+    ):
+        service.calculate_track_proximity_metrics(
+            tracks_per_frame=[],
+            distance_threshold=-1,
+        )
+
+
+def test_calculate_track_proximity_metrics_threshold_boundary():
+    service = VideoAnalyticsService()
+
+    tracks_per_frame = [
+        [
+            {
+                "track_id": 1,
+                "box": {
+                    "x1": 0,
+                    "y1": 0,
+                    "x2": 10,
+                    "y2": 10,
+                },
+            },
+            {
+                "track_id": 2,
+                "box": {
+                    "x1": 10,
+                    "y1": 0,
+                    "x2": 20,
+                    "y2": 10,
+                },
+            },
+        ]
+    ]
+
+    result = service.calculate_track_proximity_metrics(
+        tracks_per_frame=tracks_per_frame,
+        distance_threshold=10,
+    )
+
+    assert result["track_proximity_counts"] == {
+        "1,2": 1,
+    }
