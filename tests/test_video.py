@@ -328,6 +328,11 @@ def test_video_analyze_success(monkeypatch):
                 1: 3,
                 2: 3,
             },
+
+            "track_cooccurrence_counts": {
+                (1, 2): 2,
+                (1, 3): 1,
+            },
         },
     )
 
@@ -440,6 +445,11 @@ def test_video_analyze_success(monkeypatch):
     assert data["track_gap_count"] == {
         "1": 2,
         "2": 1,
+    }
+
+    assert data["track_cooccurrence_counts"] == {
+        "1,2": 2,
+        "1,3": 1,
     }
 
     assert data["track_total_gap_frames"] == {
