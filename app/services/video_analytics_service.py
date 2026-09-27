@@ -494,7 +494,7 @@ class VideoAnalyticsService:
 
             for index, track_id_a in enumerate(unique_track_ids):
                 for track_id_b in unique_track_ids[index + 1:]:
-                    pair = (track_id_a, track_id_b)
+                    pair = f"{track_id_a},{track_id_b}"
 
                     cooccurrence_counts[pair] = (
                         cooccurrence_counts.get(pair, 0) + 1
@@ -502,6 +502,97 @@ class VideoAnalyticsService:
 
         return {
             "track_cooccurrence_counts": cooccurrence_counts,
+        }
+
+    def calculate_track_movement_metrics(
+        self,
+        tracks_per_frame: list[list[dict]],
+        frame_indices: list[int],
+    ):
+        """Calculate movement statistics for each tracked object."""
+
+        if not tracks_per_frame:
+            return {
+                "track_distance_travelled": {},
+                "track_average_speed": {},
+                "track_max_speed": {},
+            }
+
+        if len(tracks_per_frame) != len(frame_indices):
+            raise ValueError(
+                "Track frames and frame indices must have the same length"
+            )
+
+        previous_position: dict[int, tuple[float, float]] = {}
+        previous_frame: dict[int, int] = {}
+
+        total_distance: dict[int, float] = {}
+        speed_values: dict[int, list[float]] = {}
+
+        for tracks, frame_index in zip(
+            tracks_per_frame,
+            frame_indices,
+        ):
+            for track in tracks:
+                track_id = track["track_id"]
+                box = track["box"]
+
+                center_x = (box["x1"] + box["x2"]) / 2
+                center_y = (box["y1"] + box["y2"]) / 2
+
+                current_position = (center_x, center_y)
+
+                if track_id in previous_position:
+                    previous_x, previous_y = previous_position[track_id]
+
+                    distance = (
+                        (center_x - previous_x) ** 2
+                        + (center_y - previous_y) ** 2
+                    ) ** 0.5
+
+                    frame_delta = (
+                        frame_index - previous_frame[track_id]
+                    )
+
+                    if frame_delta > 0:
+                        speed = distance / frame_delta
+
+                        total_distance[track_id] = (
+                            total_distance.get(track_id, 0.0)
+                            + distance
+                        )
+
+                        speed_values.setdefault(
+                            track_id,
+                            [],
+                        ).append(speed)
+
+                previous_position[track_id] = current_position
+                previous_frame[track_id] = frame_index
+
+        average_speed = {
+            track_id: round(
+                sum(speeds) / len(speeds),
+                3,
+            )
+            for track_id, speeds in speed_values.items()
+        }
+
+        max_speed = {
+            track_id: round(
+                max(speeds),
+                3,
+            )
+            for track_id, speeds in speed_values.items()
+        }
+
+        return {
+            "track_distance_travelled": {
+                track_id: round(distance, 3)
+                for track_id, distance in total_distance.items()
+            },
+            "track_average_speed": average_speed,
+            "track_max_speed": max_speed,
         }
 
 video_analytics_service = VideoAnalyticsService()
