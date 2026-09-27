@@ -1,9 +1,7 @@
 import pytest
-from app.services.video_analytics_service import (
-    VideoAnalyticsService,
-)
 
 from app.services.video_analytics_service import (
+    VideoAnalyticsService,
     video_analytics_service,
 )
 
@@ -258,74 +256,6 @@ def test_calculate_temporal_detection_metrics():
         "car": 0.6,
     }
 
-def test_calculate_track_duration_metrics():
-    result = video_analytics_service.calculate_track_duration_metrics(
-        track_ids_per_frame=[
-            [1, 2],
-            [1],
-            [1, 2],
-            [2],
-        ],
-        frame_indices=[
-            0,
-            1,
-            2,
-            3,
-        ],
-    )
-
-    assert result == {
-        "track_duration_frames": {
-            1: 3,
-            2: 4,
-        },
-    }
-
-
-def test_calculate_track_duration_metrics_with_frame_stride():
-    result = video_analytics_service.calculate_track_duration_metrics(
-        track_ids_per_frame=[
-            [5],
-            [5],
-            [5],
-        ],
-        frame_indices=[
-            0,
-            2,
-            4,
-        ],
-    )
-
-    assert result == {
-        "track_duration_frames": {
-            5: 5,
-        },
-    }
-
-
-def test_calculate_track_duration_metrics_empty():
-    result = video_analytics_service.calculate_track_duration_metrics(
-        track_ids_per_frame=[],
-        frame_indices=[],
-    )
-
-    assert result == {
-        "track_duration_frames": {},
-    }
-
-
-def test_calculate_track_duration_metrics_mismatched_lengths():
-    with pytest.raises(
-        ValueError,
-        match="Track frames and frame indices must have the same length",
-    ):
-        video_analytics_service.calculate_track_duration_metrics(
-            track_ids_per_frame=[
-                [1],
-            ],
-            frame_indices=[],
-        )
-
 
 def test_calculate_temporal_detection_metrics_with_frame_stride():
     service = VideoAnalyticsService()
@@ -398,17 +328,84 @@ def test_calculate_temporal_detection_metrics_mismatched_lengths():
 
     frame_indices = [0]
 
-    try:
+    with pytest.raises(
+        ValueError,
+        match="Detection frames and frame indices must have the same length",
+    ):
         service.calculate_temporal_detection_metrics(
             detections_per_frame=detections_per_frame,
             frame_indices=frame_indices,
         )
-        assert False, "Expected ValueError"
-    except ValueError as exc:
-        assert str(exc) == (
-            "Detection frames and frame indices "
-            "must have the same length"
+
+
+def test_calculate_track_duration_metrics():
+    result = video_analytics_service.calculate_track_duration_metrics(
+        track_ids_per_frame=[
+            [1, 2],
+            [1],
+            [1, 2],
+            [2],
+        ],
+        frame_indices=[
+            0,
+            1,
+            2,
+            3,
+        ],
+    )
+
+    assert result == {
+        "track_duration_frames": {
+            1: 3,
+            2: 4,
+        },
+    }
+
+
+def test_calculate_track_duration_metrics_with_frame_stride():
+    result = video_analytics_service.calculate_track_duration_metrics(
+        track_ids_per_frame=[
+            [5],
+            [5],
+            [5],
+        ],
+        frame_indices=[
+            0,
+            2,
+            4,
+        ],
+    )
+
+    assert result == {
+        "track_duration_frames": {
+            5: 5,
+        },
+    }
+
+
+def test_calculate_track_duration_metrics_empty():
+    result = video_analytics_service.calculate_track_duration_metrics(
+        track_ids_per_frame=[],
+        frame_indices=[],
+    )
+
+    assert result == {
+        "track_duration_frames": {},
+    }
+
+
+def test_calculate_track_duration_metrics_mismatched_lengths():
+    with pytest.raises(
+        ValueError,
+        match="Track frames and frame indices must have the same length",
+    ):
+        video_analytics_service.calculate_track_duration_metrics(
+            track_ids_per_frame=[
+                [1],
+            ],
+            frame_indices=[],
         )
+
 
 def test_calculate_track_persistence_metrics():
     service = VideoAnalyticsService()
@@ -488,6 +485,7 @@ def test_calculate_track_persistence_metrics_mismatched_lengths():
             frame_indices=[0],
         )
 
+
 def test_calculate_track_gap_metrics():
     track_ids_per_frame = [
         [1],
@@ -551,6 +549,7 @@ def test_calculate_track_gap_metrics_empty():
     assert result["track_total_gap_frames"] == {}
     assert result["track_max_gap_frames"] == {}
 
+
 def test_calculate_track_gap_metrics_track_ends_during_gap():
     track_ids_per_frame = [
         [1],
@@ -568,6 +567,7 @@ def test_calculate_track_gap_metrics_track_ends_during_gap():
     assert result["track_total_gap_frames"] == {}
     assert result["track_max_gap_frames"] == {}
 
+
 def test_calculate_track_cooccurrence_metrics():
     service = VideoAnalyticsService()
 
@@ -582,8 +582,8 @@ def test_calculate_track_cooccurrence_metrics():
 
     assert result == {
         "track_cooccurrence_counts": {
-            (1, 2): 2,
-            (1, 3): 1,
+            "1,2": 2,
+            "1,3": 1,
         },
     }
 
@@ -610,6 +610,133 @@ def test_calculate_track_cooccurrence_metrics_duplicate_ids():
 
     assert result == {
         "track_cooccurrence_counts": {
-            (1, 2): 2,
+            "1,2": 2,
         },
     }
+
+
+def test_calculate_track_movement_metrics():
+    service = VideoAnalyticsService()
+
+    result = service.calculate_track_movement_metrics(
+        tracks_per_frame=[
+            [
+                {
+                    "track_id": 1,
+                    "box": {
+                        "x1": 0,
+                        "y1": 0,
+                        "x2": 10,
+                        "y2": 10,
+                    },
+                }
+            ],
+            [
+                {
+                    "track_id": 1,
+                    "box": {
+                        "x1": 3,
+                        "y1": 4,
+                        "x2": 13,
+                        "y2": 14,
+                    },
+                }
+            ],
+            [
+                {
+                    "track_id": 1,
+                    "box": {
+                        "x1": 6,
+                        "y1": 8,
+                        "x2": 16,
+                        "y2": 18,
+                    },
+                }
+            ],
+        ],
+        frame_indices=[0, 1, 2],
+    )
+
+    assert result == {
+        "track_distance_travelled": {
+            1: 10.0,
+        },
+        "track_average_speed": {
+            1: 5.0,
+        },
+        "track_max_speed": {
+            1: 5.0,
+        },
+    }
+
+
+def test_calculate_track_movement_metrics_with_frame_stride():
+    service = VideoAnalyticsService()
+
+    result = service.calculate_track_movement_metrics(
+        tracks_per_frame=[
+            [
+                {
+                    "track_id": 1,
+                    "box": {
+                        "x1": 0,
+                        "y1": 0,
+                        "x2": 10,
+                        "y2": 10,
+                    },
+                }
+            ],
+            [
+                {
+                    "track_id": 1,
+                    "box": {
+                        "x1": 6,
+                        "y1": 8,
+                        "x2": 16,
+                        "y2": 18,
+                    },
+                }
+            ],
+        ],
+        frame_indices=[0, 2],
+    )
+
+    assert result == {
+        "track_distance_travelled": {
+            1: 10.0,
+        },
+        "track_average_speed": {
+            1: 5.0,
+        },
+        "track_max_speed": {
+            1: 5.0,
+        },
+    }
+
+
+def test_calculate_track_movement_metrics_empty():
+    service = VideoAnalyticsService()
+
+    result = service.calculate_track_movement_metrics(
+        tracks_per_frame=[],
+        frame_indices=[],
+    )
+
+    assert result == {
+        "track_distance_travelled": {},
+        "track_average_speed": {},
+        "track_max_speed": {},
+    }
+
+
+def test_calculate_track_movement_metrics_mismatched_lengths():
+    service = VideoAnalyticsService()
+
+    with pytest.raises(
+        ValueError,
+        match="Track frames and frame indices must have the same length",
+    ):
+        service.calculate_track_movement_metrics(
+            tracks_per_frame=[[]],
+            frame_indices=[],
+        )

@@ -330,8 +330,21 @@ def test_video_analyze_success(monkeypatch):
             },
 
             "track_cooccurrence_counts": {
-                (1, 2): 2,
-                (1, 3): 1,
+                "1,2": 2,
+                "1,3": 1,
+            },
+
+            "track_distance_travelled": {
+                1: 250.0,
+                2: 180.0,
+            },
+            "track_average_speed": {
+                1: 2.5,
+                2: 1.8,
+            },
+            "track_max_speed": {
+                1: 5.0,
+                2: 4.0,
             },
         },
     )
@@ -450,6 +463,21 @@ def test_video_analyze_success(monkeypatch):
     assert data["track_cooccurrence_counts"] == {
         "1,2": 2,
         "1,3": 1,
+    }
+
+    assert data["track_distance_travelled"] == {
+        "1": 250.0,
+        "2": 180.0,
+    }
+
+    assert data["track_average_speed"] == {
+        "1": 2.5,
+        "2": 1.8,
+    }
+
+    assert data["track_max_speed"] == {
+        "1": 5.0,
+        "2": 4.0,
     }
 
     assert data["track_total_gap_frames"] == {

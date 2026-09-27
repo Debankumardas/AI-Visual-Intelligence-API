@@ -223,4 +223,9 @@ class VideoAnalyticsResponse(BaseModel):
     track_max_gap_frames: dict[int, int]
 
     # TRACK CO-OCCURRENCE ANALYTICS
-    track_cooccurrence_counts: dict[tuple[int, int], int]
+    track_cooccurrence_counts: dict[str, int]
+
+    # TRACK MOVEMENT ANALYTICS
+    track_distance_travelled: dict[int, float]
+    track_average_speed: dict[int, float]
+    track_max_speed: dict[int, float]
