@@ -247,6 +247,17 @@ class VideoProcessingService:
             )
         )
 
+        track_interaction_network_metrics = (
+            video_analytics_service
+            .calculate_track_interaction_network_metrics(
+                track_interaction_episodes=(
+                    track_interaction_episode_metrics[
+                        "track_interaction_episodes"
+                    ]
+                ),
+            )
+        )
+
         return {
             **performance_metrics,
             **detection_metrics,
@@ -256,6 +267,7 @@ class VideoProcessingService:
             **track_duration_metrics,
             **track_interaction_duration_metrics,
             **track_interaction_episode_metrics,
+            **track_interaction_network_metrics,
             **temporal_detection_metrics,
             **tracking_metrics,
             **track_persistence_metrics,

@@ -798,4 +798,55 @@ class VideoAnalyticsService:
             "track_interaction_episodes": interaction_episodes,
         }
 
+    def calculate_track_interaction_network_metrics(
+        self,
+        track_interaction_episodes: dict[str, int],
+    ):
+        """Calculate per-track interaction network statistics."""
+
+        if not track_interaction_episodes:
+            return {
+                "track_interaction_partner_counts": {},
+                "track_interaction_episode_counts": {},
+            }
+
+        interaction_partners: dict[int, set[int]] = {}
+        interaction_episode_counts: dict[int, int] = {}
+
+        for pair, episode_count in track_interaction_episodes.items():
+            track_id_a, track_id_b = (
+                int(track_id)
+                for track_id in pair.split(",")
+            )
+
+            interaction_partners.setdefault(
+                track_id_a,
+                set(),
+            ).add(track_id_b)
+
+            interaction_partners.setdefault(
+                track_id_b,
+                set(),
+            ).add(track_id_a)
+
+            interaction_episode_counts[track_id_a] = (
+                interaction_episode_counts.get(track_id_a, 0)
+                + episode_count
+            )
+
+            interaction_episode_counts[track_id_b] = (
+                interaction_episode_counts.get(track_id_b, 0)
+                + episode_count
+            )
+
+        return {
+            "track_interaction_partner_counts": {
+                track_id: len(partners)
+                for track_id, partners in interaction_partners.items()
+            },
+            "track_interaction_episode_counts": (
+                interaction_episode_counts
+            ),
+        }
+
 video_analytics_service = VideoAnalyticsService()

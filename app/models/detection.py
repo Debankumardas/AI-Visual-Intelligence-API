@@ -232,3 +232,7 @@ class VideoAnalyticsResponse(BaseModel):
     track_proximity_counts: dict[str, int]
     track_interaction_duration: dict[str, int]
     track_interaction_episodes: dict[str, int]
+
+    # TRACK INTERACTION NETWORK ANALYTICS
+    track_interaction_partner_counts: dict[int, int]
+    track_interaction_episode_counts: dict[int, int]
