@@ -230,3 +230,4 @@ class VideoAnalyticsResponse(BaseModel):
     track_average_speed: dict[int, float]
     track_max_speed: dict[int, float]
     track_proximity_counts: dict[str, int]
+    track_interaction_duration: dict[str, int]

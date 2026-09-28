@@ -652,4 +652,86 @@ class VideoAnalyticsService:
             "track_proximity_counts": proximity_counts,
         }
 
+    def calculate_track_interaction_duration_metrics(
+        self,
+        tracks_per_frame: list[list[dict]],
+        frame_indices: list[int],
+        distance_threshold: float,
+    ):
+        """Calculate continuous interaction duration between tracked objects."""
+
+        if distance_threshold < 0:
+            raise ValueError(
+                "Distance threshold must be non-negative"
+            )
+
+        if not tracks_per_frame:
+            return {
+                "track_interaction_duration": {},
+            }
+
+        if len(tracks_per_frame) != len(frame_indices):
+            raise ValueError(
+                "Track frames and frame indices must have the same length"
+            )
+
+        interaction_duration: dict[str, int] = {}
+        previous_close_frame: dict[str, int] = {}
+
+        for tracks, frame_index in zip(
+            tracks_per_frame,
+            frame_indices,
+        ):
+            track_positions: dict[int, tuple[float, float]] = {}
+
+            for track in tracks:
+                track_id = int(track["track_id"])
+                box = track["box"]
+
+                center_x = (box["x1"] + box["x2"]) / 2
+                center_y = (box["y1"] + box["y2"]) / 2
+
+                track_positions[track_id] = (
+                    center_x,
+                    center_y,
+                )
+
+            close_pairs: set[str] = set()
+
+            track_ids = sorted(track_positions)
+
+            for index, track_id_a in enumerate(track_ids):
+                for track_id_b in track_ids[index + 1:]:
+                    position_a = track_positions[track_id_a]
+                    position_b = track_positions[track_id_b]
+
+                    distance = (
+                        (position_a[0] - position_b[0]) ** 2
+                        + (position_a[1] - position_b[1]) ** 2
+                    ) ** 0.5
+
+                    if distance <= distance_threshold:
+                        pair = f"{track_id_a},{track_id_b}"
+                        close_pairs.add(pair)
+
+                        if pair in previous_close_frame:
+                            duration = (
+                                frame_index
+                                - previous_close_frame[pair]
+                            )
+
+                            interaction_duration[pair] = (
+                                interaction_duration.get(pair, 0)
+                                + duration
+                            )
+
+            previous_close_frame = {
+                pair: frame_index
+                for pair in close_pairs
+            }
+
+        return {
+            "track_interaction_duration": interaction_duration,
+        }
+
 video_analytics_service = VideoAnalyticsService()

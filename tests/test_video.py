@@ -350,6 +350,10 @@ def test_video_analyze_success(monkeypatch):
                 "1,2": 40,
                 "1,3": 15,
             },
+            "track_interaction_duration": {
+                "1,2": 2,
+                "1,3": 1,
+            },
         },
     )
 
@@ -496,6 +500,11 @@ def test_video_analyze_success(monkeypatch):
     assert response.json()["track_proximity_counts"] == {
         "1,2": 40,
         "1,3": 15,
+    }
+
+    assert response.json()["track_interaction_duration"] == {
+        "1,2": 2,
+        "1,3": 1,
     }
 
 
