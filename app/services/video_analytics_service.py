@@ -734,4 +734,68 @@ class VideoAnalyticsService:
             "track_interaction_duration": interaction_duration,
         }
 
+    def calculate_track_interaction_episode_metrics(
+        self,
+        tracks_per_frame: list[list[dict]],
+        distance_threshold: float,
+    ):
+        """Calculate the number of continuous interaction episodes."""
+
+        if distance_threshold < 0:
+            raise ValueError(
+                "Distance threshold must be non-negative"
+            )
+
+        if not tracks_per_frame:
+            return {
+                "track_interaction_episodes": {},
+            }
+
+        interaction_episodes: dict[str, int] = {}
+        previous_close_pairs: set[str] = set()
+
+        for tracks in tracks_per_frame:
+            track_positions: dict[int, tuple[float, float]] = {}
+
+            for track in tracks:
+                track_id = int(track["track_id"])
+                box = track["box"]
+
+                center_x = (box["x1"] + box["x2"]) / 2
+                center_y = (box["y1"] + box["y2"]) / 2
+
+                track_positions[track_id] = (
+                    center_x,
+                    center_y,
+                )
+
+            current_close_pairs: set[str] = set()
+
+            track_ids = sorted(track_positions)
+
+            for index, track_id_a in enumerate(track_ids):
+                for track_id_b in track_ids[index + 1:]:
+                    position_a = track_positions[track_id_a]
+                    position_b = track_positions[track_id_b]
+
+                    distance = (
+                        (position_a[0] - position_b[0]) ** 2
+                        + (position_a[1] - position_b[1]) ** 2
+                    ) ** 0.5
+
+                    if distance <= distance_threshold:
+                        pair = f"{track_id_a},{track_id_b}"
+                        current_close_pairs.add(pair)
+
+                        if pair not in previous_close_pairs:
+                            interaction_episodes[pair] = (
+                                interaction_episodes.get(pair, 0) + 1
+                            )
+
+            previous_close_pairs = current_close_pairs
+
+        return {
+            "track_interaction_episodes": interaction_episodes,
+        }
+
 video_analytics_service = VideoAnalyticsService()

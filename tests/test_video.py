@@ -354,6 +354,10 @@ def test_video_analyze_success(monkeypatch):
                 "1,2": 2,
                 "1,3": 1,
             },
+            "track_interaction_episodes": {
+                "1,2": 2,
+                "1,3": 1,
+            },
         },
     )
 

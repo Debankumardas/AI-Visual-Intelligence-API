@@ -240,6 +240,13 @@ class VideoProcessingService:
             )
         )
 
+        track_interaction_episode_metrics = (
+            video_analytics_service.calculate_track_interaction_episode_metrics(
+                tracks_per_frame=tracks_per_frame,
+                distance_threshold=50.0,
+            )
+        )
+
         return {
             **performance_metrics,
             **detection_metrics,
@@ -248,6 +255,7 @@ class VideoProcessingService:
             **track_proximity_metrics,
             **track_duration_metrics,
             **track_interaction_duration_metrics,
+            **track_interaction_episode_metrics,
             **temporal_detection_metrics,
             **tracking_metrics,
             **track_persistence_metrics,

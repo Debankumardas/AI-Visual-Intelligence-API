@@ -994,3 +994,187 @@ def test_calculate_track_interaction_duration_metrics_frame_mismatch():
             frame_indices=[],
             distance_threshold=50.0,
         )
+
+def test_calculate_track_interaction_episode_metrics():
+    tracks_per_frame = [
+        [
+            {
+                "track_id": 1,
+                "box": {
+                    "x1": 0,
+                    "y1": 0,
+                    "x2": 10,
+                    "y2": 10,
+                },
+            },
+            {
+                "track_id": 2,
+                "box": {
+                    "x1": 20,
+                    "y1": 0,
+                    "x2": 30,
+                    "y2": 10,
+                },
+            },
+        ],
+        [
+            {
+                "track_id": 1,
+                "box": {
+                    "x1": 0,
+                    "y1": 0,
+                    "x2": 10,
+                    "y2": 10,
+                },
+            },
+            {
+                "track_id": 2,
+                "box": {
+                    "x1": 20,
+                    "y1": 0,
+                    "x2": 30,
+                    "y2": 10,
+                },
+            },
+        ],
+        [],
+        [
+            {
+                "track_id": 1,
+                "box": {
+                    "x1": 0,
+                    "y1": 0,
+                    "x2": 10,
+                    "y2": 10,
+                },
+            },
+            {
+                "track_id": 2,
+                "box": {
+                    "x1": 20,
+                    "y1": 0,
+                    "x2": 30,
+                    "y2": 10,
+                },
+            },
+        ],
+    ]
+
+    result = video_analytics_service.calculate_track_interaction_episode_metrics(
+        tracks_per_frame=tracks_per_frame,
+        distance_threshold=25.0,
+    )
+
+    assert result == {
+        "track_interaction_episodes": {
+            "1,2": 2,
+        },
+    }
+
+def test_calculate_track_interaction_episode_metrics_empty():
+    result = video_analytics_service.calculate_track_interaction_episode_metrics(
+        tracks_per_frame=[],
+        distance_threshold=50.0,
+    )
+
+    assert result == {
+        "track_interaction_episodes": {},
+    }
+
+
+def test_calculate_track_interaction_episode_metrics_negative_threshold():
+    with pytest.raises(ValueError, match="Distance threshold must be non-negative"):
+        video_analytics_service.calculate_track_interaction_episode_metrics(
+            tracks_per_frame=[],
+            distance_threshold=-1.0,
+        )
+
+
+def test_calculate_track_interaction_episode_metrics_single_observation():
+    tracks_per_frame = [
+        [
+            {
+                "track_id": 1,
+                "box": {
+                    "x1": 0,
+                    "y1": 0,
+                    "x2": 10,
+                    "y2": 10,
+                },
+            },
+            {
+                "track_id": 2,
+                "box": {
+                    "x1": 20,
+                    "y1": 0,
+                    "x2": 30,
+                    "y2": 10,
+                },
+            },
+        ],
+    ]
+
+    result = video_analytics_service.calculate_track_interaction_episode_metrics(
+        tracks_per_frame=tracks_per_frame,
+        distance_threshold=25.0,
+    )
+
+    assert result == {
+        "track_interaction_episodes": {
+            "1,2": 1,
+        },
+    }
+
+def test_calculate_track_interaction_episode_metrics_empty():
+    result = video_analytics_service.calculate_track_interaction_episode_metrics(
+        tracks_per_frame=[],
+        distance_threshold=50.0,
+    )
+
+    assert result == {
+        "track_interaction_episodes": {},
+    }
+
+
+def test_calculate_track_interaction_episode_metrics_negative_threshold():
+    with pytest.raises(ValueError, match="Distance threshold must be non-negative"):
+        video_analytics_service.calculate_track_interaction_episode_metrics(
+            tracks_per_frame=[],
+            distance_threshold=-1.0,
+        )
+
+
+def test_calculate_track_interaction_episode_metrics_single_observation():
+    tracks_per_frame = [
+        [
+            {
+                "track_id": 1,
+                "box": {
+                    "x1": 0,
+                    "y1": 0,
+                    "x2": 10,
+                    "y2": 10,
+                },
+            },
+            {
+                "track_id": 2,
+                "box": {
+                    "x1": 20,
+                    "y1": 0,
+                    "x2": 30,
+                    "y2": 10,
+                },
+            },
+        ],
+    ]
+
+    result = video_analytics_service.calculate_track_interaction_episode_metrics(
+        tracks_per_frame=tracks_per_frame,
+        distance_threshold=25.0,
+    )
+
+    assert result == {
+        "track_interaction_episodes": {
+            "1,2": 1,
+        },
+    }
