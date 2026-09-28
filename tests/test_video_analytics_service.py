@@ -865,3 +865,132 @@ def test_calculate_track_proximity_metrics_threshold_boundary():
     assert result["track_proximity_counts"] == {
         "1,2": 1,
     }
+
+def test_calculate_track_interaction_duration_metrics():
+    service = VideoAnalyticsService()
+
+    tracks_per_frame = [
+        [
+            {
+                "track_id": 1,
+                "box": {
+                    "x1": 0.0,
+                    "y1": 0.0,
+                    "x2": 10.0,
+                    "y2": 10.0,
+                },
+            },
+            {
+                "track_id": 2,
+                "box": {
+                    "x1": 20.0,
+                    "y1": 0.0,
+                    "x2": 30.0,
+                    "y2": 10.0,
+                },
+            },
+        ],
+        [
+            {
+                "track_id": 1,
+                "box": {
+                    "x1": 0.0,
+                    "y1": 0.0,
+                    "x2": 10.0,
+                    "y2": 10.0,
+                },
+            },
+            {
+                "track_id": 2,
+                "box": {
+                    "x1": 20.0,
+                    "y1": 0.0,
+                    "x2": 30.0,
+                    "y2": 10.0,
+                },
+            },
+        ],
+        [
+            {
+                "track_id": 1,
+                "box": {
+                    "x1": 0.0,
+                    "y1": 0.0,
+                    "x2": 10.0,
+                    "y2": 10.0,
+                },
+            },
+            {
+                "track_id": 2,
+                "box": {
+                    "x1": 100.0,
+                    "y1": 0.0,
+                    "x2": 110.0,
+                    "y2": 10.0,
+                },
+            },
+        ],
+    ]
+
+    result = service.calculate_track_interaction_duration_metrics(
+        tracks_per_frame=tracks_per_frame,
+        frame_indices=[10, 20, 35],
+        distance_threshold=50.0,
+    )
+
+    assert result == {
+        "track_interaction_duration": {
+            "1,2": 10,
+        },
+    }
+
+
+def test_calculate_track_interaction_duration_metrics_empty():
+    service = VideoAnalyticsService()
+
+    result = service.calculate_track_interaction_duration_metrics(
+        tracks_per_frame=[],
+        frame_indices=[],
+        distance_threshold=50.0,
+    )
+
+    assert result == {
+        "track_interaction_duration": {},
+    }
+
+
+def test_calculate_track_interaction_duration_metrics_negative_threshold():
+    service = VideoAnalyticsService()
+
+    with pytest.raises(ValueError, match="non-negative"):
+        service.calculate_track_interaction_duration_metrics(
+            tracks_per_frame=[],
+            frame_indices=[],
+            distance_threshold=-1.0,
+        )
+
+
+def test_calculate_track_interaction_duration_metrics_frame_mismatch():
+    service = VideoAnalyticsService()
+
+    with pytest.raises(
+        ValueError,
+        match="same length",
+    ):
+        service.calculate_track_interaction_duration_metrics(
+            tracks_per_frame=[
+                [
+                    {
+                        "track_id": 1,
+                        "box": {
+                            "x1": 0.0,
+                            "y1": 0.0,
+                            "x2": 10.0,
+                            "y2": 10.0,
+                        },
+                    }
+                ]
+            ],
+            frame_indices=[],
+            distance_threshold=50.0,
+        )
