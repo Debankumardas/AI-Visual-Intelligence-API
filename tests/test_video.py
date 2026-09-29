@@ -358,6 +358,17 @@ def test_video_analyze_success(monkeypatch):
                 "1,2": 2,
                 "1,3": 1,
             },
+            "track_interaction_partner_counts": {
+                1: 2,
+                2: 1,
+                3: 1,
+            },
+
+            "track_interaction_episode_counts": {
+                1: 3,
+                2: 2,
+                3: 1,
+            },
         },
     )
 

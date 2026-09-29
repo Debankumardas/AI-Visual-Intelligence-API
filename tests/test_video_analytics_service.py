@@ -1178,3 +1178,66 @@ def test_calculate_track_interaction_episode_metrics_single_observation():
             "1,2": 1,
         },
     }
+
+def test_calculate_track_interaction_network_metrics():
+    track_interaction_episodes = {
+        "1,2": 3,
+        "1,4": 2,
+        "2,4": 1,
+    }
+
+    result = (
+        video_analytics_service
+        .calculate_track_interaction_network_metrics(
+            track_interaction_episodes=track_interaction_episodes,
+        )
+    )
+
+    assert result == {
+        "track_interaction_partner_counts": {
+            1: 2,
+            2: 2,
+            4: 2,
+        },
+        "track_interaction_episode_counts": {
+            1: 5,
+            2: 4,
+            4: 3,
+        },
+    }
+
+
+def test_calculate_track_interaction_network_metrics_empty():
+    result = (
+        video_analytics_service
+        .calculate_track_interaction_network_metrics(
+            track_interaction_episodes={},
+        )
+    )
+
+    assert result == {
+        "track_interaction_partner_counts": {},
+        "track_interaction_episode_counts": {},
+    }
+
+
+def test_calculate_track_interaction_network_metrics_single_pair():
+    result = (
+        video_analytics_service
+        .calculate_track_interaction_network_metrics(
+            track_interaction_episodes={
+                "1,2": 4,
+            },
+        )
+    )
+
+    assert result == {
+        "track_interaction_partner_counts": {
+            1: 1,
+            2: 1,
+        },
+        "track_interaction_episode_counts": {
+            1: 4,
+            2: 4,
+        },
+    }
