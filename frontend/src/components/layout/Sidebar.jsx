@@ -1,6 +1,5 @@
 import {
   BarChart3,
-  Camera,
   FileImage,
   LayoutDashboard,
   Settings,
@@ -26,7 +25,7 @@ const navigationItems = [
   },
 ]
 
-function Sidebar() {
+function Sidebar({ activePage, onNavigate }) {
   return (
     <aside className="flex h-screen w-64 flex-col border-r border-slate-800 bg-slate-950 text-white">
       <div className="border-b border-slate-800 px-6 py-5">
@@ -47,12 +46,14 @@ function Sidebar() {
         <div className="space-y-1">
           {navigationItems.map((item) => {
             const Icon = item.icon
+            const isActive = activePage === item.label
 
             return (
               <button
                 key={item.label}
+                onClick={() => onNavigate(item.label)}
                 className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition ${
-                  item.label === "Dashboard"
+                  isActive
                     ? "bg-slate-800 text-white"
                     : "text-slate-400 hover:bg-slate-900 hover:text-white"
                 }`}
