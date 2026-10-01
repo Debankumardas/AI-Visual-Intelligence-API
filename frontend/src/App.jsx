@@ -4,6 +4,7 @@ import Sidebar from "./components/layout/Sidebar"
 import Topbar from "./components/layout/Topbar"
 import StatCard from "./components/ui/StatCard"
 import ImageAnalysis from "./pages/ImageAnalysis"
+import VideoAnalysis from "./pages/VideoAnalysis"
 
 import {
   Activity,
@@ -18,6 +19,10 @@ function App() {
   const renderPage = () => {
     if (activePage === "Image Analysis") {
       return <ImageAnalysis />
+    }
+
+    if (activePage === "Video Analysis") {
+      return <VideoAnalysis />
     }
 
     return (
