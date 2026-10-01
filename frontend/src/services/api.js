@@ -59,7 +59,13 @@ export const analyzeVideo = async (file) => {
   const formData = new FormData()
   formData.append("file", file)
 
-  const response = await api.post("/api/v1/video/analyze", formData)
+  const response = await api.post(
+    "/api/v1/video/analyze",
+    formData,
+    {
+      timeout: 180000,
+    },
+  )
 
   return response.data
 }
@@ -71,6 +77,9 @@ export const getVideoMetadata = async (file) => {
   const response = await api.post(
     "/api/v1/video/metadata",
     formData,
+    {
+      timeout: 60000,
+    },
   )
 
   return response.data
