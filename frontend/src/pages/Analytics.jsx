@@ -6,6 +6,8 @@ import {
   TrendingUp,
 } from "lucide-react"
 
+import InteractionNetwork from "../components/analytics/InteractionNetwork"
+
 function Analytics({ videoAnalytics }) {
   if (!videoAnalytics) {
     return (
@@ -100,6 +102,10 @@ function Analytics({ videoAnalytics }) {
           emptyMessage="No interaction episodes detected for this video."
         />
       </div>
+
+      <InteractionNetwork
+        interactions={videoAnalytics.track_interaction_episodes}
+      />
 
       <div className="rounded-xl border border-slate-800 bg-slate-900 p-6">
         <div className="flex items-center gap-3">
