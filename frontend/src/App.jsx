@@ -1,5 +1,6 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
+import Login from "./components/auth/Login"
 import Sidebar from "./components/layout/Sidebar"
 import Topbar from "./components/layout/Topbar"
 import StatCard from "./components/ui/StatCard"
@@ -14,9 +15,54 @@ import {
   Video,
 } from "lucide-react"
 
+import { getCurrentUser } from "./services/api"
+
+
 function App() {
-  const [activePage, setActivePage] = useState("Dashboard")
-  const [videoAnalytics, setVideoAnalytics] = useState(null)
+  const [token, setToken] = useState(
+    () => localStorage.getItem("access_token"),
+  )
+
+  const [user, setUser] = useState(null)
+  const [authLoading, setAuthLoading] = useState(true)
+
+  const [activePage, setActivePage] = useState(
+    "Dashboard",
+  )
+
+  const [videoAnalytics, setVideoAnalytics] =
+    useState(null)
+
+  useEffect(() => {
+    const restoreSession = async () => {
+      if (!token) {
+        setAuthLoading(false)
+        return
+      }
+
+      try {
+        const currentUser = await getCurrentUser(token)
+        setUser(currentUser)
+      } catch {
+        localStorage.removeItem("access_token")
+        setToken(null)
+        setUser(null)
+      } finally {
+        setAuthLoading(false)
+      }
+    }
+
+    restoreSession()
+  }, [token])
+
+  const handleLogin = (accessToken) => {
+    localStorage.setItem(
+      "access_token",
+      accessToken,
+    )
+
+    setToken(accessToken)
+  }
 
   const renderPage = () => {
     if (activePage === "Image Analysis") {
@@ -32,7 +78,11 @@ function App() {
     }
 
     if (activePage === "Analytics") {
-      return <Analytics videoAnalytics={videoAnalytics} />
+      return (
+        <Analytics
+          videoAnalytics={videoAnalytics}
+        />
+      )
     }
 
     return (
@@ -53,14 +103,22 @@ function App() {
 
         <StatCard
           title="Objects Detected"
-          value={videoAnalytics ? videoAnalytics.total_detections : "0"}
+          value={
+            videoAnalytics
+              ? videoAnalytics.total_detections
+              : "0"
+          }
           subtitle="Total detected objects"
           icon={Camera}
         />
 
         <StatCard
           title="Active Tracks"
-          value={videoAnalytics ? videoAnalytics.unique_track_ids : "0"}
+          value={
+            videoAnalytics
+              ? videoAnalytics.unique_track_ids
+              : "0"
+          }
           subtitle="Currently tracked objects"
           icon={Activity}
         />
@@ -72,13 +130,31 @@ function App() {
             </h3>
 
             <p className="mt-2 text-sm text-slate-400">
-              Upload images or videos to begin analysis and explore
-              detection and tracking analytics.
+              Upload images or videos to begin analysis
+              and explore detection and tracking analytics.
             </p>
           </div>
         </div>
       </div>
     )
+  }
+
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-950">
+        <div className="text-center">
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-slate-700 border-t-white" />
+
+          <p className="mt-4 text-sm text-slate-400">
+            Restoring session...
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!token || !user) {
+    return <Login onLogin={handleLogin} />
   }
 
   return (
@@ -89,7 +165,10 @@ function App() {
       />
 
       <main className="flex min-w-0 flex-1 flex-col">
-        <Topbar />
+        <Topbar
+          activePage={activePage}
+          user={user}
+        />
 
         <section className="flex-1 overflow-auto p-8">
           {renderPage()}
