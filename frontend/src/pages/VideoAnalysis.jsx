@@ -11,7 +11,7 @@ import {
   getVideoMetadata,
 } from "../services/api"
 
-function VideoAnalysis() {
+function VideoAnalysis({ onAnalyticsComplete }) {
   const [file, setFile] = useState(null)
   const [metadata, setMetadata] = useState(null)
   const [result, setResult] = useState(null)
@@ -52,6 +52,7 @@ function VideoAnalysis() {
       const analytics = await analyzeVideo(file)
 
       setResult(analytics)
+      onAnalyticsComplete(analytics)
     } catch (err) {
       setError(
         err.response?.data?.detail ||
