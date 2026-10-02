@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from app.auth.routes import router as auth_router
 from app.api.routes.health import router as health_router
 from app.api.v1.router import router as api_v1_router
 from app.core.config import settings
@@ -40,6 +41,7 @@ app = FastAPI(
         },
     },
 )
+
 
 # ============================================================
 # CORS MIDDLEWARE
@@ -91,6 +93,7 @@ async def app_exception_handler(
 
 app.include_router(api_v1_router)
 app.include_router(health_router)
+app.include_router(auth_router)
 
 
 # ============================================================
