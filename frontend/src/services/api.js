@@ -5,16 +5,63 @@ const api = axios.create({
   timeout: 30000,
 })
 
+// ─────────────────────────────────────────────
+// Health
+// ─────────────────────────────────────────────
+
 export const checkHealth = async () => {
   const response = await api.get("/health")
   return response.data
 }
 
+// ─────────────────────────────────────────────
+// Authentication
+// ─────────────────────────────────────────────
+
+export const loginUser = async (email, password) => {
+  const formData = new URLSearchParams()
+
+  formData.append("username", email)
+  formData.append("password", password)
+
+  const response = await api.post(
+    "/api/v1/auth/login",
+    formData,
+    {
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+    },
+  )
+
+  return response.data
+}
+
+export const getCurrentUser = async (token) => {
+  const response = await api.get(
+    "/api/v1/auth/me",
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  )
+
+  return response.data
+}
+
+// ─────────────────────────────────────────────
+// Image Analysis
+// ─────────────────────────────────────────────
+
 export const analyzeImage = async (file) => {
   const formData = new FormData()
   formData.append("file", file)
 
-  const response = await api.post("/api/v1/analyze", formData)
+  const response = await api.post(
+    "/api/v1/analyze",
+    formData,
+  )
 
   return response.data
 }
@@ -23,7 +70,10 @@ export const detectObjects = async (file) => {
   const formData = new FormData()
   formData.append("file", file)
 
-  const response = await api.post("/api/v1/detect", formData)
+  const response = await api.post(
+    "/api/v1/detect",
+    formData,
+  )
 
   return response.data
 }
@@ -32,7 +82,10 @@ export const countObjects = async (file) => {
   const formData = new FormData()
   formData.append("file", file)
 
-  const response = await api.post("/api/v1/detect/count", formData)
+  const response = await api.post(
+    "/api/v1/detect/count",
+    formData,
+  )
 
   return response.data
 }
@@ -41,7 +94,10 @@ export const trackObjects = async (file) => {
   const formData = new FormData()
   formData.append("file", file)
 
-  const response = await api.post("/api/v1/detect/track", formData)
+  const response = await api.post(
+    "/api/v1/detect/track",
+    formData,
+  )
 
   return response.data
 }
@@ -50,10 +106,17 @@ export const classifyImage = async (file) => {
   const formData = new FormData()
   formData.append("file", file)
 
-  const response = await api.post("/api/v1/predict", formData)
+  const response = await api.post(
+    "/api/v1/predict",
+    formData,
+  )
 
   return response.data
 }
+
+// ─────────────────────────────────────────────
+// Video Analysis
+// ─────────────────────────────────────────────
 
 export const analyzeVideo = async (file) => {
   const formData = new FormData()
