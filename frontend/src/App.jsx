@@ -5,6 +5,7 @@ import Topbar from "./components/layout/Topbar"
 import StatCard from "./components/ui/StatCard"
 import ImageAnalysis from "./pages/ImageAnalysis"
 import VideoAnalysis from "./pages/VideoAnalysis"
+import Analytics from "./pages/Analytics"
 
 import {
   Activity,
@@ -15,6 +16,7 @@ import {
 
 function App() {
   const [activePage, setActivePage] = useState("Dashboard")
+  const [videoAnalytics, setVideoAnalytics] = useState(null)
 
   const renderPage = () => {
     if (activePage === "Image Analysis") {
@@ -22,35 +24,43 @@ function App() {
     }
 
     if (activePage === "Video Analysis") {
-      return <VideoAnalysis />
+      return (
+        <VideoAnalysis
+          onAnalyticsComplete={setVideoAnalytics}
+        />
+      )
+    }
+
+    if (activePage === "Analytics") {
+      return <Analytics videoAnalytics={videoAnalytics} />
     }
 
     return (
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           title="Images Analyzed"
-          value="0"
+          value={videoAnalytics ? "1" : "0"}
           subtitle="Total image analysis jobs"
           icon={FileImage}
         />
 
         <StatCard
           title="Videos Processed"
-          value="0"
+          value={videoAnalytics ? "1" : "0"}
           subtitle="Total video processing jobs"
           icon={Video}
         />
 
         <StatCard
           title="Objects Detected"
-          value="0"
+          value={videoAnalytics ? videoAnalytics.total_detections : "0"}
           subtitle="Total detected objects"
           icon={Camera}
         />
 
         <StatCard
           title="Active Tracks"
-          value="0"
+          value={videoAnalytics ? videoAnalytics.unique_track_ids : "0"}
           subtitle="Currently tracked objects"
           icon={Activity}
         />
