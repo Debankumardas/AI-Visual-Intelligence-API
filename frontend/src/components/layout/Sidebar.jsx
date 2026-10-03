@@ -10,24 +10,29 @@ const navigationItems = [
   {
     label: "Dashboard",
     icon: LayoutDashboard,
+    preferenceKey: "dashboard_enabled",
   },
   {
     label: "Image Analysis",
     icon: FileImage,
+    preferenceKey: "image_analysis_enabled",
   },
   {
     label: "Video Analysis",
     icon: Video,
+    preferenceKey: "video_analysis_enabled",
   },
   {
     label: "Analytics",
     icon: BarChart3,
+    preferenceKey: null,
   },
 ]
 
 function Sidebar({
   activePage,
   onNavigate,
+  preferences,
 }) {
   return (
     <aside className="flex h-screen w-64 flex-col border-r border-slate-800 bg-slate-950 text-white">
@@ -51,15 +56,23 @@ function Sidebar({
         <div className="space-y-1">
           {navigationItems.map((item) => {
             const Icon = item.icon
+
+            if (
+              item.preferenceKey &&
+              preferences &&
+              !preferences[item.preferenceKey]
+            ) {
+              return null
+            }
+
             const isActive =
               activePage === item.label
 
             return (
               <button
                 key={item.label}
-                onClick={() =>
-                  onNavigate(item.label)
-                }
+                type="button"
+                onClick={() => onNavigate(item.label)}
                 className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition ${
                   isActive
                     ? "bg-slate-800 text-white"
@@ -78,6 +91,7 @@ function Sidebar({
       {/* Settings */}
       <div className="border-t border-slate-800 p-3">
         <button
+          type="button"
           onClick={() => onNavigate("Settings")}
           className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition ${
             activePage === "Settings"
