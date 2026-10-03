@@ -1,12 +1,12 @@
 from io import BytesIO
 
-from app.main import app
 from app.services.detection_service import detection_service
-from fastapi.testclient import TestClient
 from PIL import Image
 
 
-client = TestClient(app)
+from tests.test_auth_helper import get_authenticated_client
+
+client = get_authenticated_client()
 
 
 def create_test_image():

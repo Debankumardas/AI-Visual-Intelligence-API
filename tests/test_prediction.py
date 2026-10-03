@@ -2,12 +2,12 @@ from io import BytesIO
 from unittest.mock import patch
 
 from PIL import Image
-from fastapi.testclient import TestClient
-
-from app.main import app
 
 
-client = TestClient(app)
+
+from tests.test_auth_helper import get_authenticated_client
+
+client = get_authenticated_client()
 
 
 def create_test_image():
