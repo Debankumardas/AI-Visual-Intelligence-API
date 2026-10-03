@@ -50,6 +50,33 @@ export const getCurrentUser = async (token) => {
   return response.data
 }
 
+export const getPreferences = async (token) => {
+  const response = await api.get(
+    "/api/v1/auth/preferences",
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  )
+
+  return response.data
+}
+
+export const updatePreferences = async (token, preferences) => {
+  const response = await api.patch(
+    "/api/v1/auth/preferences",
+    preferences,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  )
+
+  return response.data
+}
+
 // ─────────────────────────────────────────────
 // Image Analysis
 // ─────────────────────────────────────────────
