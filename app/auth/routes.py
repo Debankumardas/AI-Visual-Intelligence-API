@@ -4,10 +4,13 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.auth.dependencies import get_current_user
+from app.auth.preferences import (
+    PreferencesResponse,
+    PreferencesUpdate,
+)
 from app.auth.schemas import (
     TokenResponse,
     UserCreate,
-    UserLogin,
     UserResponse,
 )
 from app.auth.security import (
@@ -17,6 +20,7 @@ from app.auth.security import (
 )
 from app.database.connection import get_db
 from app.models.user import User
+from app.models.user_preferences import UserPreferences
 
 
 router = APIRouter(
@@ -115,3 +119,63 @@ def get_me(
     current_user: User = Depends(get_current_user),
 ):
     return current_user
+
+
+@router.get(
+    "/preferences",
+    response_model=PreferencesResponse,
+)
+def get_preferences(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    preferences = db.scalar(
+        select(UserPreferences).where(
+            UserPreferences.user_id == current_user.id
+        )
+    )
+
+    if not preferences:
+        preferences = UserPreferences(
+            user_id=current_user.id
+        )
+
+        db.add(preferences)
+        db.commit()
+        db.refresh(preferences)
+
+    return preferences
+
+
+@router.patch(
+    "/preferences",
+    response_model=PreferencesResponse,
+)
+def update_preferences(
+    updates: PreferencesUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    preferences = db.scalar(
+        select(UserPreferences).where(
+            UserPreferences.user_id == current_user.id
+        )
+    )
+
+    if not preferences:
+        preferences = UserPreferences(
+            user_id=current_user.id
+        )
+        db.add(preferences)
+
+    update_data = updates.model_dump(
+        exclude_unset=True
+    )
+
+    for field, value in update_data.items():
+        setattr(preferences, field, value)
+
+    db.commit()
+    db.refresh(preferences)
+
+    return preferences

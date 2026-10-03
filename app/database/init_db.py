@@ -1,5 +1,6 @@
 from app.database.connection import Base, engine
 from app.models.user import User
+from app.models.user_preferences import UserPreferences
 
 
 def init_db() -> None:
