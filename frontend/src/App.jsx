@@ -178,10 +178,11 @@ if (activePage === "Settings") {
 
   return (
     <div className="flex min-h-screen bg-slate-950">
-      <Sidebar
-        activePage={activePage}
-        onNavigate={setActivePage}
-      />
+<Sidebar
+  activePage={activePage}
+  onNavigate={setActivePage}
+  preferences={preferences}
+/>
 
       <main className="flex min-w-0 flex-1 flex-col">
         <Topbar
