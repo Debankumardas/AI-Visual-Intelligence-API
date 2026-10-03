@@ -1,9 +1,9 @@
-from fastapi.testclient import TestClient
-
-from app.main import app
 
 
-client = TestClient(app)
+
+from tests.test_auth_helper import get_authenticated_client
+
+client = get_authenticated_client()
 
 
 def test_invalid_image_returns_standard_error():

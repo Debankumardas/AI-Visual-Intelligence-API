@@ -1,12 +1,12 @@
 from unittest.mock import MagicMock
 
-from fastapi.testclient import TestClient
 
-from app.main import app
 from app.api.routes import video as video_route
 
 
-client = TestClient(app)
+from tests.test_auth_helper import get_authenticated_client
+
+client = get_authenticated_client()
 
 
 def test_video_metadata_success(monkeypatch):
@@ -578,3 +578,4 @@ def test_video_analyze_empty_file():
 
     assert response.status_code == 400
     assert response.json()["error"] == "Invalid Video"
+
