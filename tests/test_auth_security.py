@@ -1,10 +1,9 @@
 from datetime import timedelta
-
 from fastapi.testclient import TestClient
-
 from app.auth.security import create_access_token
-from app.main import app
+from app.auth.dependencies import get_current_user
 
+from app.main import app
 
 client = TestClient(app)
 
@@ -85,6 +84,20 @@ def test_health_endpoint_remains_public():
     assert response.status_code == 200
 
 def test_valid_token_allows_protected_endpoint():
+    fake_user = type(
+        "FakeUser",
+        (),
+        {
+            "id": 1,
+            "name": "Test User",
+            "email": "test@example.com",
+            "role": "Analyst",
+            "is_active": True,
+        },
+    )()
+
+    app.dependency_overrides[get_current_user] = lambda: fake_user
+
     token = create_access_token(
         data={
             "sub": "1",
@@ -116,3 +129,4 @@ def test_valid_token_allows_protected_endpoint():
     assert response.status_code != 401
 
     client.headers.clear()
+    app.dependency_overrides.pop(get_current_user, None)
