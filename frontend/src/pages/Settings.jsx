@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import {
   Bell,
   Database,
@@ -6,73 +6,49 @@ import {
   UserRound,
   Wifi,
 } from "lucide-react"
-import {
-  getPreferences,
-  updatePreferences,
-} from "../services/api"
+import { updatePreferences } from "../services/api"
 
-function Settings({ user }) {
-  const [preferences, setPreferences] = useState({
-    dashboard: true,
-    imageAnalysis: true,
-    videoAnalysis: true,
-    analysisCompleted: true,
-    systemNotifications: true,
-  })
-
-  const [loading, setLoading] = useState(true)
+function Settings({
+  user,
+  preferences: savedPreferences,
+  onPreferencesChange,
+}) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
 
   const token = localStorage.getItem("access_token")
 
-  useEffect(() => {
-    const loadPreferences = async () => {
-      if (!token) {
-        setLoading(false)
-        return
-      }
-
-      try {
-        const data = await getPreferences(token)
-
-        setPreferences({
-          dashboard: data.dashboard_enabled,
-          imageAnalysis: data.image_analysis_enabled,
-          videoAnalysis: data.video_analysis_enabled,
-          analysisCompleted: data.analysis_completed_notifications,
-          systemNotifications: data.system_notifications,
-        })
-      } catch {
-        setError("Unable to load your preferences.")
-      } finally {
-        setLoading(false)
-      }
+  const togglePreference = async (backendKey) => {
+    if (!savedPreferences || !token || saving) {
+      return
     }
 
-    loadPreferences()
-  }, [token])
+    const newValue = !savedPreferences[backendKey]
 
-  const togglePreference = async (key, backendKey) => {
-    const newValue = !preferences[key]
+    const previousPreferences = savedPreferences
 
-    setPreferences((current) => ({
-      ...current,
-      [key]: newValue,
-    }))
+    // Update the UI immediately
+    onPreferencesChange({
+      ...savedPreferences,
+      [backendKey]: newValue,
+    })
 
     setSaving(true)
     setError("")
 
     try {
-      await updatePreferences(token, {
-        [backendKey]: newValue,
-      })
+      const updatedPreferences = await updatePreferences(
+        token,
+        {
+          [backendKey]: newValue,
+        },
+      )
+
+      // Use the backend response as the final source of truth
+      onPreferencesChange(updatedPreferences)
     } catch {
-      setPreferences((current) => ({
-        ...current,
-        [key]: !newValue,
-      }))
+      // Roll back the UI if the API request fails
+      onPreferencesChange(previousPreferences)
 
       setError("Unable to save your preference.")
     } finally {
@@ -80,8 +56,11 @@ function Settings({ user }) {
     }
   }
 
+  const loading = !savedPreferences
+
   return (
     <div className="space-y-6">
+      {/* Page Header */}
       <div>
         <h2 className="text-2xl font-semibold text-white">
           Settings
@@ -92,14 +71,22 @@ function Settings({ user }) {
         </p>
       </div>
 
+      {/* Error Message */}
       {error && (
-        <div className="rounded-lg border border-red-900 bg-red-950/40 px-4 py-3 text-sm text-red-300">
+        <div
+          role="alert"
+          className="rounded-lg border border-red-900 bg-red-950/40 px-4 py-3 text-sm text-red-300"
+        >
           {error}
         </div>
       )}
 
+      {/* Saving Status */}
       {saving && (
-        <div className="text-xs text-slate-500">
+        <div
+          role="status"
+          className="text-xs text-slate-500"
+        >
           Saving preference...
         </div>
       )}
@@ -122,13 +109,10 @@ function Settings({ user }) {
           <SettingRow
             title="Dashboard"
             description="Show analytics and system information on the dashboard."
-            enabled={preferences.dashboard}
-            disabled={loading}
+            enabled={savedPreferences?.dashboard_enabled ?? false}
+            disabled={loading || saving}
             onToggle={() =>
-              togglePreference(
-                "dashboard",
-                "dashboard_enabled",
-              )
+              togglePreference("dashboard_enabled")
             }
           />
         </div>
@@ -146,26 +130,24 @@ function Settings({ user }) {
           <SettingRow
             title="Image Analysis"
             description="Enable image classification and object detection."
-            enabled={preferences.imageAnalysis}
-            disabled={loading}
+            enabled={
+              savedPreferences?.image_analysis_enabled ?? false
+            }
+            disabled={loading || saving}
             onToggle={() =>
-              togglePreference(
-                "imageAnalysis",
-                "image_analysis_enabled",
-              )
+              togglePreference("image_analysis_enabled")
             }
           />
 
           <SettingRow
             title="Video Analysis"
             description="Enable video detection and object tracking."
-            enabled={preferences.videoAnalysis}
-            disabled={loading}
+            enabled={
+              savedPreferences?.video_analysis_enabled ?? false
+            }
+            disabled={loading || saving}
             onToggle={() =>
-              togglePreference(
-                "videoAnalysis",
-                "video_analysis_enabled",
-              )
+              togglePreference("video_analysis_enabled")
             }
           />
         </div>
@@ -183,11 +165,13 @@ function Settings({ user }) {
           <SettingRow
             title="Analysis Completed"
             description="Show a notification when an analysis finishes."
-            enabled={preferences.analysisCompleted}
-            disabled={loading}
+            enabled={
+              savedPreferences?.analysis_completed_notifications ??
+              false
+            }
+            disabled={loading || saving}
             onToggle={() =>
               togglePreference(
-                "analysisCompleted",
                 "analysis_completed_notifications",
               )
             }
@@ -196,13 +180,12 @@ function Settings({ user }) {
           <SettingRow
             title="System Notifications"
             description="Show system and API status notifications."
-            enabled={preferences.systemNotifications}
-            disabled={loading}
+            enabled={
+              savedPreferences?.system_notifications ?? false
+            }
+            disabled={loading || saving}
             onToggle={() =>
-              togglePreference(
-                "systemNotifications",
-                "system_notifications",
-              )
+              togglePreference("system_notifications")
             }
           />
         </div>

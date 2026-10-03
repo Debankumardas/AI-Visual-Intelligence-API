@@ -7,6 +7,7 @@ import StatCard from "./components/ui/StatCard"
 import ImageAnalysis from "./pages/ImageAnalysis"
 import VideoAnalysis from "./pages/VideoAnalysis"
 import Analytics from "./pages/Analytics"
+import Settings from "./pages/Settings"
 
 import {
   Activity,
@@ -15,7 +16,10 @@ import {
   Video,
 } from "lucide-react"
 
-import { getCurrentUser } from "./services/api"
+import {
+  getCurrentUser,
+  getPreferences,
+} from "./services/api"
 
 
 function App() {
@@ -24,6 +28,7 @@ function App() {
   )
 
   const [user, setUser] = useState(null)
+  const [preferences, setPreferences] = useState(null)
   const [authLoading, setAuthLoading] = useState(true)
 
   const [activePage, setActivePage] = useState(
@@ -43,10 +48,14 @@ function App() {
       try {
         const currentUser = await getCurrentUser(token)
         setUser(currentUser)
+
+        const userPreferences = await getPreferences(token)
+        setPreferences(userPreferences)
       } catch {
         localStorage.removeItem("access_token")
         setToken(null)
         setUser(null)
+        setPreferences(null)
       } finally {
         setAuthLoading(false)
       }
@@ -84,6 +93,16 @@ function App() {
         />
       )
     }
+
+if (activePage === "Settings") {
+  return (
+    <Settings
+      user={user}
+      preferences={preferences}
+      onPreferencesChange={setPreferences}
+    />
+  )
+}
 
     return (
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
