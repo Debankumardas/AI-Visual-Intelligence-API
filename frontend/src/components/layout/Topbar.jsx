@@ -10,7 +10,7 @@ import {
 } from "lucide-react"
 import { checkHealth } from "../../services/api"
 
-function Topbar({ activePage, user }) {
+function Topbar({ activePage, user, onLogout }) {
   const [apiOnline, setApiOnline] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
@@ -27,11 +27,6 @@ function Topbar({ activePage, user }) {
 
     checkApi()
   }, [])
-
-  const handleLogout = () => {
-    localStorage.removeItem("access_token")
-    window.location.reload()
-  }
 
   return (
     <header className="flex h-20 items-center justify-between border-b border-slate-800 bg-slate-950 px-8">
@@ -204,7 +199,7 @@ function Topbar({ activePage, user }) {
 
               {/* Sign Out */}
               <button
-                onClick={handleLogout}
+                onClick={onLogout}
                 className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-red-400 transition hover:bg-red-950/40 hover:text-red-300"
               >
                 <LogOut size={16} />

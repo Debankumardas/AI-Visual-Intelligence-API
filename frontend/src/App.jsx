@@ -73,6 +73,15 @@ function App() {
     setToken(accessToken)
   }
 
+  const handleLogout = () => {
+    localStorage.removeItem("access_token")
+    setToken(null)
+    setUser(null)
+    setPreferences(null)
+    setVideoAnalytics(null)
+    setActivePage("Dashboard")
+  }
+
   const renderPage = () => {
     if (activePage === "Image Analysis") {
       return <ImageAnalysis />
@@ -188,6 +197,7 @@ if (activePage === "Settings") {
         <Topbar
           activePage={activePage}
           user={user}
+          onLogout={handleLogout}
         />
 
         <section className="flex-1 overflow-auto p-8">
