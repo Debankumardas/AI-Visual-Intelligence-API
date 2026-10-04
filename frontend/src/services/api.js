@@ -18,13 +18,13 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (
-      error.response?.status === 401 &&
-      localStorage.getItem("access_token")
-    ) {
-      localStorage.removeItem("access_token")
-      window.location.reload()
-    }
+if (
+  error.response?.status === 401 &&
+  localStorage.getItem("access_token")
+) {
+  localStorage.removeItem("access_token")
+  window.dispatchEvent(new Event("session-expired"))
+}
 
     return Promise.reject(error)
   },
