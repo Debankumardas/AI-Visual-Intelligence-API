@@ -34,9 +34,9 @@ function App() {
   const [activePage, setActivePage] = useState(
     "Dashboard",
   )
-
   const [videoAnalytics, setVideoAnalytics] =
     useState(null)
+  const [sessionExpired, setSessionExpired] = useState(false)
 
   useEffect(() => {
     const restoreSession = async () => {
@@ -63,6 +63,23 @@ function App() {
 
     restoreSession()
   }, [token])
+
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      setSessionExpired(true)
+      setToken(null)
+      setUser(null)
+      setPreferences(null)
+      setVideoAnalytics(null)
+      setActivePage("Dashboard")
+    }
+
+    window.addEventListener("session-expired", handleSessionExpired)
+
+    return () => {
+      window.removeEventListener("session-expired", handleSessionExpired)
+    }
+  }, [])
 
   const handleLogin = (accessToken) => {
     localStorage.setItem(
@@ -182,7 +199,17 @@ if (activePage === "Settings") {
   }
 
   if (!token || !user) {
-    return <Login onLogin={handleLogin} />
+    return (
+      <div>
+        {sessionExpired && (
+          <div className="fixed left-1/2 top-6 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-lg border border-amber-400/30 bg-amber-500/10 px-4 py-3 text-center text-sm text-amber-200 shadow-lg">
+            Your session has expired. Please log in again.
+          </div>
+        )}
+
+        <Login onLogin={handleLogin} />
+      </div>
+    )
   }
 
   return (
