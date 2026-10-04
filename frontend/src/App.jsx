@@ -82,11 +82,8 @@ function App() {
   }, [])
 
   const handleLogin = (accessToken) => {
-    localStorage.setItem(
-      "access_token",
-      accessToken,
-    )
-
+    localStorage.setItem("access_token", accessToken)
+    setSessionExpired(false)
     setToken(accessToken)
   }
 
