@@ -1,6 +1,14 @@
 from datetime import timedelta
 from fastapi.testclient import TestClient
-from app.auth.security import create_access_token
+from jose import jwt
+from app.auth.security import (
+    ALGORITHM,
+    SECRET_KEY,
+    create_access_token,
+    decode_access_token,
+    hash_password,
+    verify_password,
+)
 from app.auth.dependencies import get_current_user
 
 from app.main import app
@@ -130,3 +138,73 @@ def test_valid_token_allows_protected_endpoint():
 
     client.headers.clear()
     app.dependency_overrides.pop(get_current_user, None)
+
+def test_created_token_contains_expected_claims():
+    token = create_access_token(
+        data={
+            "sub": "1",
+            "email": "test@example.com",
+            "role": "Analyst",
+        }
+    )
+
+    payload = decode_access_token(token)
+
+    assert payload is not None
+    assert payload["sub"] == "1"
+    assert payload["email"] == "test@example.com"
+    assert payload["role"] == "Analyst"
+    assert "exp" in payload
+
+
+def test_malformed_token_returns_none():
+    payload = decode_access_token(
+        "this-is-not-a-valid-jwt"
+    )
+
+    assert payload is None
+
+
+def test_token_signed_with_wrong_secret_is_rejected():
+    token = jwt.encode(
+        {
+            "sub": "1",
+            "email": "test@example.com",
+            "role": "Analyst",
+        },
+        "wrong-secret-for-testing",
+        algorithm=ALGORITHM,
+    )
+
+    payload = decode_access_token(token)
+
+    assert payload is None
+
+
+def test_password_hash_is_not_plaintext():
+    password = "TestPassword123!"
+
+    hashed_password = hash_password(password)
+
+    assert hashed_password != password
+
+
+def test_correct_password_is_verified():
+    password = "TestPassword123!"
+
+    hashed_password = hash_password(password)
+
+    assert verify_password(
+        password,
+        hashed_password,
+    )
+
+def test_wrong_password_is_rejected():
+    password = "TestPassword123!"
+
+    hashed_password = hash_password(password)
+
+    assert not verify_password(
+        "WrongPassword123!",
+        hashed_password,
+    )
