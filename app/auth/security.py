@@ -1,14 +1,33 @@
+import os
 from datetime import datetime, timedelta, timezone
 
+from dotenv import load_dotenv
 from jose import JWTError, jwt
 from pwdlib import PasswordHash
 
+load_dotenv()
 
-SECRET_KEY = "CHANGE_THIS_SECRET_KEY_BEFORE_PRODUCTION"
 
-ALGORITHM = "HS256"
+SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
+if not SECRET_KEY:
+    raise RuntimeError(
+        "JWT_SECRET_KEY is not configured."
+    )
+
+
+ALGORITHM = os.getenv(
+    "JWT_ALGORITHM",
+    "HS256",
+)
+
+
+ACCESS_TOKEN_EXPIRE_MINUTES = int(
+    os.getenv(
+        "JWT_ACCESS_TOKEN_EXPIRE_MINUTES",
+        "60",
+    )
+)
 
 
 password_hash = PasswordHash.recommended()
@@ -50,7 +69,9 @@ def create_access_token(
     )
 
 
-def decode_access_token(token: str) -> dict | None:
+def decode_access_token(
+    token: str,
+) -> dict | None:
     try:
         return jwt.decode(
             token,
