@@ -4,8 +4,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app.auth.security import create_access_token
 from app.database.connection import Base, get_db
 from app.main import app
+from app.models.user import User
 
 
 TEST_DATABASE_URL = "sqlite://"
@@ -16,6 +18,7 @@ engine = create_engine(
     connect_args={"check_same_thread": False},
     poolclass=StaticPool,
 )
+
 
 TestingSessionLocal = sessionmaker(
     bind=engine,
@@ -43,6 +46,21 @@ def client():
 
     app.dependency_overrides.pop(get_db, None)
     Base.metadata.drop_all(bind=engine)
+
+
+@pytest.fixture()
+def db_session(client):
+    """
+    Provide a database session connected to the same
+    temporary test database used by the FastAPI client.
+    """
+    db = TestingSessionLocal()
+
+    try:
+        yield db
+    finally:
+        db.close()
+
 
 def test_register_user_successfully(client):
     response = client.post(
@@ -93,6 +111,7 @@ def test_register_duplicate_email_is_rejected(client):
         second_response.json()["detail"]
         == "An account with this email already exists."
     )
+
 
 def test_login_successfully(client):
     client.post(
@@ -155,6 +174,7 @@ def test_login_with_unknown_email_is_rejected(client):
     assert response.status_code == 401
     assert response.json()["detail"] == "Invalid email or password."
 
+
 def test_get_current_user_successfully(client):
     client.post(
         "/api/v1/auth/register",
@@ -193,10 +213,12 @@ def test_get_current_user_successfully(client):
     assert "password" not in data
     assert "password_hash" not in data
 
+
 def test_get_current_user_requires_authentication(client):
     response = client.get("/api/v1/auth/me")
 
     assert response.status_code == 401
+
 
 def test_get_preferences_returns_defaults(client):
     client.post(
@@ -340,3 +362,133 @@ def test_preferences_require_authentication(client):
 
     assert get_response.status_code == 401
     assert patch_response.status_code == 401
+
+
+def test_login_inactive_user_is_rejected(client, db_session):
+    client.post(
+        "/api/v1/auth/register",
+        json={
+            "name": "Inactive User",
+            "email": "inactive@example.com",
+            "password": "TestPassword123!",
+        },
+    )
+
+    user = db_session.query(User).filter(
+        User.email == "inactive@example.com"
+    ).first()
+
+    assert user is not None
+
+    user.is_active = False
+    db_session.commit()
+
+    response = client.post(
+        "/api/v1/auth/login",
+        data={
+            "username": "inactive@example.com",
+            "password": "TestPassword123!",
+        },
+    )
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "This account is inactive."
+
+
+def test_token_without_subject_is_rejected(client):
+    token = create_access_token(
+        data={
+            "email": "test@example.com",
+            "role": "Analyst",
+        }
+    )
+
+    response = client.get(
+        "/api/v1/auth/me",
+        headers={
+            "Authorization": f"Bearer {token}",
+        },
+    )
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Invalid authentication token."
+
+
+def test_token_with_invalid_subject_is_rejected(client):
+    token = create_access_token(
+        data={
+            "sub": "not-an-integer",
+            "email": "test@example.com",
+            "role": "Analyst",
+        }
+    )
+
+    response = client.get(
+        "/api/v1/auth/me",
+        headers={
+            "Authorization": f"Bearer {token}",
+        },
+    )
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Invalid authentication token."
+
+
+def test_token_for_unknown_user_is_rejected(client):
+    token = create_access_token(
+        data={
+            "sub": "999999",
+            "email": "unknown@example.com",
+            "role": "Analyst",
+        }
+    )
+
+    response = client.get(
+        "/api/v1/auth/me",
+        headers={
+            "Authorization": f"Bearer {token}",
+        },
+    )
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "User account not found."
+
+
+def test_token_for_inactive_user_is_rejected(client, db_session):
+    client.post(
+        "/api/v1/auth/register",
+        json={
+            "name": "Inactive Token User",
+            "email": "inactive-token@example.com",
+            "password": "TestPassword123!",
+        },
+    )
+
+    user = db_session.query(User).filter(
+        User.email == "inactive-token@example.com"
+    ).first()
+
+    assert user is not None
+
+    user.is_active = False
+    db_session.commit()
+
+    user_id = user.id
+
+    token = create_access_token(
+        data={
+            "sub": str(user_id),
+            "email": "inactive-token@example.com",
+            "role": "Analyst",
+        }
+    )
+
+    response = client.get(
+        "/api/v1/auth/me",
+        headers={
+            "Authorization": f"Bearer {token}",
+        },
+    )
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "This account is inactive."
