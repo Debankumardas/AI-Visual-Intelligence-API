@@ -1,4 +1,5 @@
 import { act } from "react"
+
 import {
   beforeEach,
   describe,
@@ -6,6 +7,7 @@ import {
   it,
   vi,
 } from "vitest"
+
 import {
   fireEvent,
   render,
@@ -354,8 +356,16 @@ describe("App authentication", () => {
       ).toBeInTheDocument()
 
       expect(
-        localStorage.getItem("access_token"),
-      ).toBeNull()
+        await screen.findByRole("heading", {
+          name: "Login",
+        }),
+      ).toBeInTheDocument()
+
+      await waitFor(() => {
+        expect(
+          localStorage.getItem("access_token"),
+        ).toBeNull()
+      })
     },
   )
 })

@@ -72,13 +72,15 @@ function App() {
 
   useEffect(() => {
     const handleSessionExpired = () => {
-      setSessionExpired(true)
-      setToken(null)
-      setUser(null)
-      setPreferences(null)
-      setVideoAnalytics(null)
-      setActivePage("Dashboard")
-    }
+    localStorage.removeItem("access_token")
+
+    setSessionExpired(true)
+    setToken(null)
+    setUser(null)
+    setPreferences(null)
+    setVideoAnalytics(null)
+    setActivePage("Dashboard")
+  }
 
     window.addEventListener(
       "session-expired",
