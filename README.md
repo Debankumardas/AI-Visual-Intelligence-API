@@ -1,120 +1,332 @@
-# 👁️ AI Visual Intelligence Platform
+<div align="center">
 
-An AI-powered **full-stack computer vision platform** that transforms images and videos into structured visual intelligence using deep learning, REST APIs, object detection, object tracking, analytics, authentication, and an interactive React dashboard.
+# 👁️ AI Visual Intelligence API
 
-The platform combines **FastAPI, PyTorch, YOLO11n, EfficientNet-B0, React, Vite, Tailwind CSS, SQLite, SQLAlchemy, JWT authentication, OpenCV, Tesseract OCR, Docker, and Nginx** into a unified visual intelligence system.
+### **AI-Powered Computer Vision Platform**
 
-The project began as an API-first computer vision service and evolved into a complete AI application capable of image analysis, video processing, object tracking, interaction analytics, authenticated user sessions, and dashboard-based visualization.
+**FastAPI · React · Tailwind CSS · PyTorch · YOLO11 · EfficientNet**
 
----
+Build, analyze, and interact with visual intelligence through a modern full-stack AI platform.
 
-## 🚀 Overview
+<br>
 
-Traditional computer vision workflows often require users to interact directly with Python scripts, notebooks, model frameworks, or specialized tools.
+[![Python](https://img.shields.io/badge/Python-3.12+-3776AB?style=for-the-badge\&logo=python\&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-API-009688?style=for-the-badge\&logo=fastapi\&logoColor=white)](https://fastapi.tiangolo.com/)
+[![React](https://img.shields.io/badge/React-Frontend-61DAFB?style=for-the-badge\&logo=react\&logoColor=black)](https://react.dev/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-Deep%20Learning-EE4C2C?style=for-the-badge\&logo=pytorch\&logoColor=white)](https://pytorch.org/)
+[![YOLO](https://img.shields.io/badge/YOLO11-Object%20Detection-111111?style=for-the-badge)](https://docs.ultralytics.com/)
+[![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED?style=for-the-badge\&logo=docker\&logoColor=white)](https://www.docker.com/)
 
-This project abstracts those complexities behind a structured application layer.
+<br>
 
-Users interact with the system through a web dashboard while the backend handles:
+**[GitHub Repository](https://github.com/Debankumardas/AI-Visual-Intelligence-API)**
 
-- Image classification
-- Object detection
-- Annotated image generation
-- Video processing
-- Object tracking
-- Video analytics
-- Track interaction analysis
-- JWT authentication
-- User preferences
-- Database persistence
-- Structured API responses
-
-The system follows a modular architecture where the frontend, API layer, authentication, database, AI inference services, video processing, and analytics components are separated.
+</div>
 
 ---
 
-# 🎯 Project Objective
+## 📌 Overview
 
-The primary objective is to demonstrate how pretrained computer vision models can be transformed into a complete, maintainable, user-facing AI software platform.
+**AI Visual Intelligence API** is a full-stack computer vision platform designed to turn raw images into structured AI insights.
 
-Instead of exposing raw model code directly to users, the platform provides an application workflow:
+The project combines a **FastAPI backend**, **React frontend**, and pretrained deep-learning models to provide a unified interface for visual analysis.
+
+Instead of interacting directly with individual computer vision models, applications can communicate with a clean API layer that handles:
+
+* Image validation
+* Image classification
+* Object detection
+* Bounding-box analysis
+* Confidence scoring
+* Inference timing
+* Annotated image generation
+* Combined visual analysis
+* Interactive API documentation
+* Frontend-based visual interaction
+
+The architecture is designed to keep the **frontend, API layer, model logic, and inference services separated**, making the system easier to maintain and extend.
+
+---
+
+# ✨ Key Features
+
+### 🧠 Computer Vision
+
+* Image classification with **EfficientNet-B0**
+* Object detection with **YOLO11**
+* Top-k classification predictions
+* Object labels and confidence scores
+* Bounding-box coordinates
+* Annotated detection images
+* Combined classification + detection
+
+### ⚡ API Engineering
+
+* RESTful FastAPI backend
+* Modular service architecture
+* Pydantic-based request/response models
+* Image validation
+* File-size protection
+* Supported image-type validation
+* Health-check endpoint
+* Swagger / OpenAPI documentation
+
+### 🖥️ Frontend
+
+* Modern React interface
+* Tailwind CSS styling
+* Image upload workflow
+* Visual analysis interface
+* API-driven architecture
+* Separation between UI and inference logic
+
+### 🧪 Engineering
+
+* Automated tests
+* Docker support
+* Docker Compose configuration
+* Environment configuration through `.env`
+* CI workflow
+* Modular backend architecture
+
+---
+
+# 🏗️ System Architecture
+
+```mermaid
+flowchart TB
+
+    U[👤 User] --> FE[🖥️ React Frontend]
+
+    FE --> API[⚡ FastAPI Backend]
+
+    API --> V[🛡️ Image Validation]
+
+    V --> ROUTER{Analysis Type}
+
+    ROUTER --> CLS[🧠 Classification Service]
+    ROUTER --> DET[🎯 Detection Service]
+    ROUTER --> BOTH[🔍 Combined Analysis]
+
+    CLS --> EN[EfficientNet-B0]
+    DET --> YOLO[YOLO11]
+
+    BOTH --> EN
+    BOTH --> YOLO
+
+    EN --> CR[Classification Results]
+    YOLO --> DR[Detection Results]
+
+    CR --> RES[📦 Structured API Response]
+    DR --> RES
+
+    YOLO --> ANN[🖼️ Annotated Image]
+
+    RES --> FE
+    ANN --> FE
+```
+
+---
+
+# 🔄 Visual Intelligence Pipeline
+
+```mermaid
+flowchart LR
+
+    A[📤 Upload Image] --> B[🛡️ Validate File]
+
+    B --> C{Valid?}
+
+    C -->|No| D[❌ Reject Request]
+    C -->|Yes| E[🖼️ Load Image]
+
+    E --> F[AI Inference]
+
+    F --> G[🧠 EfficientNet-B0]
+    F --> H[🎯 YOLO11]
+
+    G --> I[Top Predictions]
+    G --> J[Confidence Scores]
+    G --> K[Inference Time]
+
+    H --> L[Detected Objects]
+    H --> M[Bounding Boxes]
+    H --> N[Detection Confidence]
+
+    H --> O[Annotated Image]
+
+    I --> P[📦 Structured Response]
+    J --> P
+    K --> P
+    L --> P
+    M --> P
+    N --> P
+
+    P --> Q[🖥️ Frontend]
+    O --> Q
+```
+
+---
+
+# 🧩 Architecture Layers
+
+The project follows a layered architecture rather than placing all logic inside a single application file.
+
+```mermaid
+flowchart TB
+
+    subgraph Frontend
+        UI[React UI]
+        TW[Tailwind CSS]
+    end
+
+    subgraph API["FastAPI Application"]
+        ROUTES[API Routes]
+        SCHEMAS[Request / Response Models]
+        VALIDATION[Input Validation]
+    end
+
+    subgraph Services["Inference Services"]
+        MODEL[Model Service]
+        PRED[Prediction Service]
+        DET[Detection Service]
+        ANALYSIS[Analysis Service]
+    end
+
+    subgraph Models["AI Models"]
+        EFF[EfficientNet-B0]
+        Y[YOLO11]
+    end
+
+    UI --> ROUTES
+    TW --> UI
+
+    ROUTES --> SCHEMAS
+    ROUTES --> VALIDATION
+
+    VALIDATION --> SERVICES
+
+    ROUTES --> MODEL
+    MODEL --> PRED
+    MODEL --> DET
+    MODEL --> ANALYSIS
+
+    PRED --> EFF
+    DET --> Y
+    ANALYSIS --> EFF
+    ANALYSIS --> Y
+```
+
+---
+
+# 🤖 AI Models
+
+## EfficientNet-B0
+
+**EfficientNet-B0** is used for image classification.
+
+The classification pipeline generates ranked predictions for the input image and returns confidence information together with inference timing.
+
+### Output
 
 ```text
-User
-  ↓
-React Dashboard
-  ↓
-FastAPI REST API
-  ↓
-Request Validation
-  ↓
-AI Inference
-  ↓
-Analytics
-  ↓
-Structured Results
-  ↓
-Dashboard Visualization
+Input Image
+     ↓
+Image Preprocessing
+     ↓
+EfficientNet-B0
+     ↓
+Top-K Predictions
+     ↓
+Confidence Scores
+     ↓
+Inference Time
+```
 
-The project therefore combines:
+---
 
-Artificial Intelligence
-Computer Vision
-Backend Engineering
-Frontend Development
-Authentication
-Database Engineering
-Testing
-Deployment Architecture
-⭐ Complete Project Flow
-🧠 Core AI Capabilities
-1. Image Classification
+## YOLO11
 
-The platform uses EfficientNet-B0 through PyTorch/Torchvision for image classification.
+**YOLO11** is used for real-time object detection.
 
-The classification pipeline produces:
+The detection pipeline identifies objects and provides:
 
-Top predictions
-ImageNet class labels
-Confidence scores
-Inference timing
-Structured JSON responses
+* Object class
+* Confidence score
+* Bounding-box coordinates
+* Detection timing
+* Annotated image output
 
-Example:
+### Output
 
+```text
+Input Image
+     ↓
+YOLO11
+     ↓
+Object Detection
+     ↓
+Labels + Confidence
+     ↓
+Bounding Boxes
+     ↓
+Annotated Image
+```
+
+---
+
+# 🔌 API Endpoints
+
+| Method | Endpoint            | Description                         |
+| ------ | ------------------- | ----------------------------------- |
+| `GET`  | `/`                 | API status                          |
+| `GET`  | `/health`           | Health check                        |
+| `POST` | `/predict`          | Image classification                |
+| `POST` | `/detect`           | Object detection                    |
+| `POST` | `/detect/annotated` | Detection with annotated image      |
+| `POST` | `/analyze`          | Combined classification + detection |
+
+---
+
+# 🧠 `/predict`
+
+Performs image classification using EfficientNet-B0.
+
+### Request
+
+```http
+POST /predict
+Content-Type: multipart/form-data
+```
+
+Upload an image file.
+
+### Response
+
+```json
 {
   "filename": "sample.jpg",
   "predictions": [
     {
       "label": "golden retriever",
       "confidence": 0.9376
-    },
-    {
-      "label": "Labrador retriever",
-      "confidence": 0.0042
     }
   ],
   "inference_time_ms": 42.31
 }
+```
 
-The current classifier uses ImageNet classes and is therefore intended as a general-purpose computer vision demonstration rather than a custom domain-specific classifier.
+---
 
-🎯 2. Object Detection
+# 🎯 `/detect`
 
-Object detection is powered by YOLO11n.
+Performs object detection using YOLO11.
 
-The detector identifies objects within images and provides:
+### Response
 
-Object labels
-Confidence scores
-Bounding-box coordinates
-Detection results
-Inference information
-
-Example:
-
+```json
 {
   "filename": "sample.jpg",
-  "content_type": "image/jpeg",
   "detections": [
     {
       "label": "dog",
@@ -128,938 +340,511 @@ Example:
     }
   ]
 }
+```
 
-The yolo11n.pt model is included with the project.
+---
 
-🖍️ 3. Annotated Detection
+# 🖍️ `/detect/annotated`
 
-The platform can generate an annotated version of an input image.
+Runs object detection and returns an image containing the detected objects and bounding boxes.
 
-The processing pipeline is:
+```mermaid
+flowchart LR
 
-The resulting image visually represents detected objects and their locations.
+    A[Input Image] --> B[YOLO11]
+    B --> C[Object Detection]
+    C --> D[Bounding Boxes]
+    D --> E[Render Annotations]
+    E --> F[Annotated Image]
+```
 
-🔍 4. Combined Image Analysis
+---
 
-The platform can combine image classification and object detection into a single analysis workflow.
+# 🔍 `/analyze`
 
-This allows an application to obtain both:
+The `/analyze` endpoint combines the two primary computer vision capabilities.
 
-What the image represents
-Which objects are present
+```mermaid
+flowchart TD
 
-from a unified analysis operation.
+    A[Input Image] --> B[Validation]
 
-🎥 Video Intelligence
+    B --> C[EfficientNet-B0]
+    B --> D[YOLO11]
 
-The project extends computer vision from individual images to video.
+    C --> E[Classification]
+    D --> F[Object Detection]
 
-The video processing pipeline supports:
+    E --> G[Classification Results]
+    F --> H[Detection Results]
 
-Video uploads
-Frame processing
-Object detection
-Object tracking
-Annotated video generation
-Detection statistics
-Track statistics
-Video analytics
-Interaction analytics
+    G --> I[Combined Analysis]
+    H --> I
 
-The general video workflow is:
+    I --> J[Structured Response]
+```
 
-🎯 Object Tracking
+This endpoint is useful when an application needs both **semantic image classification** and **object-level detection** from the same image.
 
-Object detection identifies objects independently in individual frames.
+---
 
-Object tracking adds temporal information by attempting to maintain object identities across multiple frames.
+# 🛡️ Image Validation
 
-The workflow is:
+Before AI inference, uploaded files pass through validation.
 
-Video
-  ↓
-Frame Processing
-  ↓
-YOLO11n Detection
-  ↓
-Object Tracking
-  ↓
-Track IDs
-  ↓
-Temporal Analytics
+```mermaid
+flowchart TD
 
-This enables the system to analyze:
+    A[Uploaded File] --> B{Supported Format?}
 
-Total detections
-Unique tracked objects
-Track statistics
-Object interactions
-Interaction episodes
-📊 Video Analytics
+    B -->|No| X[❌ Reject]
+    B -->|Yes| C{Within Size Limit?}
 
-The video analytics layer transforms frame-level detections into higher-level information.
+    C -->|No| X
+    C -->|Yes| D{Valid Image Data?}
 
-Current analytics include:
+    D -->|No| X
+    D -->|Yes| E[✅ Run AI Inference]
+```
 
-Total detections
-Unique track IDs
-Track statistics
-Interaction statistics
-Interaction partner counts
-Interaction episode counts
+### Supported formats
 
-The analytics workflow is:
+* JPEG
+* PNG
+* WebP
 
-Video
-  ↓
-Detections
-  ↓
-Tracked Objects
-  ↓
-Track Statistics
-  ↓
-Interaction Analysis
-  ↓
-Visual Analytics
-🕸️ Track Interaction Network
+### Maximum file size
 
-One of the advanced analytics components is the Track Interaction Network.
+```text
+10 MB
+```
 
-Tracked objects can be represented as nodes in an interaction network.
+---
 
-For example:
+# 📦 Project Structure
 
-The analytics service can calculate interaction information such as:
-
-Interaction Partner Counts
-
-The number of distinct objects that interacted with each tracked object.
-
-Example:
-
-{
-    1: 2,
-    2: 2,
-    4: 2
-}
-Interaction Episode Counts
-
-The total number of interaction episodes involving each tracked object.
-
-Example:
-
-{
-    1: 5,
-    2: 4,
-    4: 3
-}
-
-This transforms raw object tracking information into higher-level interaction information that can be visualized through the analytics dashboard.
-
-🔐 Authentication
-
-The platform includes JWT-based authentication.
-
-Authentication provides:
-
-User registration
-User login
-Password hashing
-JWT access tokens
-Protected API endpoints
-Current-user retrieval
-Session expiration handling
-
-The authentication workflow is:
-
-Passwords are securely hashed using Argon2 through pwdlib.
-
-JWT configuration is supplied through environment variables rather than being hard-coded into the application.
-
-👤 User Preferences
-
-Authenticated users can maintain application preferences.
-
-The preference system allows application features to be enabled or disabled according to the user's configuration.
-
-The relationship is:
-
-User
- ├── Authentication Information
- └── Application Preferences
-
-This separates security-related information from application-level configuration.
-
-🗄️ Database
-
-The project uses:
-
-SQLite
-SQLAlchemy
-
-The database stores persistent application information such as:
-
-Users
-User preferences
-
-The database architecture is:
-
-FastAPI
-   ↓
-Database Dependency
-   ↓
-SQLAlchemy
-   ↓
-SQLite
-
-SQLite is appropriate for local development, demonstrations, and portfolio-scale usage.
-
-For a high-concurrency production deployment, PostgreSQL would be a stronger choice.
-
-🖥️ React Dashboard
-
-The project includes a dedicated React frontend.
-
-The frontend is built using:
-
-React
-Vite
-Tailwind CSS
-Axios
-Lucide React
-
-The dashboard provides a graphical interface for interacting with the computer vision backend instead of requiring users to manually construct API requests.
-
-📱 Dashboard Components
-Dashboard
-
-Provides an overview of visual intelligence activity including:
-
-Images analyzed
-Videos processed
-Objects detected
-Active tracks
-Image Analysis
-
-Provides a frontend interface for image-based computer vision operations.
-
-The frontend communicates with the FastAPI backend using REST API requests.
-
-Video Analysis
-
-Provides an interface for:
-
-Video processing
-Detection
-Tracking
-Video analytics
-
-Video results can be passed to the analytics interface for further exploration.
-
-Analytics
-
-The analytics interface presents higher-level information generated from video processing.
-
-This includes:
-
-Detection statistics
-Tracking statistics
-Interaction information
-Interaction network visualization
-Settings
-
-The settings interface allows authenticated users to manage application preferences.
-
-🔄 Frontend Authentication Flow
-
-The frontend manages authentication using the JWT access token.
-
-Login Page
-    ↓
-FastAPI Authentication
-    ↓
-JWT Token
-    ↓
-Browser Session
-    ↓
-Protected API Requests
-    ↓
-Dashboard
-
-If a protected API request returns a 401 Unauthorized response, the frontend can invalidate the current session and return the user to the login interface.
-
-🏗️ Backend Architecture
-
-The backend follows a modular layered architecture.
-
-The architecture separates:
-
-API Layer
-
-Handles HTTP requests and responses.
-
-Authentication Layer
-
-Handles:
-
-Password hashing
-JWT generation
-JWT validation
-User authentication
-Protected routes
-Database Layer
-
-Handles:
-
-SQLAlchemy engine
-Database sessions
-Database initialization
-Model Layer
-
-Contains structured application models for:
-
-Predictions
-Detections
-Analysis
-Users
-User preferences
-Error responses
-Service Layer
-
-Contains application logic for:
-
-Model inference
-Detection
-Annotation
-Prediction
-Video processing
-Video analytics
-Video writing
-Middleware
-
-Provides request-level infrastructure such as request ID handling.
-
-📁 Project Structure
+```text
 AI-Visual-Intelligence-API/
 │
+├── .github/
+│   └── workflows/
+│
 ├── app/
-│   │
+│   ├── main.py
 │   ├── api/
-│   │   ├── routes/
-│   │   │   ├── analysis.py
-│   │   │   ├── detection.py
-│   │   │   ├── health.py
-│   │   │   ├── prediction.py
-│   │   │   ├── utils.py
-│   │   │   └── video.py
-│   │   │
-│   │   └── v1/
-│   │       └── router.py
-│   │
-│   ├── auth/
-│   │   ├── dependencies.py
-│   │   ├── preferences.py
-│   │   ├── routes.py
-│   │   ├── schemas.py
-│   │   └── security.py
-│   │
-│   ├── core/
-│   │   ├── config.py
-│   │   ├── exceptions.py
-│   │   └── logging.py
-│   │
-│   ├── database/
-│   │   ├── connection.py
-│   │   └── init_db.py
-│   │
-│   ├── middleware/
-│   │   └── request_id.py
-│   │
 │   ├── models/
-│   │   ├── analysis.py
-│   │   ├── detection.py
-│   │   ├── error.py
-│   │   ├── prediction.py
-│   │   ├── user.py
-│   │   └── user_preferences.py
-│   │
-│   ├── services/
-│   │   ├── annotation_service.py
-│   │   ├── detection_service.py
-│   │   ├── model_service.py
-│   │   ├── prediction_service.py
-│   │   ├── video_analytics_service.py
-│   │   ├── video_processing_service.py
-│   │   ├── video_service.py
-│   │   └── video_writer_service.py
-│   │
-│   └── main.py
+│   └── services/
 │
 ├── frontend/
-│   │
 │   ├── src/
-│   │   ├── components/
-│   │   │   ├── analytics/
-│   │   │   │   └── InteractionNetwork.jsx
-│   │   │   │
-│   │   │   ├── auth/
-│   │   │   │   └── Login.jsx
-│   │   │   │
-│   │   │   ├── layout/
-│   │   │   │   ├── Sidebar.jsx
-│   │   │   │   └── Topbar.jsx
-│   │   │   │
-│   │   │   └── ui/
-│   │   │       └── StatCard.jsx
-│   │   │
-│   │   ├── pages/
-│   │   │   ├── Analytics.jsx
-│   │   │   ├── ImageAnalysis.jsx
-│   │   │   ├── Settings.jsx
-│   │   │   └── VideoAnalysis.jsx
-│   │   │
-│   │   ├── services/
-│   │   │   └── api.js
-│   │   │
-│   │   ├── test/
-│   │   │   └── setup.js
-│   │   │
-│   │   ├── App.jsx
-│   │   ├── App.test.jsx
-│   │   ├── index.css
-│   │   └── main.jsx
-│   │
-│   ├── Dockerfile
-│   ├── nginx.conf
-│   ├── package.json
-│   └── vite.config.js
+│   ├── public/
+│   └── ...
+│
+├── tests/
 │
 ├── .dockerignore
-├── docker-compose.yml
+├── .env.example
+├── .gitignore
 ├── Dockerfile
+├── docker-compose.yml
 ├── requirements.txt
+├── run.py
+├── sample.jpg
 ├── yolo11n.pt
 └── README.md
-⚙️ Technology Stack
-Category	Technology
-Backend Language	Python
-Frontend Language	JavaScript
-API Framework	FastAPI
-ASGI Server	Uvicorn
-Frontend	React
-Build Tool	Vite
-Styling	Tailwind CSS
-HTTP Client	Axios
-UI Icons	Lucide React
-Deep Learning	PyTorch
-Image Classification	EfficientNet-B0
-Object Detection	YOLO11n
-Computer Vision	OpenCV
-OCR	Tesseract
-Database	SQLite
-ORM	SQLAlchemy
-Authentication	JWT
-Password Hashing	Argon2 / pwdlib
-API Documentation	Swagger / OpenAPI
-Backend Testing	Pytest
-Frontend Testing	Vitest
-Frontend Testing Utilities	React Testing Library
-Reverse Proxy	Nginx
-Containerization	Docker
-Orchestration	Docker Compose
-🔌 API Endpoints
+```
 
-The backend exposes API functionality for health checks, authentication, image analysis, detection, video processing, and related services.
+### Architecture principle
 
-Core image endpoints include:
+```text
+Frontend
+   ↓
+API Layer
+   ↓
+Validation
+   ↓
+Service Layer
+   ↓
+AI Models
+   ↓
+Structured Results
+```
 
-Method	Endpoint	Purpose
-GET	/	API status
-GET	/health	Health check
-POST	/predict	Image classification
-POST	/detect	Object detection
-POST	/detect/annotated	Detection with annotated image
-POST	/analyze	Combined image analysis
+This separation makes it easier to replace models, add endpoints, introduce authentication, or connect additional client applications.
 
-Authentication endpoints provide user registration, login, current-user retrieval, and preference-related functionality.
+---
 
-Video routes provide video processing and analytics functionality.
+# ⚙️ Tech Stack
 
-For the complete and always-current API contract, use the generated Swagger documentation.
+| Layer             | Technology                |
+| ----------------- | ------------------------- |
+| Language          | Python                    |
+| Backend           | FastAPI                   |
+| Server            | Uvicorn                   |
+| Frontend          | React                     |
+| Styling           | Tailwind CSS              |
+| Deep Learning     | PyTorch                   |
+| Classification    | EfficientNet-B0           |
+| Object Detection  | YOLO11                    |
+| Model Ecosystem   | Torchvision / Ultralytics |
+| API Documentation | Swagger / OpenAPI         |
+| Testing           | Pytest / Python Tests     |
+| Containerization  | Docker                    |
+| Orchestration     | Docker Compose            |
+| Version Control   | Git / GitHub              |
 
-📚 Swagger API Documentation
+---
 
-Once the backend is running, open:
+# 🚀 Getting Started
 
-http://127.0.0.1:8000/docs
+## 1. Clone the repository
 
-FastAPI provides an interactive Swagger interface where API requests can be inspected and tested.
-
-Alternative documentation:
-
-http://127.0.0.1:8000/redoc
-💻 Local Backend Setup
-1. Clone the Repository
+```bash
 git clone https://github.com/Debankumardas/AI-Visual-Intelligence-API.git
+
 cd AI-Visual-Intelligence-API
-2. Create a Virtual Environment
+```
+
+---
+
+## 2. Create a virtual environment
+
+### Windows PowerShell
+
+```powershell
 python -m venv .venv
-3. Activate the Environment
+```
 
-Windows PowerShell:
+Activate it:
 
+```powershell
 .venv\Scripts\Activate.ps1
-4. Install Dependencies
+```
+
+---
+
+## 3. Install backend dependencies
+
+```powershell
 pip install -r requirements.txt
-🔐 Environment Configuration
+```
 
-Create a .env file in the project root.
+---
 
-Example:
+## 4. Configure environment variables
 
-JWT_SECRET_KEY=your-strong-secret-key
-JWT_ALGORITHM=HS256
-JWT_ACCESS_TOKEN_EXPIRE_MINUTES=60
+Create a `.env` file using the provided example:
 
-The JWT secret must be kept private and must not be committed to Git.
+```powershell
+Copy-Item .env.example .env
+```
 
-For local SQLite configuration:
+Update the values according to your local environment.
 
-DATABASE_URL=sqlite:///./app.db
-🗄️ Initialize the Database
+> Never commit API keys, credentials, or other secrets to GitHub.
 
-Run:
+---
 
-python -m app.database.init_db
+# ▶️ Run the Backend
 
-This creates the required database tables.
+Start the FastAPI application:
 
-▶️ Start the Backend
+```powershell
+python run.py
+```
 
-Run:
+The API will be available at:
 
-uvicorn app.main:app --reload
-
-The backend will be available at:
-
+```text
 http://127.0.0.1:8000
-🖥️ Frontend Setup
+```
 
-Open a second terminal and navigate to the frontend:
+---
 
+# 📚 API Documentation
+
+FastAPI automatically provides interactive API documentation.
+
+### Swagger UI
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+### ReDoc
+
+```text
+http://127.0.0.1:8000/redoc
+```
+
+You can upload images and test the endpoints directly through Swagger.
+
+---
+
+# 🖥️ Frontend
+
+The repository also contains a dedicated React frontend.
+
+```text
+frontend/
+```
+
+The frontend communicates with the FastAPI backend and provides the user-facing interface for visual analysis.
+
+Install frontend dependencies according to the package configuration inside the `frontend` directory.
+
+```powershell
 cd frontend
-
-Install dependencies:
-
 npm install
+```
 
 Start the development server:
 
+```powershell
 npm run dev
+```
 
-The frontend will normally be available at:
+> The exact frontend command may depend on the current frontend configuration.
 
-http://localhost:5173
-🔗 Frontend API Configuration
+---
 
-The frontend API client supports the following environment variable:
+# 🐳 Docker
 
-VITE_API_BASE_URL=http://127.0.0.1:8000
+The project includes Docker configuration for containerized execution.
 
-For local development, the React application can communicate directly with the FastAPI backend.
+### Build
 
-In the containerized architecture, Nginx provides the reverse proxy between the frontend and backend.
+```powershell
+docker compose build
+```
 
-🧪 Testing
+### Start
 
-The project includes automated backend and frontend testing.
+```powershell
+docker compose up
+```
 
-Backend Tests
+### Stop
 
-Run:
-
-pytest
-
-The backend test suite covers areas including:
-
-API behavior
-Authentication
-Protected endpoints
-Database functionality
-Computer vision services
-Video processing
-Analytics
-Error handling
-Frontend Tests
-
-From the frontend directory:
-
-npm test
-
-Frontend tests cover application behavior such as:
-
-Component rendering
-Authentication
-Session restoration
-Session expiration
-Dashboard behavior
-Navigation
-Frontend Linting
-npm run lint
-Frontend Production Build
-npm run build
-🐳 Docker Architecture
-
-The project includes Docker configuration for a production-style deployment.
-
-The architecture is:
-
-The Docker setup includes:
-
-Python 3.12 backend
-CPU-based PyTorch
-YOLO11n
-Tesseract OCR
-FastAPI
-React production build
-Nginx
-SQLite persistent volume
-
-The intended request path is:
-
-Browser
-   ↓
-Nginx :80
-   ├── React Frontend
-   │
-   └── /api/* → FastAPI :8000
-🚀 Docker Commands
-
-Build and start the complete application:
-
-docker compose up --build
-
-Run in detached mode:
-
-docker compose up -d
-
-Stop the services:
-
+```powershell
 docker compose down
+```
 
-The Docker configuration is included for deployment and reproducibility.
+Docker allows the backend environment and its dependencies to be reproduced more consistently across machines.
 
-Docker runtime validation requires Docker to be installed and available on the host machine.
+---
 
-🔒 Security Considerations
+# 🧪 Testing
 
-The project includes several security-oriented mechanisms:
+The project contains automated test coverage under:
 
-JWT authentication
-Argon2 password hashing
-Protected API routes
-Environment-based secrets
-Session expiration handling
-Input validation
-File type validation
-File size validation
-Request ID middleware
+```text
+tests/
+```
 
-Sensitive values such as JWT secrets are intentionally kept outside the source code.
+Run the test suite with:
 
-For a larger production deployment, additional measures would be recommended:
+```powershell
+pytest
+```
 
-HTTPS
-Rate limiting
-Secure secret management
-Production database
-Security headers
-Centralized logging
-Monitoring
-Role-based authorization
-📦 Input Validation
+For individual API/model tests, use the relevant test module inside the `tests` directory.
 
-Uploaded images are validated before inference.
+---
 
-Supported image types include:
+# 🔬 Request Lifecycle
 
-JPEG
-PNG
-WebP
+A complete visual-analysis request follows this flow:
 
-The upload pipeline also enforces a maximum image size.
+```mermaid
+sequenceDiagram
 
-For video processing, configured video formats and video upload limits are used.
+    participant User
+    participant Frontend
+    participant API as FastAPI
+    participant Validation
+    participant Models as AI Models
+    participant Response
 
-The validation workflow is:
+    User->>Frontend: Upload Image
+    Frontend->>API: POST /analyze
 
-Validation occurs before expensive inference so invalid requests can be rejected early.
+    API->>Validation: Validate Image
+    Validation-->>API: Valid Image
 
-⚡ CPU-Oriented Design
+    API->>Models: Run Classification
+    API->>Models: Run Detection
 
-The project is designed to operate on CPU hardware.
+    Models-->>API: Predictions
+    Models-->>API: Objects + Bounding Boxes
 
-The current development environment does not depend on an NVIDIA GPU.
+    API->>Response: Build Structured Result
+    Response-->>Frontend: JSON + Visual Result
 
-This makes the system easier to run on standard consumer hardware, although GPU acceleration can significantly improve inference performance for larger workloads.
+    Frontend-->>User: Display Analysis
+```
 
-The project therefore prioritizes:
+---
 
-Lightweight models
-Modular inference services
-Configurable processing
-CPU compatibility
-🧱 Engineering Architecture
+# 🎯 Use Cases
 
-The project follows a layered architecture rather than placing the entire application inside one file.
+The platform can serve as a foundation for:
 
-                 FastAPI Application
-                         │
-          ┌──────────────┼──────────────┐
-          │              │              │
-        Routes        Auth Layer     Middleware
-          │              │
-          ▼              ▼
-      Services       Database
-          │
-    ┌─────┼───────────────┐
-    │     │               │
- Image  Video         Analytics
-    │     │               │
-    └─────┼───────────────┘
-          ▼
-       AI Models
+* Computer vision applications
+* AI-powered web applications
+* Image analysis dashboards
+* Object detection systems
+* Visual inspection systems
+* Image classification services
+* AI inference backends
+* Educational computer vision platforms
+* Rapid computer vision prototyping
+* Frontend applications requiring visual AI
 
-This separation improves:
+---
 
-Maintainability
-Testing
-Reusability
-Debugging
-Extensibility
-📈 Development Evolution
+# 📈 Engineering Highlights
 
-The project evolved through multiple stages.
+This project demonstrates more than simply running pretrained models.
 
-Stage 1 — Image AI API
+### Architecture
 
-Initial capabilities:
+* Modular FastAPI backend
+* Separate service layer
+* Dedicated model components
+* Structured request/response schemas
+* Frontend/backend separation
 
-Image
- ↓
-Classification
- ↓
-Detection
- ↓
-REST API
-Stage 2 — Production-Oriented Backend
+### Computer Vision
 
-Added:
+* Classification
+* Object detection
+* Bounding-box visualization
+* Confidence scoring
+* Combined visual analysis
 
-Structured API architecture
-Validation
-Error handling
-Logging
-Request IDs
-Automated testing
-Stage 3 — Video Intelligence
+### Software Engineering
 
-Added:
+* Input validation
+* Automated testing
+* Environment configuration
+* Docker support
+* CI workflow
+* API documentation
 
-Video processing
-Object detection
-Object tracking
-Annotated video
-Video analytics
-Stage 4 — Advanced Analytics
+### Full-Stack AI
 
-Added:
-
-Track analytics
-Interaction analysis
-Interaction partner statistics
-Interaction episode statistics
-Interaction network visualization
-Stage 5 — Full-Stack Application
-
-Added:
-
-React dashboard
-Authentication
-User preferences
-Database
-Frontend API integration
-Session management
-Stage 6 — Deployment Architecture
-
-Added:
-
-Dockerfile
-Docker Compose
-Nginx reverse proxy
-Production frontend build
-Persistent database volume
-🎯 Current Capabilities
-
-The platform brings together:
-
-                 AI VISUAL INTELLIGENCE
-                          │
-       ┌──────────────────┼──────────────────┐
-       │                  │                  │
-       ▼                  ▼                  ▼
-     Images             Videos           Analytics
-       │                  │                  │
-       ▼                  ▼                  ▼
-Classification        Detection        Track Analysis
-Detection             Tracking         Interactions
-Annotation            Processing       Networks
-       │                  │                  │
-       └──────────────────┼──────────────────┘
-                          ▼
-                    FastAPI Backend
-                          │
-                 ┌────────┴────────┐
-                 ▼                 ▼
-           Authentication       Database
-                 │                 │
-                 └────────┬────────┘
-                          ▼
-                   React Dashboard
-⚠️ Current Limitations
-
-Although the project is designed as a complete portfolio-level computer vision platform, some limitations remain.
-
-AI Model Limitations
-EfficientNet-B0 currently performs general ImageNet classification.
-YOLO11n is optimized for lightweight inference and may trade accuracy for speed compared with larger detection models.
-Hardware Limitations
-CPU inference is slower than GPU inference.
-Video processing can become computationally expensive for long or high-resolution videos.
-Database Limitations
-SQLite is suitable for local development and portfolio-scale usage.
-High-concurrency production workloads would benefit from PostgreSQL.
-Deployment Limitations
-Docker configuration is provided for reproducible deployment.
-Cloud deployment is not currently included.
-A production-scale deployment would require additional infrastructure and monitoring.
-🔮 Future Improvements
-
-Possible future development includes:
-
-GPU inference support
-PostgreSQL integration
-Alembic database migrations
-Redis-based background jobs
-Asynchronous video processing
-Cloud deployment
-Advanced role-based access control
-API rate limiting
-Model benchmarking
-Custom-trained computer vision models
-Batch inference
-Real-time camera streams
-WebSocket-based live detection
-Advanced video analytics
-Production object storage
-Scalable inference workers
-Monitoring and observability
-Performance optimization
-🏆 What This Project Demonstrates
-
-This project demonstrates practical skills across multiple areas of modern AI and software engineering.
-
-Artificial Intelligence
-Computer vision
-Image classification
-Object detection
-Object tracking
-Video analytics
-Interaction analysis
-Backend Engineering
-FastAPI
-REST API design
-Service-layer architecture
-Request validation
-Error handling
-Middleware
-API documentation
-Security
-JWT authentication
-Argon2 password hashing
-Protected endpoints
-Environment-based secrets
-Session management
-Database Engineering
-SQLite
-SQLAlchemy
-Database sessions
-User persistence
-Preference persistence
-Frontend Engineering
+```text
 React
-Vite
-Tailwind CSS
-Axios
-Component-based architecture
-Dashboard development
-Authentication flows
-Testing
-Pytest
-Vitest
-React Testing Library
-API testing
-Authentication testing
-Frontend behavior testing
-Deployment
-Docker
-Docker Compose
-Nginx
-Reverse proxy architecture
-Production frontend builds
-📌 Key Engineering Principle
-
-The central idea behind the project is:
-
-Raw Visual Data
-       ↓
+  ↓
+FastAPI
+  ↓
 Validation
-       ↓
-AI Inference
-       ↓
+  ↓
+Inference Services
+  ↓
+PyTorch / YOLO
+  ↓
 Structured Results
+  ↓
+React Visualization
+```
+
+---
+
+# ⚠️ Current Limitations
+
+The project is primarily intended as a **portfolio, learning, and development platform**.
+
+Current limitations include:
+
+* Classification uses a pretrained ImageNet model rather than a custom domain-specific classifier.
+* YOLO11n is optimized for lightweight inference and may trade some accuracy for speed compared with larger models.
+* Production deployment would require additional security and infrastructure.
+* Authentication and authorization should be added before exposing the API publicly.
+* Rate limiting should be implemented for production workloads.
+* Monitoring and structured production logging can be expanded.
+* GPU acceleration depends on the deployment environment.
+
+---
+
+# 🔮 Future Roadmap
+
+```mermaid
+flowchart LR
+
+    A[Current Platform] --> B[Authentication]
+    B --> C[Rate Limiting]
+    C --> D[Advanced Monitoring]
+    D --> E[GPU Inference]
+    E --> F[Batch Processing]
+    F --> G[Custom Vision Models]
+    G --> H[Cloud Deployment]
+```
+
+Potential future improvements:
+
+* 🔐 JWT/API-key authentication
+* 🚦 API rate limiting
+* 📊 Advanced monitoring
+* ⚡ GPU inference
+* 📦 Batch image processing
+* 🧠 Custom-trained vision models
+* 🎚️ Configurable confidence thresholds
+* 📝 Structured logging
+* ☁️ Cloud deployment
+* 🔄 Improved CI/CD
+* 🗄️ Optional inference history/database
+* 📱 Extended frontend capabilities
+
+---
+
+# 🧠 What This Project Demonstrates
+
+This project demonstrates the complete journey from a pretrained computer vision model to a usable AI application:
+
+```text
+Pretrained Models
        ↓
-Analytics
+Model Abstraction
        ↓
-REST API
+Inference Services
        ↓
-React Dashboard
+FastAPI REST Layer
        ↓
-User
+Validation & Structured Responses
+       ↓
+React Frontend
+       ↓
+Docker / CI
+       ↓
+Usable Visual Intelligence Platform
+```
 
-The project demonstrates how AI models can be transformed from standalone inference scripts into a complete, modular, maintainable, and user-facing software platform.
+The focus is not only on model inference, but on **engineering AI systems that can actually be consumed by applications**.
 
-📚 API Documentation
+---
 
-Interactive API documentation is automatically generated by FastAPI.
+# 👨‍💻 Author
 
-After starting the backend:
+## Deban Kumar Das D
 
-Swagger:
-http://127.0.0.1:8000/docs
+**Data Science · Machine Learning · Artificial Intelligence · Computer Vision**
 
-ReDoc:
-http://127.0.0.1:8000/redoc
-👨‍💻 Author
+I build practical AI and data-driven applications with a focus on turning machine-learning capabilities into usable software systems.
 
-Deban Kumar Das D
+### Connect
 
-BCA — Data Science
+[![GitHub](https://img.shields.io/badge/GitHub-Debankumardas-181717?style=for-the-badge\&logo=github)](https://github.com/Debankumardas)
 
-GitHub: @Debankumardas
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Deban%20Kumar%20Das-0A66C2?style=for-the-badge\&logo=linkedin)](https://www.linkedin.com/in/debankumardasd/)
 
-📄 License
+---
 
-This project is intended for educational, learning, research, and portfolio purposes.
+<div align="center">
 
-⭐ If you find this project useful, consider starring the repository.
+### ⭐ If you find this project useful, consider starring the repository.
+
+**Build · Experiment · Evaluate · Improve**
+
+</div>
