@@ -48,7 +48,7 @@ function App() {
       try {
         const currentUser = await getCurrentUser(token)
         setUser(currentUser)
-
+        setSessionExpired(false)
         const userPreferences = await getPreferences(token)
         setPreferences(userPreferences)
       } catch {
