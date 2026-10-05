@@ -21,7 +21,6 @@ import {
   getPreferences,
 } from "./services/api"
 
-
 function App() {
   const [token, setToken] = useState(
     () => localStorage.getItem("access_token"),
@@ -34,9 +33,12 @@ function App() {
   const [activePage, setActivePage] = useState(
     "Dashboard",
   )
+
   const [videoAnalytics, setVideoAnalytics] =
     useState(null)
-  const [sessionExpired, setSessionExpired] = useState(false)
+
+  const [sessionExpired, setSessionExpired] =
+    useState(false)
 
   useEffect(() => {
     const restoreSession = async () => {
@@ -47,9 +49,13 @@ function App() {
 
       try {
         const currentUser = await getCurrentUser(token)
+
         setUser(currentUser)
         setSessionExpired(false)
-        const userPreferences = await getPreferences(token)
+
+        const userPreferences =
+          await getPreferences(token)
+
         setPreferences(userPreferences)
       } catch {
         localStorage.removeItem("access_token")
@@ -74,21 +80,32 @@ function App() {
       setActivePage("Dashboard")
     }
 
-    window.addEventListener("session-expired", handleSessionExpired)
+    window.addEventListener(
+      "session-expired",
+      handleSessionExpired,
+    )
 
     return () => {
-      window.removeEventListener("session-expired", handleSessionExpired)
+      window.removeEventListener(
+        "session-expired",
+        handleSessionExpired,
+      )
     }
   }, [])
 
   const handleLogin = (accessToken) => {
-    localStorage.setItem("access_token", accessToken)
+    localStorage.setItem(
+      "access_token",
+      accessToken,
+    )
+
     setSessionExpired(false)
     setToken(accessToken)
   }
 
   const handleLogout = () => {
     localStorage.removeItem("access_token")
+
     setToken(null)
     setUser(null)
     setPreferences(null)
@@ -96,20 +113,89 @@ function App() {
     setActivePage("Dashboard")
   }
 
+  const isPageEnabled = (
+    page,
+    currentPreferences = preferences,
+  ) => {
+    if (!currentPreferences) {
+      return true
+    }
+
+    const preferenceMap = {
+      Dashboard: "dashboard_enabled",
+      "Image Analysis": "image_analysis_enabled",
+      "Video Analysis": "video_analysis_enabled",
+    }
+
+    const preferenceKey = preferenceMap[page]
+
+    if (!preferenceKey) {
+      return true
+    }
+
+    return Boolean(
+      currentPreferences[preferenceKey],
+    )
+  }
+
+  const getSafePage = (
+    page,
+    currentPreferences = preferences,
+  ) => {
+    if (
+      isPageEnabled(
+        page,
+        currentPreferences,
+      )
+    ) {
+      return page
+    }
+
+    if (
+      currentPreferences?.dashboard_enabled
+    ) {
+      return "Dashboard"
+    }
+
+    return "Analytics"
+  }
+
+  const handleNavigate = (page) => {
+    const safePage = getSafePage(
+      page,
+      preferences,
+    )
+
+    setActivePage(safePage)
+  }
+
+  /*
+   * activePage can temporarily contain a disabled page
+   * while preferences are being restored or changed.
+   *
+   * Always derive the page that is actually allowed to render.
+   */
+  const currentPage = getSafePage(
+    activePage,
+    preferences,
+  )
+
   const renderPage = () => {
-    if (activePage === "Image Analysis") {
+    if (currentPage === "Image Analysis") {
       return <ImageAnalysis />
     }
 
-    if (activePage === "Video Analysis") {
+    if (currentPage === "Video Analysis") {
       return (
         <VideoAnalysis
-          onAnalyticsComplete={setVideoAnalytics}
+          onAnalyticsComplete={
+            setVideoAnalytics
+          }
         />
       )
     }
 
-    if (activePage === "Analytics") {
+    if (currentPage === "Analytics") {
       return (
         <Analytics
           videoAnalytics={videoAnalytics}
@@ -117,28 +203,38 @@ function App() {
       )
     }
 
-if (activePage === "Settings") {
-  return (
-    <Settings
-      user={user}
-      preferences={preferences}
-      onPreferencesChange={setPreferences}
-    />
-  )
-}
+    if (currentPage === "Settings") {
+      return (
+        <Settings
+          user={user}
+          preferences={preferences}
+          onPreferencesChange={
+            setPreferences
+          }
+        />
+      )
+    }
 
     return (
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           title="Images Analyzed"
-          value={videoAnalytics ? "1" : "0"}
+          value={
+            videoAnalytics
+              ? "1"
+              : "0"
+          }
           subtitle="Total image analysis jobs"
           icon={FileImage}
         />
 
         <StatCard
           title="Videos Processed"
-          value={videoAnalytics ? "1" : "0"}
+          value={
+            videoAnalytics
+              ? "1"
+              : "0"
+          }
           subtitle="Total video processing jobs"
           icon={Video}
         />
@@ -172,8 +268,9 @@ if (activePage === "Settings") {
             </h3>
 
             <p className="mt-2 text-sm text-slate-400">
-              Upload images or videos to begin analysis
-              and explore detection and tracking analytics.
+              Upload images or videos to
+              begin analysis and explore
+              detection and tracking analytics.
             </p>
           </div>
         </div>
@@ -200,7 +297,8 @@ if (activePage === "Settings") {
       <div>
         {sessionExpired && (
           <div className="fixed left-1/2 top-6 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-lg border border-amber-400/30 bg-amber-500/10 px-4 py-3 text-center text-sm text-amber-200 shadow-lg">
-            Your session has expired. Please log in again.
+            Your session has expired.
+            Please log in again.
           </div>
         )}
 
@@ -211,15 +309,15 @@ if (activePage === "Settings") {
 
   return (
     <div className="flex min-h-screen bg-slate-950">
-<Sidebar
-  activePage={activePage}
-  onNavigate={setActivePage}
-  preferences={preferences}
-/>
+      <Sidebar
+        activePage={currentPage}
+        onNavigate={handleNavigate}
+        preferences={preferences}
+      />
 
       <main className="flex min-w-0 flex-1 flex-col">
         <Topbar
-          activePage={activePage}
+          activePage={currentPage}
           user={user}
           onLogout={handleLogout}
         />
