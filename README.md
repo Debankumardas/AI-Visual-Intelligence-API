@@ -1,93 +1,94 @@
-# 👁️ AI Visual Intelligence Platform
+<div align="center">
 
-> **A full-stack computer vision platform that transforms images and videos into structured visual intelligence through AI inference, object detection, tracking, analytics, authentication, and an interactive React dashboard.**
+# AI Visual Intelligence
 
-[![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python\&logoColor=white)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.141.1-009688?logo=fastapi\&logoColor=white)](https://fastapi.tiangolo.com/)
-[![React](https://img.shields.io/badge/React-Vite-61DAFB?logo=react\&logoColor=black)](https://react.dev/)
-[![PyTorch](https://img.shields.io/badge/PyTorch-Computer%20Vision-EE4C2C?logo=pytorch\&logoColor=white)](https://pytorch.org/)
+**A full-stack computer vision platform for image understanding, video tracking, and interaction analytics.**
+
+Turn visual data into structured results through classification, detection, tracking, analytics, authentication, and a React dashboard.
+
+<br />
+
+[![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.141.1-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![React](https://img.shields.io/badge/React-Vite-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-Computer%20Vision-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org/)
 [![YOLOv8](https://img.shields.io/badge/YOLOv8s-Object%20Detection-111111)](https://docs.ultralytics.com/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4.x-06B6D4?logo=tailwindcss\&logoColor=white)](https://tailwindcss.com/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4.x-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+
+</div>
 
 ---
 
-## ✨ What Is This?
+## The idea
 
-**AI Visual Intelligence Platform** started as an API-first computer vision project and evolved into a complete application around image understanding, video intelligence, object tracking, interaction analytics, authentication, persistence, and dashboard visualization.
+This project started as a computer vision API and grew into a complete application around it.
 
-Instead of exposing raw model inference directly, the platform wraps computer vision capabilities inside a modular software architecture:
+The models are only one part of the system. The rest of the work is about turning model output into something usable: validating uploads, exposing structured APIs, tracking objects across video frames, aggregating analytics, handling authentication and persistence, and presenting everything through a web interface.
 
 ```text
-Visual Data
-     ↓
+Visual input
+    │
+    ▼
 Validation
-     ↓
-AI Inference
-     ↓
-Structured Results
-     ↓
-Analytics
-     ↓
+    │
+    ▼
+AI inference
+    │
+    ▼
+Structured results
+    │
+    ▼
+Tracking & analytics
+    │
+    ▼
 FastAPI
-     ↓
-React Dashboard
-     ↓
-User
+    │
+    ▼
+React dashboard
 ```
 
-The project combines:
-
-* 🧠 **Image classification** with EfficientNet-B0
-* 🎯 **Object detection** with YOLOv8s
-* 🖍️ **Annotated image generation**
-* 🎥 **Video processing**
-* 🧭 **Object tracking**
-* 📊 **Video and track analytics**
-* 🕸️ **Interaction network analysis**
-* 🔐 **JWT authentication**
-* 👤 **User preferences**
-* 🗄️ **SQLite + SQLAlchemy persistence**
-* 🖥️ **React dashboard**
-* 🧪 **Backend and frontend testing**
-* 📦 **Offline model weights** stored in the `models/` folder
+> The goal is not to demonstrate inference in isolation.  
+> It is to build the application around it.
 
 ---
 
-## 🚀 Core Capabilities
+## What it does
 
-| Capability                | Description                                                                     | Technology                |
-| ------------------------- | ------------------------------------------------------------------------------- | ------------------------- |
-| 🖼️ Image Classification  | General-purpose image classification with top predictions and confidence scores | EfficientNet-B0 + PyTorch |
-| 🎯 Object Detection       | Detect objects, labels, confidence and bounding boxes                           | YOLOv8s                   |
-| 🖍️ Annotation            | Generate images with detected objects visually marked                           | OpenCV                    |
-| 🔍 Combined Analysis      | Run classification and detection in one workflow                                | EfficientNet-B0 + YOLOv8s |
-| 🎥 Video Intelligence     | Process uploaded videos frame-by-frame                                          | OpenCV + YOLOv8s          |
-| 🧭 Object Tracking        | Maintain tracked object identities across frames                                | Detection + tracking      |
-| 📊 Video Analytics        | Aggregate detection and tracking information                                    | Analytics services        |
-| 🕸️ Interaction Analytics | Analyze interaction partners and interaction episodes                           | Track analytics           |
-| 🔐 Authentication         | Registration, login, JWT sessions and protected APIs                            | FastAPI + JWT + Argon2    |
-| 🖥️ Dashboard             | Interact with AI services through a web interface                               | React + Vite + Tailwind   |
+| Area | Capability | Implementation |
+| --- | --- | --- |
+| Images | Image classification | EfficientNet-B0 + PyTorch |
+| Images | Object detection | YOLOv8s |
+| Images | Annotated detections | OpenCV |
+| Images | Combined classification + detection | Unified analysis workflow |
+| Video | Frame-by-frame detection | OpenCV + YOLOv8s |
+| Video | Object tracking | Detection + tracking pipeline |
+| Analytics | Track statistics | Analytics services |
+| Analytics | Interaction partner / episode analysis | Track interaction analytics |
+| Platform | Authentication | JWT + Argon2 |
+| Platform | Persistence | SQLite + SQLAlchemy |
+| Frontend | Interactive dashboard | React + Vite + Tailwind CSS |
+| Quality | Backend + frontend tests | Pytest + Vitest |
 
 ---
 
-# 🧠 AI & Computer Vision
+## Image intelligence
 
-## 1. Image Classification
+### Classification
 
-The platform uses **EfficientNet-B0 through PyTorch/Torchvision** for image classification.
+Image classification uses **EfficientNet-B0** through PyTorch / Torchvision.
 
-The classification pipeline returns:
+The classifier returns:
 
-* Top predictions
-* ImageNet class labels
-* Confidence scores
-* Inference timing
-* Structured API responses
+- top predictions
+- ImageNet class labels
+- confidence scores
+- inference timing
+- structured API responses
 
-The current classifier uses **ImageNet classes**, so it is intended as a general-purpose computer vision demonstration rather than a custom domain-specific classifier.
+The current model is a general-purpose ImageNet classifier rather than a custom domain-specific model.
 
 <details>
-<summary>Example response</summary>
+<summary><strong>Example classification response</strong></summary>
 
 ```json
 {
@@ -108,24 +109,21 @@ The current classifier uses **ImageNet classes**, so it is intended as a general
 
 </details>
 
----
-
-## 2. Object Detection
+### Object detection
 
 Object detection is powered by **YOLOv8s**.
 
-The detector provides:
+Each detection includes:
 
-* Object labels
-* Confidence scores
-* Bounding-box coordinates
-* Detection results
-* Inference information
+- class label
+- confidence score
+- bounding-box coordinates
+- inference information
 
-The `yolov8s.pt` model is included in the `models/` folder.
+The `yolov8s.pt` weight file is stored locally in `models/`.
 
 <details>
-<summary>Example response</summary>
+<summary><strong>Example detection response</strong></summary>
 
 ```json
 {
@@ -148,39 +146,34 @@ The `yolov8s.pt` model is included in the `models/` folder.
 
 </details>
 
----
+### Combined analysis
 
-## 3. Combined Image Analysis
-
-Classification and object detection can be executed through a unified analysis workflow.
-
-This allows the system to answer two different questions from the same image:
+Classification and detection can run in a single workflow.
 
 ```text
-What does the image represent?
-             +
+What does this image represent?
+              +
 Which objects are present?
 ```
 
+That gives the application both image-level context and object-level information without requiring two separate user flows.
+
 ---
 
-# 🎥 Video Intelligence
+## Video intelligence
 
-The platform extends computer vision from individual images to video.
+The video pipeline extends the same detection stack across time.
 
-The video pipeline supports:
+It supports:
 
-* Video uploads
-* Frame processing
-* YOLOv8s detection
-* Object tracking
-* Annotated video generation
-* Detection statistics
-* Track statistics
-* Video analytics
-* Interaction analytics
-
-### Video Pipeline
+- video uploads
+- frame processing
+- YOLOv8s detections
+- object tracking
+- annotated video generation
+- detection statistics
+- track statistics
+- interaction analytics
 
 ```mermaid
 flowchart LR
@@ -190,69 +183,41 @@ flowchart LR
     D --> E[Track IDs]
     E --> F[Track Analytics]
     F --> G[Interaction Analysis]
-    G --> H[Dashboard Visualization]
+    G --> H[Dashboard]
 ```
 
----
+### Detection vs. tracking
 
-## 🧭 Object Tracking
+Detection answers **what is visible in a frame**.
 
-Object detection identifies objects independently within frames.
+Tracking adds the temporal layer: **which object is which across multiple frames**.
 
-Tracking adds temporal information by attempting to maintain object identities across multiple frames.
+| Detection | Tracking |
+| --- | --- |
+| Finds objects in individual frames | Maintains identities across frames |
+| Produces bounding boxes | Produces track IDs |
+| Frame-level information | Temporal information |
+| Individual detections | Track-level analytics |
 
-| Detection               | Tracking                    |
-| ----------------------- | --------------------------- |
-| Finds objects in frames | Maintains object identities |
-| Bounding boxes          | Track IDs                   |
-| Frame-level information | Temporal information        |
-| Individual detections   | Track-level analytics       |
+Tracking makes it possible to calculate:
 
-Tracking enables the platform to analyze:
-
-* Total detections
-* Unique tracked objects
-* Track statistics
-* Object interactions
-* Interaction episodes
+- total detections
+- unique tracked objects
+- per-track statistics
+- object interactions
+- interaction episodes
 
 ---
 
-## 📊 Video Analytics
+## Interaction analytics
 
-The analytics layer converts frame-level detections into higher-level information.
+A tracked object can also be treated as a node in an interaction network.
 
-Current analytics include:
+That lets the analytics layer move beyond raw bounding boxes and answer questions about relationships between tracks.
 
-* Total detections
-* Unique track IDs
-* Track statistics
-* Interaction statistics
-* Interaction partner counts
-* Interaction episode counts
+### Interaction partner count
 
-```mermaid
-flowchart LR
-    A[Video] --> B[Detections]
-    B --> C[Tracked Objects]
-    C --> D[Track Statistics]
-    D --> E[Interaction Analysis]
-    E --> F[Visual Analytics]
-```
-
----
-
-## 🕸️ Track Interaction Network
-
-One of the platform's more advanced analytics components is the **Track Interaction Network**.
-
-Tracked objects can be represented as nodes in an interaction network. The analytics service can calculate:
-
-### Interaction Partner Count
-
-The number of distinct objects that interacted with each tracked object.
-
-Example:
+How many distinct tracked objects interacted with each track?
 
 ```json
 {
@@ -262,11 +227,9 @@ Example:
 }
 ```
 
-### Interaction Episode Count
+### Interaction episode count
 
-The number of interaction episodes involving each tracked object.
-
-Example:
+How many interaction episodes involved each track?
 
 ```json
 {
@@ -276,64 +239,64 @@ Example:
 }
 ```
 
-This converts raw tracking information into higher-level interaction information that can be visualized through the analytics dashboard.
+The result is a higher-level representation of what happened in the video rather than a long list of independent detections.
 
 ---
 
-# 🖥️ React Dashboard
+## Dashboard
 
-The project includes a dedicated React frontend so users can interact with the computer vision system without manually constructing API requests.
+The React frontend provides a UI for the computer vision workflows, so the system can be used without manually constructing API requests.
 
-### Frontend Stack
+### Application areas
 
-* React
-* Vite
-* Tailwind CSS
-* Axios
-* Lucide React
+| Page | Purpose |
+| --- | --- |
+| Dashboard | Overview of images, videos, detections, and tracks |
+| Image Analysis | Classification, detection, annotation, and combined analysis |
+| Video Analysis | Video processing, detection, tracking, and analytics |
+| Analytics | Detection, tracking, and interaction visualizations |
+| Settings | User application preferences |
 
-### Application Areas
+### Frontend stack
 
-| Page           | Purpose                                             |
-| -------------- | --------------------------------------------------- |
-| Dashboard      | Overview of images, videos, detections and tracks   |
-| Image Analysis | Image-based computer vision operations              |
-| Video Analysis | Video processing, detection, tracking and analytics |
-| Analytics      | Detection, tracking and interaction visualization   |
-| Settings       | User application preferences                        |
+- React
+- Vite
+- Tailwind CSS
+- Axios
+- Lucide React
 
 ---
 
-## 🔐 Authentication Flow
+## Authentication
 
-The frontend and backend use JWT-based authentication.
+Authentication is handled by the FastAPI backend using JWT access tokens.
 
 ```mermaid
 flowchart LR
-    A[Login / Registration] --> B[FastAPI Authentication]
+    A[Login / Registration] --> B[FastAPI Auth]
     B --> C[JWT Access Token]
     C --> D[Browser Session]
     D --> E[Protected API Requests]
     E --> F[React Dashboard]
 ```
 
-Authentication includes:
+Implemented flows include:
 
-* User registration
-* User login
-* Argon2 password hashing through `pwdlib`
-* JWT access tokens
-* Protected API endpoints
-* Current-user retrieval
-* Session expiration handling
+- user registration
+- user login
+- Argon2 password hashing through `pwdlib`
+- JWT access tokens
+- protected API endpoints
+- current-user retrieval
+- session expiration handling
 
-If a protected API request returns `401 Unauthorized`, the frontend invalidates the current session and returns the user to the login interface.
+If a protected request returns `401 Unauthorized`, the frontend invalidates the current session and returns the user to the login interface.
 
 ---
 
-# 🏗️ System Architecture
+## Architecture
 
-The platform follows a modular architecture separating presentation, API routing, authentication, persistence, AI inference, video processing and analytics.
+The application is split into clear backend, frontend, inference, persistence, and analytics concerns.
 
 ```mermaid
 flowchart TB
@@ -364,22 +327,20 @@ flowchart TB
     AU --> DB
 ```
 
-### Backend Layers
+### Backend responsibilities
 
-| Layer          | Responsibility                                                 |
-| -------------- | -------------------------------------------------------------- |
-| API            | HTTP requests and responses                                    |
-| Authentication | Password hashing, JWT generation and validation                |
-| Database       | SQLAlchemy engine, sessions and initialization                 |
-| Models         | Structured application and response models                     |
-| Services       | AI inference, detection, annotation, video and analytics logic |
-| Middleware     | Request-level infrastructure such as request IDs               |
+| Layer | Responsibility |
+| --- | --- |
+| API | HTTP requests and responses |
+| Authentication | Password hashing, JWT generation, and validation |
+| Database | SQLAlchemy engine, sessions, and initialization |
+| Models | Structured application and response models |
+| Services | AI inference, detection, annotation, video, and analytics logic |
+| Middleware | Request-level infrastructure such as request IDs |
 
 ---
 
-# 📁 Project Structure
-
-The repository is organized around separate backend, frontend and model concerns.
+## Repository layout
 
 ```text
 AI-Visual-Intelligence-API/
@@ -420,105 +381,74 @@ AI-Visual-Intelligence-API/
 
 ---
 
-# ⚙️ Technology Stack
+## Tech stack
 
-| Layer             | Technologies                   |
-| ----------------- | ------------------------------ |
-| Backend           | Python, FastAPI, Uvicorn       |
-| Frontend          | React, Vite, JavaScript        |
-| Styling           | Tailwind CSS                   |
-| HTTP Client       | Axios                          |
-| UI                | Lucide React                   |
-| Deep Learning     | PyTorch                        |
-| Classification    | EfficientNet-B0                |
-| Detection         | YOLOv8s                        |
-| Computer Vision   | OpenCV                         |
-| OCR               | Tesseract                      |
-| Database          | SQLite                         |
-| ORM               | SQLAlchemy                     |
-| Authentication    | JWT                            |
-| Password Hashing  | Argon2 / `pwdlib`              |
-| API Documentation | Swagger / OpenAPI              |
-| Backend Testing   | Pytest                         |
-| Frontend Testing  | Vitest + React Testing Library |
+| Layer | Technology |
+| --- | --- |
+| Backend | Python, FastAPI, Uvicorn |
+| Frontend | React, Vite, JavaScript |
+| Styling | Tailwind CSS |
+| HTTP client | Axios |
+| UI icons | Lucide React |
+| Deep learning | PyTorch |
+| Classification | EfficientNet-B0 |
+| Detection | YOLOv8s |
+| Computer vision | OpenCV |
+| OCR | Tesseract |
+| Database | SQLite |
+| ORM | SQLAlchemy |
+| Authentication | JWT |
+| Password hashing | Argon2 / `pwdlib` |
+| API docs | Swagger / OpenAPI |
+| Backend testing | Pytest |
+| Frontend testing | Vitest + React Testing Library |
 
 ---
 
-# 🔌 API
+## API
 
-The backend exposes functionality for:
+### Core endpoints
 
-* Health checks
-* Authentication
-* Image classification
-* Object detection
-* Annotated detection
-* Combined image analysis
-* Video processing
-* Video analytics
-
-### Core Endpoints
-
-| Method | Endpoint            | Purpose                        |
-| ------ | ------------------- | ------------------------------ |
-| `GET`  | `/`                 | API status                     |
-| `GET`  | `/health`           | Health check                   |
-| `POST` | `/predict`          | Image classification           |
-| `POST` | `/detect`           | Object detection               |
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `GET` | `/` | API status |
+| `GET` | `/health` | Health check |
+| `POST` | `/predict` | Image classification |
+| `POST` | `/detect` | Object detection |
 | `POST` | `/detect/annotated` | Detection with annotated image |
-| `POST` | `/analyze`          | Combined image analysis        |
+| `POST` | `/analyze` | Combined image analysis |
 
-Authentication and video functionality are exposed through their respective route modules.
+Authentication and video functionality live in their respective route modules.
 
-For the complete API contract, use the automatically generated FastAPI documentation.
+Once the backend is running, the complete API contract is available through FastAPI's generated documentation:
+
+```text
+Swagger  http://127.0.0.1:8000/docs
+ReDoc    http://127.0.0.1:8000/redoc
+```
 
 ---
 
-# 📚 API Documentation
+## Run locally
 
-Once the backend is running:
-
-**Swagger**
-
-```text
-http://127.0.0.1:8000/docs
-```
-
-**ReDoc**
-
-```text
-http://127.0.0.1:8000/redoc
-```
-
-Swagger provides an interactive interface for inspecting and testing API requests.
-
----
-
-# 💻 Local Development
-
-## 1. Clone
+### 1. Clone the repository
 
 ```powershell
 git clone https://github.com/Debankumardas/AI-Visual-Intelligence-API.git
 cd AI-Visual-Intelligence-API
 ```
 
-## 2. Backend Environment
+### 2. Create the backend environment
 
 ```powershell
 python -m venv .venv
 .venv\Scripts\Activate.ps1
-```
-
-Install dependencies:
-
-```powershell
 pip install -r requirements.txt
 ```
 
-## 3. Configure Environment
+### 3. Configure environment variables
 
-Create a `.env` file in the project root.
+Create a `.env` file in the project root:
 
 ```env
 JWT_SECRET_KEY=your-strong-secret-key
@@ -527,23 +457,23 @@ JWT_ACCESS_TOKEN_EXPIRE_MINUTES=60
 DATABASE_URL=sqlite:///./app.db
 ```
 
-Optional settings:
+Optional configuration:
 
-| Variable                     | Default | Purpose                                                                                      |
-| ---------------------------- | ------- | -------------------------------------------------------------------------------------------- |
-| `PRELOAD_MODELS`             | `true`  | Load the AI models at startup. When `false`, they load on the first request.                 |
-| `VIDEO_MAX_PROCESSED_FRAMES` | `150`   | Maximum frames analysed per video. Longer videos are sampled evenly with a larger stride.    |
-| `MODELS_DIR`                 | `models` | Folder containing the model weights.                                                         |
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `PRELOAD_MODELS` | `true` | Load AI models at startup; when `false`, load them on the first request |
+| `VIDEO_MAX_PROCESSED_FRAMES` | `150` | Maximum number of analyzed frames per video |
+| `MODELS_DIR` | `models` | Directory containing local model weights |
 
-> Keep `JWT_SECRET_KEY` private and never commit it to Git.
+> Keep `JWT_SECRET_KEY` private and do not commit it to Git.
 
-## 4. Initialize Database
+### 4. Initialize the database
 
 ```powershell
 python -m app.database.init_db
 ```
 
-## 5. Start Backend
+### 5. Start the backend
 
 ```powershell
 uvicorn app.main:app --reload
@@ -555,9 +485,7 @@ Backend:
 http://127.0.0.1:8000
 ```
 
----
-
-# 🖥️ Frontend Development
+### 6. Start the frontend
 
 Open a second terminal:
 
@@ -573,23 +501,57 @@ Frontend:
 http://localhost:5173
 ```
 
-Open `http://localhost:5173`. The Vite dev server forwards `/api` and `/health`
-to the backend, so the browser stays on a single origin and no CORS setup is
-needed.
+The Vite development server forwards `/api` and `/health` to the backend, keeping the browser on a single origin during local development.
 
-| Variable            | Default                 | Purpose                                                                    |
-| ------------------- | ----------------------- | -------------------------------------------------------------------------- |
-| `VITE_BACKEND_URL`  | `http://127.0.0.1:8000` | Where the dev server forwards `/api` and `/health` requests.               |
-| `VITE_API_BASE_URL` | `/`                     | Optional. Call a backend directly (it must then allow this origin in CORS). |
+Frontend environment variables:
 
-See `frontend/.env.example`. `npm run preview` uses the same proxy to serve the
-production build locally.
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `VITE_BACKEND_URL` | `http://127.0.0.1:8000` | Backend target for the development proxy |
+| `VITE_API_BASE_URL` | `/` | Optional direct backend base URL |
+
+See `frontend/.env.example` for the frontend environment configuration.
 
 ---
 
-# 🧪 Testing & Quality
+## Models and offline operation
 
-The project includes automated backend and frontend testing.
+Model weights live inside the repository's `models/` directory and are loaded from local files. The backend does not need to download weights at runtime.
+
+| File | Used for |
+| --- | --- |
+| `yolov8s.pt` | Object detection and tracking |
+| `yolov8s-seg.pt` | Instance segmentation |
+| `efficientnet_b0_rwightman-7f5810bc.pth` | ImageNet classification |
+
+Model sources and SHA-256 checksums are documented in `models/README.md`.
+
+If a model file is missing or corrupted:
+
+```powershell
+python -m scripts.download_models
+```
+
+A missing weight file is surfaced through `/health/ready` with an explanatory error rather than crashing the API.
+
+You can also point the application at a different model directory with `MODELS_DIR`.
+
+### CPU-oriented defaults
+
+The current development workflow does not require an NVIDIA GPU.
+
+That choice shapes a few defaults:
+
+- lightweight pretrained models
+- CPU-compatible inference
+- configurable processing
+- a frame budget for video analysis
+
+YOLOv8s provides a better accuracy / speed balance than smaller alternatives, but CPU video inference is still relatively expensive. Videos are therefore sampled down to at most `VIDEO_MAX_PROCESSED_FRAMES` processed frames.
+
+---
+
+## Testing
 
 ### Backend
 
@@ -597,16 +559,16 @@ The project includes automated backend and frontend testing.
 pytest
 ```
 
-Backend coverage includes areas such as:
+Backend coverage includes:
 
-* API behavior
-* Authentication
-* Protected endpoints
-* Database functionality
-* Computer vision services
-* Video processing
-* Analytics
-* Error handling
+- API behavior
+- authentication
+- protected endpoints
+- database functionality
+- computer vision services
+- video processing
+- analytics
+- error handling
 
 ### Frontend
 
@@ -615,14 +577,14 @@ cd frontend
 npm test
 ```
 
-Frontend tests cover areas such as:
+Frontend tests cover:
 
-* Component rendering
-* Authentication
-* Session restoration
-* Session expiration
-* Dashboard behavior
-* Navigation
+- component rendering
+- authentication
+- session restoration
+- session expiration
+- dashboard behavior
+- navigation
 
 ### Lint
 
@@ -630,292 +592,125 @@ Frontend tests cover areas such as:
 npm run lint
 ```
 
-Frontend lint, tests and the production build also run in CI.
-
-### Production Build
+### Production build
 
 ```powershell
 npm run build
 ```
 
----
-
-# 📦 Models
-
-All model weights are stored in the [`models/`](models) folder and loaded from
-local files, so the backend works fully offline. Nothing is downloaded at
-runtime.
-
-| File                                     | Used for                        |
-| ---------------------------------------- | ------------------------------- |
-| `yolov8s.pt`                             | Object detection and tracking   |
-| `yolov8s-seg.pt`                         | Instance segmentation           |
-| `efficientnet_b0_rwightman-7f5810bc.pth` | Image classification (ImageNet) |
-
-Sources and SHA-256 checksums are listed in [`models/README.md`](models/README.md).
-If a file is missing or corrupted, restore and verify it with:
-
-```powershell
-python -m scripts.download_models
-```
-
-A missing weight file is reported by `/health/ready` with an explanatory error
-instead of crashing the API. Set `MODELS_DIR` to load the weights from another
-folder.
-
-YOLOv8s is more accurate than the smaller YOLOv8n/YOLO11n models but slower on
-CPU (about 0.6 s per frame on a 2-core machine). Videos are therefore sampled
-down to at most `VIDEO_MAX_PROCESSED_FRAMES` frames.
+Frontend linting, tests, and the production build also run in CI.
 
 ---
 
-# 🔒 Security & Validation
+## Security and validation
 
-The platform includes several security and reliability mechanisms:
+The current application includes:
 
-* JWT authentication
-* Argon2 password hashing
-* Protected API routes
-* Environment-based secrets
-* Session expiration
-* Input validation
-* File type validation
-* File size validation
-* Request ID middleware
+- JWT authentication
+- Argon2 password hashing
+- protected API routes
+- environment-based secrets
+- session expiration
+- input validation
+- file type validation
+- file size validation
+- request ID middleware
 
 Supported image types include:
 
-* JPEG
-* PNG
-* WebP
+- JPEG
+- PNG
+- WebP
 
-Validation occurs before expensive inference so invalid requests can be rejected early.
+Validation happens before expensive inference so malformed or unsupported requests can fail early.
 
-For larger production deployments, additional infrastructure such as HTTPS, rate limiting, secure secret management, production databases, security headers, monitoring and role-based authorization would be appropriate.
-
----
-
-# ⚡ CPU-Oriented Design
-
-The project is designed to operate on CPU hardware and does not require an NVIDIA GPU for its current development workflow.
-
-The architecture therefore prioritizes:
-
-* Lightweight models
-* Modular inference services
-* Configurable processing
-* CPU compatibility
-
-GPU acceleration can significantly improve inference performance for larger workloads.
+For a larger production deployment, the project would still need infrastructure such as HTTPS, rate limiting, production secret management, a production database, security headers, monitoring, and role-based authorization.
 
 ---
 
-# 🗄️ Database
+## Current constraints
 
-The current persistence layer uses:
+This is a working full-stack project, but it is intentionally scoped.
 
-* SQLite
-* SQLAlchemy
-
-Persistent application information includes:
-
-* Users
-* User preferences
-
-```mermaid
-flowchart LR
-    A[FastAPI] --> B[Database Dependency]
-    B --> C[SQLAlchemy]
-    C --> D[(SQLite)]
-```
-
-SQLite is appropriate for local development, demonstrations and portfolio-scale usage.
-
-For higher-concurrency production workloads, PostgreSQL would be a stronger choice.
+| Area | Current constraint |
+| --- | --- |
+| Classification | EfficientNet-B0 uses general ImageNet classes |
+| Detection | YOLOv8s balances accuracy and CPU speed; larger models cost more compute |
+| Hardware | CPU inference is slower than GPU inference |
+| Video | Long or high-resolution videos are computationally expensive |
+| Database | SQLite is aimed at local and portfolio-scale usage |
+| Deployment | Local development is configured; production hosting is not included |
 
 ---
 
-# 📈 Development Evolution
+## Roadmap
 
-The project evolved from a simple computer vision API into a broader full-stack platform.
-
-| Stage                           | Evolution                                                                     |
-| ------------------------------- | ----------------------------------------------------------------------------- |
-| **1 — Image AI API**            | Classification, detection and REST API                                        |
-| **2 — Production Backend**      | Validation, errors, logging, request IDs and testing                          |
-| **3 — Video Intelligence**      | Video processing, detection, tracking and annotated video                     |
-| **4 — Advanced Analytics**      | Track analytics, interaction analysis and interaction networks                |
-| **5 — Full-Stack Application**  | React dashboard, authentication, preferences, database and session management |
-| **6 — Hardening**               | Offline model weights, non-blocking inference and a video frame budget        |
+- [ ] GPU inference support
+- [ ] PostgreSQL + Alembic migrations
+- [ ] Asynchronous video processing and background jobs
+- [ ] Cloud deployment
+- [ ] Custom-trained computer vision models
+- [ ] Model benchmarking and performance optimization
+- [ ] API rate limiting and advanced authorization
+- [ ] Monitoring and observability
+- [ ] Scalable inference workers
+- [ ] Real-time camera and WebSocket-based detection
 
 ---
 
-# 🎯 Current Platform
+## Why this project matters
 
-The current system brings together three major areas:
+A model demo can stop at:
 
 ```text
-                    AI VISUAL INTELLIGENCE
-                              │
-             ┌────────────────┼────────────────┐
-             │                │                │
-             ▼                ▼                ▼
-          IMAGES           VIDEOS          ANALYTICS
-             │                │                │
-       ┌─────┼─────┐     ┌────┼────┐      ┌───┼────┐
-       ▼     ▼     ▼     ▼         ▼      ▼        ▼
-    Class  Detect Annotate Detect Track  Tracks  Interactions
-       │            │       │      │      │        │
-       └────────────┴───────┴──────┴──────┴────────┘
-                              │
-                              ▼
-                       FastAPI Backend
-                         │         │
-                         ▼         ▼
-                  Authentication  Database
-                         │         │
-                         └────┬────┘
-                              ▼
-                       React Dashboard
+input → model → prediction
 ```
 
----
-
-# ⚠️ Current Limitations
-
-| Area           | Current Limitation                                                                                     |
-| -------------- | ------------------------------------------------------------------------------------------------------ |
-| Classification | EfficientNet-B0 currently performs general ImageNet classification                                     |
-| Detection      | YOLOv8s balances accuracy and CPU speed; larger models are more accurate but much slower on CPU       |
-| Hardware       | CPU inference is slower than GPU inference                                                             |
-| Video          | Long or high-resolution videos can become computationally expensive                                    |
-| Database       | SQLite is intended for local and portfolio-scale usage                                                 |
-| Deployment     | The app is set up for local use; production hosting (HTTPS, process management) is not included       |
-
----
-
-# 🔮 Roadmap
-
-Potential future development includes:
-
-* [ ] GPU inference support
-* [ ] PostgreSQL + Alembic migrations
-* [ ] Asynchronous video processing and background jobs
-* [ ] Cloud deployment
-* [ ] Custom-trained computer vision models
-* [ ] Model benchmarking and performance optimization
-* [ ] API rate limiting and advanced authorization
-* [ ] Monitoring and observability
-* [ ] Scalable inference workers
-* [ ] Real-time camera and WebSocket-based detection
-
----
-
-# 🏆 Engineering Highlights
-
-This project demonstrates the integration of AI models with practical software engineering rather than treating model inference as an isolated script.
-
-### Artificial Intelligence
-
-* Computer vision
-* Image classification
-* Object detection
-* Object tracking
-* Video analytics
-* Interaction analysis
-
-### Backend Engineering
-
-* FastAPI
-* REST API design
-* Modular service architecture
-* Request validation
-* Error handling
-* Middleware
-* OpenAPI documentation
-
-### Security & Data
-
-* JWT authentication
-* Argon2 password hashing
-* Protected endpoints
-* Environment-based secrets
-* SQLAlchemy
-* Persistent user data
-
-### Frontend Engineering
-
-* React
-* Vite
-* Tailwind CSS
-* Axios
-* Component-based architecture
-* Dashboard development
-* Authentication flows
-
-### Testing & Quality
-
-* Pytest
-* Vitest
-* React Testing Library
-* GitHub Actions CI
-
----
-
-# 📌 Engineering Principle
-
-The central idea behind the project is simple:
-
-> **Turn standalone AI inference into a complete, modular and user-facing software system.**
+This project keeps going:
 
 ```text
-Raw Visual Data
+raw visual data
       ↓
-Validation
+validation
       ↓
-AI Inference
+AI inference
       ↓
-Structured Results
+structured results
       ↓
-Analytics
+tracking & analytics
       ↓
 REST API
       ↓
-React Dashboard
+authentication + persistence
       ↓
-User
+React dashboard
 ```
 
-The project demonstrates how pretrained computer vision models can be integrated with backend engineering, frontend development, authentication, persistence, testing and deployment architecture.
+That integration is the point of the repository.
+
+It brings computer vision together with backend engineering, frontend development, authentication, persistence, testing, validation, and application architecture in one system.
 
 ---
 
-# 📚 API Documentation
+## Authors
 
-FastAPI automatically generates interactive API documentation.
-
-After starting the backend:
-
-**Swagger:** `http://127.0.0.1:8000/docs`
-
-**ReDoc:** `http://127.0.0.1:8000/redoc`
-
----
-
-# 👨‍💻 Author
-
-**Deban Kumar Das D**
-
+**Deban Kumar Das D**  
 BCA — Data Science
-
 GitHub: [@Debankumardas](https://github.com/Debankumardas)
 
----
-
-## 📄 License
-
-This project is intended for educational, learning, research and portfolio purposes.
+**Pranav S Nair**
+GitHub: [@p04pranav](https://github.com/p04pranav)
 
 ---
 
-⭐ **If you find the project useful, consider starring the repository.**
+## License
+
+This project is intended for educational, learning, research, and portfolio purposes.
+
+---
+
+<div align="center">
+
+If this project is useful to you, consider giving the repository a star.
+
+</div>
