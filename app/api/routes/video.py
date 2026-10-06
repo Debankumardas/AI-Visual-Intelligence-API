@@ -3,6 +3,7 @@ import tempfile
 
 from fastapi import APIRouter, BackgroundTasks, File, UploadFile
 from fastapi.responses import FileResponse
+from starlette.concurrency import run_in_threadpool
 
 from app.api.routes.utils import load_uploaded_video
 from app.core.exceptions import InvalidVideoError
@@ -28,7 +29,10 @@ async def analyze_video_metadata(
 
     try:
         try:
-            metadata = video_service.get_metadata(video_path)
+            metadata = await run_in_threadpool(
+                video_service.get_metadata,
+                video_path,
+            )
         except ValueError as exc:
             raise InvalidVideoError(
                 "Invalid or corrupted video file."
@@ -59,7 +63,8 @@ async def analyze_video(
 
     try:
         try:
-            analytics = video_processing_service.analyze_video(
+            analytics = await run_in_threadpool(
+                video_processing_service.analyze_video,
                 video_path=video_path,
             )
 
@@ -92,7 +97,8 @@ async def annotate_video(
 
     try:
         try:
-            video_processing_service.generate_annotated_video(
+            await run_in_threadpool(
+                video_processing_service.generate_annotated_video,
                 video_path=input_path,
                 output_path=output_path,
             )
