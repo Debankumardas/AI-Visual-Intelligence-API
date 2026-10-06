@@ -18,12 +18,14 @@ import {
 import App from "./App"
 
 import {
+  checkHealth,
   getCurrentUser,
   getPreferences,
 } from "./services/api"
 
 
 vi.mock("./services/api", () => ({
+  checkHealth: vi.fn(),
   getCurrentUser: vi.fn(),
   getPreferences: vi.fn(),
 }))
@@ -172,6 +174,8 @@ beforeEach(() => {
   localStorage.clear()
 
   vi.clearAllMocks()
+
+  checkHealth.mockResolvedValue({ status: "healthy" })
 
   getCurrentUser.mockResolvedValue(mockUser)
 

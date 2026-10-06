@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 
 import Login from "./components/auth/Login"
 import Sidebar from "./components/layout/Sidebar"
@@ -16,10 +16,15 @@ import {
   Video,
 } from "lucide-react"
 
+import useNotifications from "./hooks/useNotifications"
+
 import {
+  checkHealth,
   getCurrentUser,
   getPreferences,
 } from "./services/api"
+
+const HEALTH_POLL_INTERVAL_MS = 30000
 
 function App() {
   const [token, setToken] = useState(
@@ -39,6 +44,28 @@ function App() {
 
   const [sessionExpired, setSessionExpired] =
     useState(false)
+
+  const [apiOnline, setApiOnline] = useState(false)
+
+  const [imageAnalysesCount, setImageAnalysesCount] =
+    useState(0)
+
+  const [videoAnalysesCount, setVideoAnalysesCount] =
+    useState(0)
+
+  const {
+    notifications,
+    addNotification,
+    markAllRead,
+    clearNotifications,
+  } = useNotifications(preferences)
+
+  const resetSessionData = useCallback(() => {
+    setVideoAnalytics(null)
+    setImageAnalysesCount(0)
+    setVideoAnalysesCount(0)
+    clearNotifications()
+  }, [clearNotifications])
 
   useEffect(() => {
     const restoreSession = async () => {
@@ -78,7 +105,7 @@ function App() {
     setToken(null)
     setUser(null)
     setPreferences(null)
-    setVideoAnalytics(null)
+    resetSessionData()
     setActivePage("Dashboard")
   }
 
@@ -93,7 +120,88 @@ function App() {
         handleSessionExpired,
       )
     }
-  }, [])
+  }, [resetSessionData])
+
+  useEffect(() => {
+    if (!user) {
+      return undefined
+    }
+
+    let cancelled = false
+    let previouslyOnline = null
+
+    const pollHealth = async () => {
+      let online
+
+      try {
+        await checkHealth()
+        online = true
+      } catch {
+        online = false
+      }
+
+      if (cancelled) {
+        return
+      }
+
+      setApiOnline(online)
+
+      if (previouslyOnline !== null && previouslyOnline !== online) {
+        addNotification(
+          online
+            ? {
+                kind: "system",
+                title: "API connection restored",
+                message: "The backend is reachable again.",
+              }
+            : {
+                kind: "system",
+                title: "API connection lost",
+                message: "The backend is not responding.",
+              },
+        )
+      }
+
+      previouslyOnline = online
+    }
+
+    pollHealth()
+
+    const intervalId = setInterval(
+      pollHealth,
+      HEALTH_POLL_INTERVAL_MS,
+    )
+
+    return () => {
+      cancelled = true
+      clearInterval(intervalId)
+    }
+  }, [user, addNotification])
+
+  const handleImageAnalysisComplete = (result) => {
+    setImageAnalysesCount((count) => count + 1)
+
+    const objectCount = result?.detections?.length ?? 0
+
+    addNotification({
+      kind: "analysis",
+      title: "Image analysis completed",
+      message: `${objectCount} ${
+        objectCount === 1 ? "object" : "objects"
+      } detected.`,
+    })
+  }
+
+  const handleVideoAnalysisComplete = (analytics) => {
+    setVideoAnalytics(analytics)
+    setVideoAnalysesCount((count) => count + 1)
+
+    addNotification({
+      kind: "analysis",
+      title: "Video analysis completed",
+      message: `${analytics.total_detections} detections, ${analytics.unique_track_ids} unique tracks.`,
+    })
+  }
 
   const handleLogin = (accessToken) => {
     localStorage.setItem(
@@ -111,7 +219,7 @@ function App() {
     setToken(null)
     setUser(null)
     setPreferences(null)
-    setVideoAnalytics(null)
+    resetSessionData()
     setActivePage("Dashboard")
   }
 
@@ -184,14 +292,20 @@ function App() {
 
   const renderPage = () => {
     if (currentPage === "Image Analysis") {
-      return <ImageAnalysis />
+      return (
+        <ImageAnalysis
+          onAnalysisComplete={
+            handleImageAnalysisComplete
+          }
+        />
+      )
     }
 
     if (currentPage === "Video Analysis") {
       return (
         <VideoAnalysis
           onAnalyticsComplete={
-            setVideoAnalytics
+            handleVideoAnalysisComplete
           }
         />
       )
@@ -221,23 +335,15 @@ function App() {
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           title="Images Analyzed"
-          value={
-            videoAnalytics
-              ? "1"
-              : "0"
-          }
-          subtitle="Total image analysis jobs"
+          value={String(imageAnalysesCount)}
+          subtitle="Image analyses this session"
           icon={FileImage}
         />
 
         <StatCard
           title="Videos Processed"
-          value={
-            videoAnalytics
-              ? "1"
-              : "0"
-          }
-          subtitle="Total video processing jobs"
+          value={String(videoAnalysesCount)}
+          subtitle="Video analyses this session"
           icon={Video}
         />
 
@@ -248,18 +354,18 @@ function App() {
               ? videoAnalytics.total_detections
               : "0"
           }
-          subtitle="Total detected objects"
+          subtitle="From the latest video analysis"
           icon={Camera}
         />
 
         <StatCard
-          title="Active Tracks"
+          title="Unique Tracks"
           value={
             videoAnalytics
               ? videoAnalytics.unique_track_ids
               : "0"
           }
-          subtitle="Currently tracked objects"
+          subtitle="From the latest video analysis"
           icon={Activity}
         />
 
@@ -322,6 +428,10 @@ function App() {
           activePage={currentPage}
           user={user}
           onLogout={handleLogout}
+          apiOnline={apiOnline}
+          notifications={notifications}
+          onMarkAllRead={markAllRead}
+          onNavigate={handleNavigate}
         />
 
         <section className="flex-1 overflow-auto p-8">

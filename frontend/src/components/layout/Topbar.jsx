@@ -1,32 +1,34 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import {
   Bell,
   CircleUserRound,
   LogOut,
   Settings,
-  UserRound,
   Wifi,
   WifiOff,
 } from "lucide-react"
-import { checkHealth } from "../../services/api"
+import { formatRelativeTime } from "../../utils/time"
 
-function Topbar({ activePage, user, onLogout }) {
-  const [apiOnline, setApiOnline] = useState(false)
+const NOTIFICATION_DOT_COLORS = {
+  analysis: "bg-emerald-400",
+  system: "bg-amber-400",
+}
+
+function Topbar({
+  activePage,
+  user,
+  onLogout,
+  apiOnline = false,
+  notifications = [],
+  onMarkAllRead = () => {},
+  onNavigate = () => {},
+}) {
   const [profileOpen, setProfileOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
 
-  useEffect(() => {
-    const checkApi = async () => {
-      try {
-        await checkHealth()
-        setApiOnline(true)
-      } catch {
-        setApiOnline(false)
-      }
-    }
-
-    checkApi()
-  }, [])
+  const unreadCount = notifications.filter(
+    (notification) => !notification.read,
+  ).length
 
   return (
     <header className="flex h-20 items-center justify-between border-b border-slate-800 bg-slate-950 px-8">
@@ -71,6 +73,7 @@ function Topbar({ activePage, user, onLogout }) {
         {/* Notifications */}
         <div className="relative">
           <button
+            type="button"
             onClick={() =>
               setNotificationsOpen((open) => !open)
             }
@@ -80,7 +83,12 @@ function Topbar({ activePage, user, onLogout }) {
           >
             <Bell size={19} />
 
-            <span className="absolute -right-1 -top-1 flex h-2.5 w-2.5 rounded-full bg-emerald-400" />
+            {unreadCount > 0 && (
+              <span
+                data-testid="unread-badge"
+                className="absolute -right-1 -top-1 flex h-2.5 w-2.5 rounded-full bg-emerald-400"
+              />
+            )}
           </button>
 
           {notificationsOpen && (
@@ -90,55 +98,64 @@ function Topbar({ activePage, user, onLogout }) {
                   Notifications
                 </h3>
 
-                <button className="text-xs text-slate-500 transition hover:text-white">
+                <button
+                  type="button"
+                  onClick={onMarkAllRead}
+                  disabled={unreadCount === 0}
+                  className="text-xs text-slate-500 transition hover:text-white disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:text-slate-500"
+                >
                   Mark all as read
                 </button>
               </div>
 
-              <div className="divide-y divide-slate-800">
-                <div className="px-4 py-4">
-                  <div className="flex gap-3">
-                    <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-emerald-400" />
+              {notifications.length ? (
+                <ul className="max-h-96 divide-y divide-slate-800 overflow-y-auto">
+                  {notifications.map((notification) => (
+                    <li
+                      key={notification.id}
+                      className="px-4 py-4"
+                    >
+                      <div className="flex gap-3">
+                        <span
+                          className={`mt-1 h-2 w-2 shrink-0 rounded-full ${
+                            notification.read
+                              ? "bg-slate-600"
+                              : NOTIFICATION_DOT_COLORS[
+                                  notification.kind
+                                ] ?? "bg-emerald-400"
+                          }`}
+                        />
 
-                    <div>
-                      <p className="text-sm text-slate-200">
-                        System ready
-                      </p>
+                        <div className="min-w-0">
+                          <p
+                            className={`text-sm ${
+                              notification.read
+                                ? "text-slate-400"
+                                : "text-slate-200"
+                            }`}
+                          >
+                            {notification.title}
+                          </p>
 
-                      <p className="mt-1 text-xs text-slate-500">
-                        API connection is active.
-                      </p>
+                          <p className="mt-1 break-words text-xs text-slate-500">
+                            {notification.message}
+                          </p>
 
-                      <p className="mt-2 text-[11px] text-slate-600">
-                        Just now
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="px-4 py-4">
-                  <div className="flex gap-3">
-                    <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-slate-600" />
-
-                    <div>
-                      <p className="text-sm text-slate-300">
-                        No new analysis
-                      </p>
-
-                      <p className="mt-1 text-xs text-slate-500">
-                        Run an image or video analysis to
-                        generate results.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="border-t border-slate-800 px-4 py-3 text-center">
-                <button className="text-xs font-medium text-slate-400 transition hover:text-white">
-                  View all notifications
-                </button>
-              </div>
+                          <p className="mt-2 text-[11px] text-slate-600">
+                            {formatRelativeTime(
+                              notification.createdAt,
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="px-4 py-8 text-center text-sm text-slate-500">
+                  No notifications yet.
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -146,6 +163,7 @@ function Topbar({ activePage, user, onLogout }) {
         {/* User Profile */}
         <div className="relative">
           <button
+            type="button"
             onClick={() =>
               setProfileOpen((open) => !open)
             }
@@ -185,20 +203,22 @@ function Topbar({ activePage, user, onLogout }) {
                 </p>
               </div>
 
-              {/* Profile */}
-              <button className="mt-2 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-slate-300 transition hover:bg-slate-800 hover:text-white">
-                <UserRound size={16} />
-                <span>Profile</span>
-              </button>
-
               {/* Preferences */}
-              <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-slate-300 transition hover:bg-slate-800 hover:text-white">
+              <button
+                type="button"
+                onClick={() => {
+                  setProfileOpen(false)
+                  onNavigate("Settings")
+                }}
+                className="mt-2 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-slate-300 transition hover:bg-slate-800 hover:text-white"
+              >
                 <Settings size={16} />
                 <span>Preferences</span>
               </button>
 
               {/* Sign Out */}
               <button
+                type="button"
                 onClick={onLogout}
                 className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-red-400 transition hover:bg-red-950/40 hover:text-red-300"
               >

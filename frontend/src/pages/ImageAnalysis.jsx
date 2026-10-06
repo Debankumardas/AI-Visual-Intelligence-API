@@ -2,7 +2,7 @@ import { useState } from "react"
 import { Upload, Image as ImageIcon, Loader2 } from "lucide-react"
 import { analyzeImage } from "../services/api"
 
-function ImageAnalysis() {
+function ImageAnalysis({ onAnalysisComplete }) {
   const [file, setFile] = useState(null)
   const [preview, setPreview] = useState("")
   const [result, setResult] = useState(null)
@@ -35,6 +35,7 @@ function ImageAnalysis() {
     try {
       const data = await analyzeImage(file)
       setResult(data)
+      onAnalysisComplete?.(data)
     } catch (err) {
       setError(
         err.response?.data?.detail ||
