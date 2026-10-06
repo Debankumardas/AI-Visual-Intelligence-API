@@ -696,9 +696,11 @@ It brings computer vision together with backend engineering, frontend developmen
 
 **Deban Kumar Das D**  
 BCA — Data Science
+
 GitHub: [@Debankumardas](https://github.com/Debankumardas)
 
 **Pranav S Nair**
+
 GitHub: [@p04pranav](https://github.com/p04pranav)
 
 ---
