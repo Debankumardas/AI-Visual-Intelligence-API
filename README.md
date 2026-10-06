@@ -6,9 +6,8 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.141.1-009688?logo=fastapi\&logoColor=white)](https://fastapi.tiangolo.com/)
 [![React](https://img.shields.io/badge/React-Vite-61DAFB?logo=react\&logoColor=black)](https://react.dev/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-Computer%20Vision-EE4C2C?logo=pytorch\&logoColor=white)](https://pytorch.org/)
-[![YOLO11](https://img.shields.io/badge/YOLO11n-Object%20Detection-111111)](https://docs.ultralytics.com/)
+[![YOLOv8](https://img.shields.io/badge/YOLOv8s-Object%20Detection-111111)](https://docs.ultralytics.com/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4.x-06B6D4?logo=tailwindcss\&logoColor=white)](https://tailwindcss.com/)
-[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker\&logoColor=white)](https://www.docker.com/)
 
 ---
 
@@ -39,7 +38,7 @@ User
 The project combines:
 
 * 🧠 **Image classification** with EfficientNet-B0
-* 🎯 **Object detection** with YOLO11n
+* 🎯 **Object detection** with YOLOv8s
 * 🖍️ **Annotated image generation**
 * 🎥 **Video processing**
 * 🧭 **Object tracking**
@@ -50,7 +49,7 @@ The project combines:
 * 🗄️ **SQLite + SQLAlchemy persistence**
 * 🖥️ **React dashboard**
 * 🧪 **Backend and frontend testing**
-* 🐳 **Docker + Nginx deployment architecture**
+* 📦 **Offline model weights** stored in the `models/` folder
 
 ---
 
@@ -59,10 +58,10 @@ The project combines:
 | Capability                | Description                                                                     | Technology                |
 | ------------------------- | ------------------------------------------------------------------------------- | ------------------------- |
 | 🖼️ Image Classification  | General-purpose image classification with top predictions and confidence scores | EfficientNet-B0 + PyTorch |
-| 🎯 Object Detection       | Detect objects, labels, confidence and bounding boxes                           | YOLO11n                   |
+| 🎯 Object Detection       | Detect objects, labels, confidence and bounding boxes                           | YOLOv8s                   |
 | 🖍️ Annotation            | Generate images with detected objects visually marked                           | OpenCV                    |
-| 🔍 Combined Analysis      | Run classification and detection in one workflow                                | EfficientNet-B0 + YOLO11n |
-| 🎥 Video Intelligence     | Process uploaded videos frame-by-frame                                          | OpenCV + YOLO11n          |
+| 🔍 Combined Analysis      | Run classification and detection in one workflow                                | EfficientNet-B0 + YOLOv8s |
+| 🎥 Video Intelligence     | Process uploaded videos frame-by-frame                                          | OpenCV + YOLOv8s          |
 | 🧭 Object Tracking        | Maintain tracked object identities across frames                                | Detection + tracking      |
 | 📊 Video Analytics        | Aggregate detection and tracking information                                    | Analytics services        |
 | 🕸️ Interaction Analytics | Analyze interaction partners and interaction episodes                           | Track analytics           |
@@ -113,7 +112,7 @@ The current classifier uses **ImageNet classes**, so it is intended as a general
 
 ## 2. Object Detection
 
-Object detection is powered by **YOLO11n**.
+Object detection is powered by **YOLOv8s**.
 
 The detector provides:
 
@@ -123,7 +122,7 @@ The detector provides:
 * Detection results
 * Inference information
 
-The `yolo11n.pt` model is included with the project.
+The `yolov8s.pt` model is included in the `models/` folder.
 
 <details>
 <summary>Example response</summary>
@@ -173,7 +172,7 @@ The video pipeline supports:
 
 * Video uploads
 * Frame processing
-* YOLO11n detection
+* YOLOv8s detection
 * Object tracking
 * Annotated video generation
 * Detection statistics
@@ -186,7 +185,7 @@ The video pipeline supports:
 ```mermaid
 flowchart LR
     A[Video Upload] --> B[Frame Processing]
-    B --> C[YOLO11n Detection]
+    B --> C[YOLOv8s Detection]
     C --> D[Object Tracking]
     D --> E[Track IDs]
     E --> F[Track Analytics]
@@ -340,7 +339,7 @@ The platform follows a modular architecture separating presentation, API routing
 flowchart TB
     U[User] --> F[React Dashboard]
 
-    F --> N[Nginx / API Client]
+    F --> N[Vite Proxy / API Client]
     N --> A[FastAPI Application]
 
     A --> R[API Routes]
@@ -354,7 +353,7 @@ flowchart TB
     S --> AN[Analytics Services]
 
     I --> ML1[EfficientNet-B0]
-    I --> ML2[YOLO11n]
+    I --> ML2[YOLOv8s]
 
     V --> ML2
     V --> O[OpenCV / Video Writer]
@@ -380,7 +379,7 @@ flowchart TB
 
 # 📁 Project Structure
 
-The repository is organized around separate backend, frontend and deployment concerns.
+The repository is organized around separate backend, frontend and model concerns.
 
 ```text
 AI-Visual-Intelligence-API/
@@ -405,16 +404,17 @@ AI-Visual-Intelligence-API/
 │   │   ├── test/
 │   │   ├── App.jsx
 │   │   └── main.jsx
-│   ├── Dockerfile
-│   ├── nginx.conf
 │   ├── package.json
 │   └── vite.config.js
 │
+├── models/
+│   ├── yolov8s.pt
+│   ├── yolov8s-seg.pt
+│   └── efficientnet_b0_rwightman-7f5810bc.pth
+│
+├── scripts/
 ├── tests/
-├── Dockerfile
-├── docker-compose.yml
 ├── requirements.txt
-├── yolo11n.pt
 └── README.md
 ```
 
@@ -431,7 +431,7 @@ AI-Visual-Intelligence-API/
 | UI                | Lucide React                   |
 | Deep Learning     | PyTorch                        |
 | Classification    | EfficientNet-B0                |
-| Detection         | YOLO11n                        |
+| Detection         | YOLOv8s                        |
 | Computer Vision   | OpenCV                         |
 | OCR               | Tesseract                      |
 | Database          | SQLite                         |
@@ -441,9 +441,6 @@ AI-Visual-Intelligence-API/
 | API Documentation | Swagger / OpenAPI              |
 | Backend Testing   | Pytest                         |
 | Frontend Testing  | Vitest + React Testing Library |
-| Reverse Proxy     | Nginx                          |
-| Containerization  | Docker                         |
-| Orchestration     | Docker Compose                 |
 
 ---
 
@@ -535,7 +532,8 @@ Optional settings:
 | Variable                     | Default | Purpose                                                                                      |
 | ---------------------------- | ------- | -------------------------------------------------------------------------------------------- |
 | `PRELOAD_MODELS`             | `true`  | Load the AI models at startup. When `false`, they load on the first request.                 |
-| `VIDEO_MAX_PROCESSED_FRAMES` | `300`   | Maximum frames analysed per video. Longer videos are sampled evenly with a larger stride.    |
+| `VIDEO_MAX_PROCESSED_FRAMES` | `150`   | Maximum frames analysed per video. Longer videos are sampled evenly with a larger stride.    |
+| `MODELS_DIR`                 | `models` | Folder containing the model weights.                                                         |
 
 > Keep `JWT_SECRET_KEY` private and never commit it to Git.
 
@@ -575,17 +573,17 @@ Frontend:
 http://localhost:5173
 ```
 
-For local development, configure:
+Open `http://localhost:5173`. The Vite dev server forwards `/api` and `/health`
+to the backend, so the browser stays on a single origin and no CORS setup is
+needed.
 
-```env
-VITE_API_BASE_URL=http://127.0.0.1:8000
-```
+| Variable            | Default                 | Purpose                                                                    |
+| ------------------- | ----------------------- | -------------------------------------------------------------------------- |
+| `VITE_BACKEND_URL`  | `http://127.0.0.1:8000` | Where the dev server forwards `/api` and `/health` requests.               |
+| `VITE_API_BASE_URL` | `/`                     | Optional. Call a backend directly (it must then allow this origin in CORS). |
 
-See `frontend/.env.example`. If the variable is not set, the frontend uses
-`http://127.0.0.1:8000`. Set it to `/` to send requests to the same origin
-(the Docker/Nginx setup does this).
-
-In the containerized architecture, Nginx provides the reverse proxy between the frontend and backend.
+See `frontend/.env.example`. `npm run preview` uses the same proxy to serve the
+production build locally.
 
 ---
 
@@ -642,64 +640,32 @@ npm run build
 
 ---
 
-# 🐳 Docker
+# 📦 Models
 
-The repository includes Docker configuration for reproducible deployment.
+All model weights are stored in the [`models/`](models) folder and loaded from
+local files, so the backend works fully offline. Nothing is downloaded at
+runtime.
 
-### Container Architecture
+| File                                     | Used for                        |
+| ---------------------------------------- | ------------------------------- |
+| `yolov8s.pt`                             | Object detection and tracking   |
+| `yolov8s-seg.pt`                         | Instance segmentation           |
+| `efficientnet_b0_rwightman-7f5810bc.pth` | Image classification (ImageNet) |
 
-```mermaid
-flowchart LR
-    U[Browser] --> N[Nginx :80]
-
-    N --> F[React Production Build]
-    N -->|/api/*| B[FastAPI :8000]
-
-    B --> AI[AI Services]
-    B --> DB[(SQLite Volume)]
-
-    AI --> Y[YOLO11n]
-    AI --> E[EfficientNet-B0]
-    AI --> O[OpenCV / Tesseract]
-```
-
-The Docker setup includes:
-
-* Python 3.12 backend
-* CPU-based PyTorch
-* YOLO11n
-* Tesseract OCR
-* FastAPI
-* React production build
-* Nginx
-* Persistent SQLite volume
-
-### Start
+Sources and SHA-256 checksums are listed in [`models/README.md`](models/README.md).
+If a file is missing or corrupted, restore and verify it with:
 
 ```powershell
-docker compose up --build
+python -m scripts.download_models
 ```
 
-### Detached Mode
+A missing weight file is reported by `/health/ready` with an explanatory error
+instead of crashing the API. Set `MODELS_DIR` to load the weights from another
+folder.
 
-```powershell
-docker compose up -d
-```
-
-### Stop
-
-```powershell
-docker compose down
-```
-
-`JWT_SECRET_KEY` must be set (for example in a `.env` file next to
-`docker-compose.yml`); Compose refuses to start without it.
-
-The model weights are baked into the backend image, so the containers start
-without internet access. The frontend waits until the backend reports ready on
-`/health/ready`.
-
-> Docker runtime validation requires Docker to be installed and available on the host machine.
+YOLOv8s is more accurate than the smaller YOLOv8n/YOLO11n models but slower on
+CPU (about 0.6 s per frame on a 2-core machine). Videos are therefore sampled
+down to at most `VIDEO_MAX_PROCESSED_FRAMES` frames.
 
 ---
 
@@ -780,7 +746,7 @@ The project evolved from a simple computer vision API into a broader full-stack 
 | **3 — Video Intelligence**      | Video processing, detection, tracking and annotated video                     |
 | **4 — Advanced Analytics**      | Track analytics, interaction analysis and interaction networks                |
 | **5 — Full-Stack Application**  | React dashboard, authentication, preferences, database and session management |
-| **6 — Deployment Architecture** | Docker, Compose, Nginx and persistent database volume                         |
+| **6 — Hardening**               | Offline model weights, non-blocking inference and a video frame budget        |
 
 ---
 
@@ -820,11 +786,11 @@ The current system brings together three major areas:
 | Area           | Current Limitation                                                                                     |
 | -------------- | ------------------------------------------------------------------------------------------------------ |
 | Classification | EfficientNet-B0 currently performs general ImageNet classification                                     |
-| Detection      | YOLO11n prioritizes lightweight inference and may trade accuracy for speed compared with larger models |
+| Detection      | YOLOv8s balances accuracy and CPU speed; larger models are more accurate but much slower on CPU       |
 | Hardware       | CPU inference is slower than GPU inference                                                             |
 | Video          | Long or high-resolution videos can become computationally expensive                                    |
 | Database       | SQLite is intended for local and portfolio-scale usage                                                 |
-| Deployment     | Docker configuration is provided, but cloud deployment is not currently included                       |
+| Deployment     | The app is set up for local use; production hosting (HTTPS, process management) is not included       |
 
 ---
 
@@ -887,14 +853,12 @@ This project demonstrates the integration of AI models with practical software e
 * Dashboard development
 * Authentication flows
 
-### Testing & Deployment
+### Testing & Quality
 
 * Pytest
 * Vitest
 * React Testing Library
-* Docker
-* Docker Compose
-* Nginx reverse proxy
+* GitHub Actions CI
 
 ---
 
