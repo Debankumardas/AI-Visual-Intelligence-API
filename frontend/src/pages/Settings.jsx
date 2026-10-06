@@ -215,7 +215,7 @@ function Settings({
 
           {backendUrl.proxied && (
             <p className="mt-1 text-xs text-slate-500">
-              Served through the reverse proxy
+              Proxied to the backend by the dev server
             </p>
           )}
         </div>
