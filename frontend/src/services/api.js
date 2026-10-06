@@ -63,9 +63,36 @@ export const checkHealth = async () => {
   return response.data
 }
 
+/**
+ * Model readiness. The API answers 503 with a JSON body while models
+ * are loading or failed to load; that body is the result, not an error.
+ */
+export const getReadiness = async () => {
+  try {
+    const response = await api.get("/health/ready")
+    return response.data
+  } catch (error) {
+    if (error.response?.data?.models) {
+      return error.response.data
+    }
+
+    throw error
+  }
+}
+
 // ─────────────────────────────────────────────
 // Authentication
 // ─────────────────────────────────────────────
+
+export const registerUser = async ({ name, email, password }) => {
+  const response = await api.post("/api/v1/auth/register", {
+    name,
+    email,
+    password,
+  })
+
+  return response.data
+}
 
 export const loginUser = async (email, password) => {
   const formData = new URLSearchParams()

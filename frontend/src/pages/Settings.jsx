@@ -1,328 +1,189 @@
 import { useState } from "react"
-import {
-  Bell,
-  Database,
-  Settings as SettingsIcon,
-  UserRound,
-  Wifi,
-} from "lucide-react"
-import {
-  describeApiBaseUrl,
-  updatePreferences,
-} from "../services/api"
 
-function Settings({
-  user,
-  preferences: savedPreferences,
-  onPreferencesChange,
-}) {
+import Alert from "../components/ui/Alert"
+import Card, { CardHeader } from "../components/ui/Card"
+import PageHeader from "../components/ui/PageHeader"
+import Skeleton from "../components/ui/Skeleton"
+import Switch from "../components/ui/Switch"
+import useAuth from "../hooks/useAuth"
+import useDocumentTitle from "../hooks/useDocumentTitle"
+import { describeApiBaseUrl, updatePreferences } from "../services/api"
+
+const SECTIONS = [
+  {
+    title: "Pages",
+    description: "Choose which pages appear in the navigation.",
+    items: [
+      {
+        key: "dashboard_enabled",
+        label: "Overview",
+        description: "Session totals, model status and your latest result.",
+      },
+      {
+        key: "image_analysis_enabled",
+        label: "Image lab",
+        description:
+          "Classify, detect, segment, read text in and count objects in images.",
+      },
+      {
+        key: "video_analysis_enabled",
+        label: "Video lab",
+        description: "Detect and track objects across a video.",
+      },
+    ],
+  },
+  {
+    title: "Notifications",
+    description: "Choose which events add a notification.",
+    items: [
+      {
+        key: "analysis_completed_notifications",
+        label: "Analysis completed",
+        description: "When an image or video analysis finishes.",
+      },
+      {
+        key: "system_notifications",
+        label: "System status",
+        description: "When the connection to the API drops or returns.",
+      },
+    ],
+  },
+]
+
+function Settings() {
+  useDocumentTitle("Settings")
+
+  const { token, user, preferences, setPreferences } = useAuth()
+
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
 
-  const token = localStorage.getItem("access_token")
+  const backendUrl = describeApiBaseUrl()
 
-  const togglePreference = async (backendKey) => {
-    if (!savedPreferences || !token || saving) {
+  const togglePreference = async (key) => {
+    if (!preferences || !token || saving) {
       return
     }
 
-    const newValue = !savedPreferences[backendKey]
+    const previous = preferences
 
-    const previousPreferences = savedPreferences
-
-    // Update the UI immediately
-    onPreferencesChange({
-      ...savedPreferences,
-      [backendKey]: newValue,
-    })
+    // Update the screen straight away, then roll back if saving fails.
+    setPreferences({ ...preferences, [key]: !preferences[key] })
 
     setSaving(true)
     setError("")
 
     try {
-      const updatedPreferences = await updatePreferences(
-        token,
-        {
-          [backendKey]: newValue,
-        },
-      )
+      const saved = await updatePreferences(token, {
+        [key]: !previous[key],
+      })
 
-      // Use the backend response as the final source of truth
-      onPreferencesChange(updatedPreferences)
+      setPreferences(saved)
     } catch {
-      // Roll back the UI if the API request fails
-      onPreferencesChange(previousPreferences)
-
+      setPreferences(previous)
       setError("Unable to save your preference.")
     } finally {
       setSaving(false)
     }
   }
 
-  const loading = !savedPreferences
-
-  const backendUrl = describeApiBaseUrl()
-
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div>
-        <h2 className="text-2xl font-semibold text-white">
-          Settings
-        </h2>
+      <PageHeader
+        title="Settings"
+        description="Manage what you see and which notifications you get."
+      />
 
-        <p className="mt-1 text-sm text-slate-400">
-          Manage your platform preferences and account configuration.
-        </p>
+      {error && (
+        <Alert tone="danger" title="Couldn't save that change">
+          Check your connection and try again. Your previous setting
+          was restored.
+        </Alert>
+      )}
+
+      <div aria-live="polite" className="text-xs text-muted">
+        {saving ? "Saving preference…" : ""}
       </div>
 
-      {/* Error Message */}
-      {error && (
-        <div
-          role="alert"
-          className="rounded-lg border border-red-900 bg-red-950/40 px-4 py-3 text-sm text-red-300"
-        >
-          {error}
-        </div>
-      )}
-
-      {/* Saving Status */}
-      {saving && (
-        <div
-          role="status"
-          className="text-xs text-slate-500"
-        >
-          Saving preference...
-        </div>
-      )}
-
-      {/* General Settings */}
-      <section className="rounded-xl border border-slate-800 bg-slate-900 p-6">
-        <SectionHeader
-          icon={SettingsIcon}
-          title="General"
-          description="General interface preferences."
-        />
-
-        <div className="mt-5 space-y-4">
-          <SettingRow
-            title="Interface"
-            description="Configure the appearance of the platform."
-            value="Dark"
+      {SECTIONS.map((section) => (
+        <Card key={section.title} aria-labelledby={`${section.title}-heading`}>
+          <CardHeader
+            id={`${section.title}-heading`}
+            title={section.title}
+            description={section.description}
           />
 
-          <SettingRow
-            title="Dashboard"
-            description="Show analytics and system information on the dashboard."
-            enabled={savedPreferences?.dashboard_enabled ?? false}
-            disabled={loading || saving}
-            onToggle={() =>
-              togglePreference("dashboard_enabled")
-            }
-          />
-        </div>
-      </section>
+          <div className="mt-2 divide-y divide-hairline">
+            {preferences
+              ? section.items.map((item) => (
+                  <Switch
+                    key={item.key}
+                    label={item.label}
+                    description={item.description}
+                    checked={Boolean(preferences[item.key])}
+                    onChange={() => togglePreference(item.key)}
+                    disabled={saving}
+                  />
+                ))
+              : section.items.map((item) => (
+                  <div key={item.key} className="py-3">
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                ))}
+          </div>
+        </Card>
+      ))}
 
-      {/* Analysis Settings */}
-      <section className="rounded-xl border border-slate-800 bg-slate-900 p-6">
-        <SectionHeader
-          icon={Database}
-          title="Analysis"
-          description="Configure analysis-related preferences."
-        />
-
-        <div className="mt-5 space-y-4">
-          <SettingRow
-            title="Image Analysis"
-            description="Enable image classification and object detection."
-            enabled={
-              savedPreferences?.image_analysis_enabled ?? false
-            }
-            disabled={loading || saving}
-            onToggle={() =>
-              togglePreference("image_analysis_enabled")
-            }
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card aria-labelledby="account-heading">
+          <CardHeader
+            id="account-heading"
+            title="Account"
+            description="The account you're signed in with."
           />
 
-          <SettingRow
-            title="Video Analysis"
-            description="Enable video detection and object tracking."
-            enabled={
-              savedPreferences?.video_analysis_enabled ?? false
-            }
-            disabled={loading || saving}
-            onToggle={() =>
-              togglePreference("video_analysis_enabled")
-            }
-          />
-        </div>
-      </section>
+          <dl className="mt-4 space-y-3 text-sm">
+            <div>
+              <dt className="text-muted">Name</dt>
+              <dd className="mt-0.5 font-medium text-fg">
+                {user?.name || "–"}
+              </dd>
+            </div>
 
-      {/* Notifications */}
-      <section className="rounded-xl border border-slate-800 bg-slate-900 p-6">
-        <SectionHeader
-          icon={Bell}
-          title="Notifications"
-          description="Control system and analysis notifications."
-        />
+            <div>
+              <dt className="text-muted">Email</dt>
+              <dd className="mt-0.5 break-all font-medium text-fg">
+                {user?.email || "–"}
+              </dd>
+            </div>
 
-        <div className="mt-5 space-y-4">
-          <SettingRow
-            title="Analysis Completed"
-            description="Show a notification when an analysis finishes."
-            enabled={
-              savedPreferences?.analysis_completed_notifications ??
-              false
-            }
-            disabled={loading || saving}
-            onToggle={() =>
-              togglePreference(
-                "analysis_completed_notifications",
-              )
-            }
+            <div>
+              <dt className="text-muted">Role</dt>
+              <dd className="mt-0.5 font-medium text-fg">
+                {user?.role || "–"}
+              </dd>
+            </div>
+          </dl>
+        </Card>
+
+        <Card aria-labelledby="backend-heading">
+          <CardHeader
+            id="backend-heading"
+            title="Backend"
+            description="Where this app sends its requests."
           />
 
-          <SettingRow
-            title="System Notifications"
-            description="Show system and API status notifications."
-            enabled={
-              savedPreferences?.system_notifications ?? false
-            }
-            disabled={loading || saving}
-            onToggle={() =>
-              togglePreference("system_notifications")
-            }
-          />
-        </div>
-      </section>
-
-      {/* API */}
-      <section className="rounded-xl border border-slate-800 bg-slate-900 p-6">
-        <SectionHeader
-          icon={Wifi}
-          title="API"
-          description="Backend connection information."
-        />
-
-        <div className="mt-5 rounded-lg bg-slate-950 px-4 py-4">
-          <p className="text-sm font-medium text-white">
-            Backend URL
-          </p>
-
-          <p className="mt-1 break-all text-sm text-slate-400">
+          <p className="mt-4 break-all font-mono text-sm text-fg">
             {backendUrl.url}
           </p>
 
           {backendUrl.proxied && (
-            <p className="mt-1 text-xs text-slate-500">
-              Proxied to the backend by the dev server
+            <p className="mt-1 text-xs text-muted">
+              Proxied to the backend by the dev server.
             </p>
           )}
-        </div>
-      </section>
-
-      {/* Account */}
-      <section className="rounded-xl border border-slate-800 bg-slate-900 p-6">
-        <SectionHeader
-          icon={UserRound}
-          title="Account"
-          description="Authenticated account information."
-        />
-
-        <div className="mt-5 space-y-4">
-          <div className="rounded-lg bg-slate-950 px-4 py-4">
-            <p className="text-sm font-medium text-white">
-              {user?.name || "User"}
-            </p>
-
-            <p className="mt-1 text-sm text-slate-400">
-              {user?.email || "No email available"}
-            </p>
-
-            <p className="mt-2 text-xs text-slate-500">
-              Role: {user?.role || "User"}
-            </p>
-          </div>
-        </div>
-      </section>
-    </div>
-  )
-}
-
-function SectionHeader({
-  icon: Icon,
-  title,
-  description,
-}) {
-  return (
-    <div className="flex items-start gap-3">
-      <div className="rounded-lg bg-slate-800 p-2">
-        <Icon className="h-5 w-5 text-slate-300" />
+        </Card>
       </div>
-
-      <div>
-        <h3 className="text-base font-semibold text-white">
-          {title}
-        </h3>
-
-        <p className="mt-1 text-sm text-slate-400">
-          {description}
-        </p>
-      </div>
-    </div>
-  )
-}
-
-function SettingRow({
-  title,
-  description,
-  enabled,
-  onToggle,
-  value,
-  disabled = false,
-}) {
-  const interactive = typeof onToggle === "function"
-
-  return (
-    <div className="flex items-center justify-between gap-4 rounded-lg bg-slate-950 px-4 py-4">
-      <div className="min-w-0">
-        <p className="text-sm font-medium text-white">
-          {title}
-        </p>
-
-        <p className="mt-1 text-xs text-slate-500">
-          {description}
-        </p>
-      </div>
-
-      {interactive ? (
-        <button
-          type="button"
-          onClick={onToggle}
-          disabled={disabled}
-          aria-pressed={enabled}
-          aria-label={`Toggle ${title}`}
-          className={`relative h-6 w-11 shrink-0 rounded-full transition ${
-            enabled ? "bg-white" : "bg-slate-700"
-          } ${
-            disabled
-              ? "cursor-not-allowed opacity-50"
-              : "cursor-pointer"
-          }`}
-        >
-          <span
-            className={`absolute top-1 h-4 w-4 rounded-full transition ${
-              enabled
-                ? "left-6 bg-slate-900"
-                : "left-1 bg-slate-300"
-            }`}
-          />
-        </button>
-      ) : (
-        <span className="shrink-0 rounded-full bg-slate-800 px-3 py-1 text-xs font-medium text-slate-300">
-          {value}
-        </span>
-      )}
     </div>
   )
 }

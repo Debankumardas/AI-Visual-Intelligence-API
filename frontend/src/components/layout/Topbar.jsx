@@ -1,233 +1,216 @@
-import { useState } from "react"
 import {
   Bell,
   CircleUserRound,
   LogOut,
+  Menu,
   Settings,
   Wifi,
   WifiOff,
 } from "lucide-react"
+
+import { cn } from "../../utils/cn"
 import { formatRelativeTime } from "../../utils/time"
+import Badge from "../ui/Badge"
+import IconButton from "../ui/IconButton"
+import Popover from "../ui/Popover"
 
 const NOTIFICATION_DOT_COLORS = {
-  analysis: "bg-emerald-400",
-  system: "bg-amber-400",
+  analysis: "bg-accent",
+  system: "bg-warning",
+}
+
+function NotificationsPanel({
+  notifications,
+  unreadCount,
+  onMarkAllRead,
+}) {
+  return (
+    <div className="w-80">
+      <div className="flex items-center justify-between border-b border-hairline px-4 py-3">
+        <h2 className="text-sm font-semibold text-fg">
+          Notifications
+        </h2>
+
+        <button
+          type="button"
+          onClick={onMarkAllRead}
+          disabled={unreadCount === 0}
+          className="min-h-8 rounded-control px-2 text-xs font-medium text-muted transition-colors duration-150 hover:text-fg disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:text-muted"
+        >
+          Mark all as read
+        </button>
+      </div>
+
+      {notifications.length ? (
+        <ul className="scroll-contain max-h-96 divide-y divide-hairline overflow-y-auto">
+          {notifications.map((notification) => (
+            <li key={notification.id} className="px-4 py-3.5">
+              <div className="flex gap-3">
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    "mt-1.5 size-2 shrink-0 rounded-full",
+                    notification.read
+                      ? "bg-faint"
+                      : (NOTIFICATION_DOT_COLORS[notification.kind] ??
+                          "bg-accent"),
+                  )}
+                />
+
+                <div className="min-w-0">
+                  <p
+                    className={cn(
+                      "text-sm",
+                      notification.read ? "text-muted" : "text-fg",
+                    )}
+                  >
+                    {notification.title}
+                  </p>
+
+                  <p className="mt-0.5 break-words text-xs text-muted">
+                    {notification.message}
+                  </p>
+
+                  <p className="mt-1.5 text-xs text-muted">
+                    {formatRelativeTime(notification.createdAt)}
+                  </p>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="px-4 py-8 text-center text-sm text-muted">
+          No notifications yet.
+        </p>
+      )}
+    </div>
+  )
 }
 
 function Topbar({
-  activePage,
   user,
   onLogout,
   apiOnline = false,
   notifications = [],
   onMarkAllRead = () => {},
-  onNavigate = () => {},
+  onOpenSettings = () => {},
+  onOpenMenu = () => {},
 }) {
-  const [profileOpen, setProfileOpen] = useState(false)
-  const [notificationsOpen, setNotificationsOpen] = useState(false)
-
   const unreadCount = notifications.filter(
     (notification) => !notification.read,
   ).length
 
   return (
-    <header className="flex h-20 items-center justify-between border-b border-slate-800 bg-slate-950 px-8">
-      {/* Page Header */}
-      <div>
-        <h2 className="text-xl font-semibold text-white">
-          {activePage}
-        </h2>
-
-        <p className="mt-1 text-sm text-slate-400">
-          Monitor and analyze your computer vision workloads
-        </p>
+    <header className="sticky top-0 z-10 flex h-14 items-center justify-between gap-3 border-b border-hairline bg-ink/90 px-4 backdrop-blur sm:px-6 lg:px-8">
+      <div className="lg:hidden">
+        <IconButton
+          label="Open navigation"
+          icon={Menu}
+          onClick={onOpenMenu}
+        />
       </div>
 
-      {/* Topbar Actions */}
-      <div className="flex items-center gap-5">
-        {/* API Status */}
-        <div
-          className={`flex items-center gap-2 rounded-full border px-3 py-1.5 ${
-            apiOnline
-              ? "border-emerald-900 bg-emerald-950/40"
-              : "border-red-900 bg-red-950/40"
-          }`}
-        >
-          {apiOnline ? (
-            <Wifi size={14} className="text-emerald-400" />
-          ) : (
-            <WifiOff size={14} className="text-red-400" />
-          )}
-
-          <span
-            className={`text-xs font-medium ${
-              apiOnline
-                ? "text-emerald-400"
-                : "text-red-400"
-            }`}
+      <div className="ml-auto flex items-center gap-2 sm:gap-3">
+        <div aria-live="polite">
+          <Badge
+            tone={apiOnline ? "success" : "danger"}
+            icon={apiOnline ? Wifi : WifiOff}
           >
-            {apiOnline ? "API Online" : "API Offline"}
-          </span>
+            {apiOnline ? "API online" : "API offline"}
+          </Badge>
         </div>
 
-        {/* Notifications */}
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() =>
-              setNotificationsOpen((open) => !open)
-            }
-            className="relative text-slate-400 transition hover:text-white"
-            title="Notifications"
-            aria-label="Notifications"
-          >
-            <Bell size={19} />
+        <Popover
+          trigger={(triggerProps) => (
+            <button
+              type="button"
+              {...triggerProps}
+              aria-label={
+                unreadCount
+                  ? `Notifications, ${unreadCount} unread`
+                  : "Notifications"
+              }
+              title="Notifications"
+              className="relative inline-flex size-11 items-center justify-center rounded-control text-muted transition-colors duration-150 hover:bg-raised hover:text-fg sm:size-10"
+            >
+              <Bell size={18} aria-hidden="true" />
 
-            {unreadCount > 0 && (
-              <span
-                data-testid="unread-badge"
-                className="absolute -right-1 -top-1 flex h-2.5 w-2.5 rounded-full bg-emerald-400"
-              />
-            )}
-          </button>
-
-          {notificationsOpen && (
-            <div className="absolute right-0 top-10 z-50 w-80 overflow-hidden rounded-xl border border-slate-800 bg-slate-900 shadow-xl">
-              <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
-                <h3 className="text-sm font-semibold text-white">
-                  Notifications
-                </h3>
-
-                <button
-                  type="button"
-                  onClick={onMarkAllRead}
-                  disabled={unreadCount === 0}
-                  className="text-xs text-slate-500 transition hover:text-white disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:text-slate-500"
-                >
-                  Mark all as read
-                </button>
-              </div>
-
-              {notifications.length ? (
-                <ul className="max-h-96 divide-y divide-slate-800 overflow-y-auto">
-                  {notifications.map((notification) => (
-                    <li
-                      key={notification.id}
-                      className="px-4 py-4"
-                    >
-                      <div className="flex gap-3">
-                        <span
-                          className={`mt-1 h-2 w-2 shrink-0 rounded-full ${
-                            notification.read
-                              ? "bg-slate-600"
-                              : NOTIFICATION_DOT_COLORS[
-                                  notification.kind
-                                ] ?? "bg-emerald-400"
-                          }`}
-                        />
-
-                        <div className="min-w-0">
-                          <p
-                            className={`text-sm ${
-                              notification.read
-                                ? "text-slate-400"
-                                : "text-slate-200"
-                            }`}
-                          >
-                            {notification.title}
-                          </p>
-
-                          <p className="mt-1 break-words text-xs text-slate-500">
-                            {notification.message}
-                          </p>
-
-                          <p className="mt-2 text-[11px] text-slate-600">
-                            {formatRelativeTime(
-                              notification.createdAt,
-                            )}
-                          </p>
-                        </div>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="px-4 py-8 text-center text-sm text-slate-500">
-                  No notifications yet.
-                </p>
+              {unreadCount > 0 && (
+                <span
+                  data-testid="unread-badge"
+                  className="absolute right-2.5 top-2.5 size-2 rounded-full bg-accent ring-2 ring-ink"
+                />
               )}
-            </div>
+            </button>
           )}
-        </div>
+        >
+          <NotificationsPanel
+            notifications={notifications}
+            unreadCount={unreadCount}
+            onMarkAllRead={onMarkAllRead}
+          />
+        </Popover>
 
-        {/* User Profile */}
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() =>
-              setProfileOpen((open) => !open)
-            }
-            className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition hover:bg-slate-900"
-            aria-label="Open user menu"
-          >
-            <CircleUserRound
-              size={28}
-              className="text-slate-400"
-            />
+        <Popover
+          trigger={(triggerProps) => (
+            <button
+              type="button"
+              {...triggerProps}
+              aria-label="Open user menu"
+              className="flex min-h-11 items-center gap-2 rounded-control px-1.5 transition-colors duration-150 hover:bg-raised sm:min-h-10"
+            >
+              <CircleUserRound
+                size={26}
+                aria-hidden="true"
+                className="text-muted"
+              />
 
-            <div className="hidden text-left sm:block">
-              <p className="max-w-32 truncate text-sm font-medium text-white">
-                {user?.name || "User"}
-              </p>
-
-              <p className="max-w-40 truncate text-xs text-slate-500">
-                {user?.email || "Account"}
-              </p>
-            </div>
-          </button>
-
-          {profileOpen && (
-            <div className="absolute right-0 top-12 z-50 w-64 rounded-xl border border-slate-800 bg-slate-900 p-2 shadow-xl">
-              {/* User Information */}
-              <div className="border-b border-slate-800 px-3 py-3">
-                <p className="truncate text-sm font-medium text-white">
+              <span className="hidden max-w-36 truncate text-sm font-medium text-fg sm:block">
+                {user?.name || "Account"}
+              </span>
+            </button>
+          )}
+        >
+          {({ close }) => (
+            <div className="w-64 p-2">
+              <div className="border-b border-hairline px-3 pb-3 pt-2">
+                <p className="truncate text-sm font-medium text-fg">
                   {user?.name || "User"}
                 </p>
 
-                <p className="mt-1 truncate text-xs text-slate-500">
+                <p className="mt-0.5 truncate text-xs text-muted">
                   {user?.email || "No email available"}
                 </p>
 
-                <p className="mt-2 inline-flex rounded-full bg-slate-800 px-2 py-1 text-[11px] text-slate-400">
+                <Badge className="mt-2">
                   {user?.role || "User"}
-                </p>
+                </Badge>
               </div>
 
-              {/* Preferences */}
               <button
                 type="button"
                 onClick={() => {
-                  setProfileOpen(false)
-                  onNavigate("Settings")
+                  close()
+                  onOpenSettings()
                 }}
-                className="mt-2 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-slate-300 transition hover:bg-slate-800 hover:text-white"
+                className="mt-2 flex min-h-11 w-full items-center gap-3 rounded-control px-3 text-sm text-fg transition-colors duration-150 hover:bg-surface"
               >
-                <Settings size={16} />
-                <span>Preferences</span>
+                <Settings size={16} aria-hidden="true" />
+                Preferences
               </button>
 
-              {/* Sign Out */}
               <button
                 type="button"
                 onClick={onLogout}
-                className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-red-400 transition hover:bg-red-950/40 hover:text-red-300"
+                className="flex min-h-11 w-full items-center gap-3 rounded-control px-3 text-sm text-danger transition-colors duration-150 hover:bg-danger/10"
               >
-                <LogOut size={16} />
-                <span>Sign Out</span>
+                <LogOut size={16} aria-hidden="true" />
+                Sign out
               </button>
             </div>
           )}
-        </div>
+        </Popover>
       </div>
     </header>
   )

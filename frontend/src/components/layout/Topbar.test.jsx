@@ -28,32 +28,23 @@ const read = {
 }
 
 function renderTopbar(props = {}) {
-  return render(
-    <Topbar
-      activePage="Dashboard"
-      user={user}
-      onLogout={() => {}}
-      {...props}
-    />,
-  )
+  return render(<Topbar user={user} onLogout={() => {}} {...props} />)
 }
 
 const openNotifications = () =>
-  fireEvent.click(
-    screen.getByRole("button", { name: "Notifications" }),
-  )
+  fireEvent.click(screen.getByRole("button", { name: /^Notifications/ }))
 
 describe("Topbar API status", () => {
   it("shows the API as online", () => {
     renderTopbar({ apiOnline: true })
 
-    expect(screen.getByText("API Online")).toBeInTheDocument()
+    expect(screen.getByText("API online")).toBeInTheDocument()
   })
 
   it("shows the API as offline", () => {
     renderTopbar({ apiOnline: false })
 
-    expect(screen.getByText("API Offline")).toBeInTheDocument()
+    expect(screen.getByText("API offline")).toBeInTheDocument()
   })
 })
 
@@ -65,12 +56,15 @@ describe("Topbar notifications", () => {
 
     openNotifications()
 
+    expect(screen.getByText("No notifications yet.")).toBeInTheDocument()
+  })
+
+  it("announces the unread count in the button name", () => {
+    renderTopbar({ notifications: [unread, read] })
+
     expect(
-      screen.getByText("No notifications yet."),
+      screen.getByRole("button", { name: "Notifications, 1 unread" }),
     ).toBeInTheDocument()
-    expect(
-      screen.queryByText("System ready"),
-    ).not.toBeInTheDocument()
   })
 
   it("shows the unread badge only while something is unread", () => {
@@ -81,12 +75,7 @@ describe("Topbar notifications", () => {
     expect(screen.getByTestId("unread-badge")).toBeInTheDocument()
 
     rerender(
-      <Topbar
-        activePage="Dashboard"
-        user={user}
-        onLogout={() => {}}
-        notifications={[read]}
-      />,
+      <Topbar user={user} onLogout={() => {}} notifications={[read]} />,
     )
 
     expect(screen.queryByTestId("unread-badge")).not.toBeInTheDocument()
@@ -97,9 +86,7 @@ describe("Topbar notifications", () => {
 
     openNotifications()
 
-    expect(
-      screen.getByText("Image analysis completed"),
-    ).toBeInTheDocument()
+    expect(screen.getByText("Image analysis completed")).toBeInTheDocument()
     expect(screen.getByText("2 objects detected.")).toBeInTheDocument()
     expect(screen.getByText("Just now")).toBeInTheDocument()
     expect(screen.getByText("5 min ago")).toBeInTheDocument()
@@ -108,10 +95,7 @@ describe("Topbar notifications", () => {
   it("marks all notifications as read", () => {
     const onMarkAllRead = vi.fn()
 
-    renderTopbar({
-      notifications: [unread],
-      onMarkAllRead,
-    })
+    renderTopbar({ notifications: [unread], onMarkAllRead })
 
     openNotifications()
 
@@ -131,6 +115,17 @@ describe("Topbar notifications", () => {
       screen.getByRole("button", { name: "Mark all as read" }),
     ).toBeDisabled()
   })
+
+  it("closes the list with Escape", () => {
+    renderTopbar()
+
+    openNotifications()
+    fireEvent.keyDown(document, { key: "Escape" })
+
+    expect(
+      screen.queryByText("No notifications yet."),
+    ).not.toBeInTheDocument()
+  })
 })
 
 describe("Topbar user menu", () => {
@@ -139,17 +134,24 @@ describe("Topbar user menu", () => {
       screen.getByRole("button", { name: "Open user menu" }),
     )
 
-  it("navigates to Settings from Preferences", () => {
-    const onNavigate = vi.fn()
-
-    renderTopbar({ onNavigate })
+  it("shows who is signed in", () => {
+    renderTopbar()
 
     openMenu()
-    fireEvent.click(
-      screen.getByRole("button", { name: "Preferences" }),
-    )
 
-    expect(onNavigate).toHaveBeenCalledWith("Settings")
+    expect(screen.getByText("test@example.com")).toBeInTheDocument()
+    expect(screen.getByText("Analyst")).toBeInTheDocument()
+  })
+
+  it("opens Settings from Preferences and closes the menu", () => {
+    const onOpenSettings = vi.fn()
+
+    renderTopbar({ onOpenSettings })
+
+    openMenu()
+    fireEvent.click(screen.getByRole("button", { name: "Preferences" }))
+
+    expect(onOpenSettings).toHaveBeenCalledTimes(1)
     expect(
       screen.queryByRole("button", { name: "Preferences" }),
     ).not.toBeInTheDocument()
@@ -161,18 +163,22 @@ describe("Topbar user menu", () => {
     renderTopbar({ onLogout })
 
     openMenu()
-    fireEvent.click(screen.getByRole("button", { name: "Sign Out" }))
+    fireEvent.click(screen.getByRole("button", { name: "Sign out" }))
 
     expect(onLogout).toHaveBeenCalledTimes(1)
   })
+})
 
-  it("no longer offers placeholder actions", () => {
-    renderTopbar()
+describe("Topbar navigation button", () => {
+  it("asks the shell to open the navigation", () => {
+    const onOpenMenu = vi.fn()
 
-    openMenu()
+    renderTopbar({ onOpenMenu })
 
-    expect(
-      screen.queryByRole("button", { name: "Profile" }),
-    ).not.toBeInTheDocument()
+    fireEvent.click(
+      screen.getByRole("button", { name: "Open navigation" }),
+    )
+
+    expect(onOpenMenu).toHaveBeenCalledTimes(1)
   })
 })
