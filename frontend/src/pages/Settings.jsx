@@ -6,7 +6,10 @@ import {
   UserRound,
   Wifi,
 } from "lucide-react"
-import { updatePreferences } from "../services/api"
+import {
+  describeApiBaseUrl,
+  updatePreferences,
+} from "../services/api"
 
 function Settings({
   user,
@@ -57,6 +60,8 @@ function Settings({
   }
 
   const loading = !savedPreferences
+
+  const backendUrl = describeApiBaseUrl()
 
   return (
     <div className="space-y-6">
@@ -205,8 +210,14 @@ function Settings({
           </p>
 
           <p className="mt-1 break-all text-sm text-slate-400">
-            http://127.0.0.1:8000
+            {backendUrl.url}
           </p>
+
+          {backendUrl.proxied && (
+            <p className="mt-1 text-xs text-slate-500">
+              Served through the reverse proxy
+            </p>
+          )}
         </div>
       </section>
 

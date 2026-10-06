@@ -1,7 +1,30 @@
 import axios from "axios"
 
+// Use `??` so an explicit "/" (same-origin, behind Nginx) is respected.
+export const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000"
+
+export const VIDEO_REQUEST_TIMEOUT_MS = 300000
+
+/**
+ * Human-readable backend location. A relative base URL means requests
+ * go to the same origin and are forwarded by the reverse proxy.
+ */
+export const describeApiBaseUrl = (
+  baseUrl = API_BASE_URL,
+  origin = window.location.origin,
+) => {
+  if (/^https?:\/\//i.test(baseUrl)) {
+    return { url: baseUrl, proxied: false }
+  }
+
+  const path = baseUrl.replace(/\/+$/, "")
+
+  return { url: `${origin}${path}`, proxied: true }
+}
+
 const api = axios.create({
-  baseURL: "http://127.0.0.1:8000",
+  baseURL: API_BASE_URL,
   timeout: 30000,
 })
 
@@ -178,7 +201,7 @@ export const analyzeVideo = async (file) => {
     "/api/v1/video/analyze",
     formData,
     {
-      timeout: 180000,
+      timeout: VIDEO_REQUEST_TIMEOUT_MS,
     },
   )
 
