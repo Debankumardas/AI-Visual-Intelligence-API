@@ -135,11 +135,13 @@ class Settings:
     )
 
     # Upper bound on frames run through the model per video. Longer
-    # videos are sampled evenly with a larger frame stride.
+    # videos are sampled evenly with a larger frame stride. YOLOv8s
+    # takes ~0.6 s per frame on a 2-core CPU, so 150 frames is about
+    # 90 s.
     video_max_processed_frames: int = field(
         default_factory=lambda: _env_int(
             "VIDEO_MAX_PROCESSED_FRAMES",
-            300,
+            150,
         )
     )
     video_device: str = "cpu"

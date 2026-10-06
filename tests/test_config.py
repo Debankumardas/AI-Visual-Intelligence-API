@@ -91,3 +91,15 @@ def test_require_model_file_explains_how_to_recover(tmp_path):
 
     assert "gone.pt" in message
     assert "python -m scripts.download_models" in message
+
+
+def test_video_frame_budget_defaults_to_150(monkeypatch, reload_config):
+    monkeypatch.delenv("VIDEO_MAX_PROCESSED_FRAMES", raising=False)
+
+    assert reload_config().settings.video_max_processed_frames == 150
+
+
+def test_video_frame_budget_can_be_overridden(monkeypatch, reload_config):
+    monkeypatch.setenv("VIDEO_MAX_PROCESSED_FRAMES", "40")
+
+    assert reload_config().settings.video_max_processed_frames == 40
