@@ -530,6 +530,13 @@ JWT_ACCESS_TOKEN_EXPIRE_MINUTES=60
 DATABASE_URL=sqlite:///./app.db
 ```
 
+Optional settings:
+
+| Variable                     | Default | Purpose                                                                                      |
+| ---------------------------- | ------- | -------------------------------------------------------------------------------------------- |
+| `PRELOAD_MODELS`             | `true`  | Load the AI models at startup. When `false`, they load on the first request.                 |
+| `VIDEO_MAX_PROCESSED_FRAMES` | `300`   | Maximum frames analysed per video. Longer videos are sampled evenly with a larger stride.    |
+
 > Keep `JWT_SECRET_KEY` private and never commit it to Git.
 
 ## 4. Initialize Database
@@ -573,6 +580,10 @@ For local development, configure:
 ```env
 VITE_API_BASE_URL=http://127.0.0.1:8000
 ```
+
+See `frontend/.env.example`. If the variable is not set, the frontend uses
+`http://127.0.0.1:8000`. Set it to `/` to send requests to the same origin
+(the Docker/Nginx setup does this).
 
 In the containerized architecture, Nginx provides the reverse proxy between the frontend and backend.
 
@@ -620,6 +631,8 @@ Frontend tests cover areas such as:
 ```powershell
 npm run lint
 ```
+
+Frontend lint, tests and the production build also run in CI.
 
 ### Production Build
 
@@ -678,6 +691,13 @@ docker compose up -d
 ```powershell
 docker compose down
 ```
+
+`JWT_SECRET_KEY` must be set (for example in a `.env` file next to
+`docker-compose.yml`); Compose refuses to start without it.
+
+The model weights are baked into the backend image, so the containers start
+without internet access. The frontend waits until the backend reports ready on
+`/health/ready`.
 
 > Docker runtime validation requires Docker to be installed and available on the host machine.
 
