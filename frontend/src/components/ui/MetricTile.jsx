@@ -1,11 +1,13 @@
-function MetricTile({ label, value }) {
+function MetricTile({ label, value, mono = false }) {
   return (
-    <div className="rounded-lg bg-slate-950 px-4 py-4">
-      <p className="text-xs text-slate-500">
-        {label}
-      </p>
+    <div className="rounded-control bg-sunken px-4 py-3">
+      <p className="text-xs text-muted">{label}</p>
 
-      <p className="mt-1 text-lg font-semibold text-white">
+      <p
+        className={`tnum mt-1 text-lg font-semibold text-fg ${
+          mono ? "font-mono text-base font-medium" : ""
+        }`}
+      >
         {value}
       </p>
     </div>

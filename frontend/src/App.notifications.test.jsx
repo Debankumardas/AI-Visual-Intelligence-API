@@ -81,7 +81,7 @@ const openNotifications = () =>
   )
 
 const dashboardValue = (title) =>
-  screen.getByText(title).closest("div.rounded-xl")
+  screen.getByRole("group", { name: title })
 
 beforeEach(() => {
   localStorage.clear()
