@@ -9,6 +9,7 @@ from PIL import Image
 from ultralytics import YOLO
 
 from app.core.config import settings
+from app.core.model_files import require_model_file
 
 
 logger = logging.getLogger(__name__)
@@ -57,7 +58,9 @@ class DetectionService:
                 )
 
                 try:
-                    self.model = YOLO(settings.yolo_model_path)
+                    self.model = YOLO(
+                        require_model_file(settings.yolo_model_path)
+                    )
                 except Exception as exc:
                     self.load_error = str(exc)
                     logger.exception("Failed to load YOLO model.")
@@ -86,7 +89,9 @@ class DetectionService:
                     )
 
                     self._seg_model = YOLO(
-                        settings.yolo_seg_model_path
+                        require_model_file(
+                            settings.yolo_seg_model_path
+                        )
                     )
 
         return self._seg_model

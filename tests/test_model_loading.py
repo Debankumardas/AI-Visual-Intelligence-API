@@ -1,6 +1,7 @@
 from types import SimpleNamespace
 
 import pytest
+import torch
 from fastapi.testclient import TestClient
 from PIL import Image
 
@@ -9,6 +10,7 @@ from app.main import app
 from app.services import detection_service as detection_module
 from app.services.detection_service import DetectionService
 from app.services.detection_service import detection_service
+from app.services import model_service as model_service_module
 from app.services.model_service import ImagePredictionModel
 from app.services.model_service import model_service
 
@@ -84,7 +86,7 @@ def test_segmentation_model_is_loaded_once(monkeypatch):
     service.segment(image)
     service.segment(image)
 
-    assert created == ["yolo11n-seg.pt"]
+    assert created == [detection_module.settings.yolo_seg_model_path]
 
 
 def test_model_service_does_not_load_weights_on_init():
@@ -226,3 +228,137 @@ def test_startup_survives_model_load_failure(monkeypatch):
         assert client.get("/health").status_code == 200
 
     assert calls == ["detection", "classification"]
+
+
+# ============================================================
+# LOCAL MODEL FILES
+# ============================================================
+
+
+def test_missing_yolo_file_fails_without_calling_yolo(
+    monkeypatch,
+    tmp_path,
+):
+    missing = tmp_path / "yolov8s.pt"
+
+    def fail_if_called(*args, **kwargs):
+        raise AssertionError("YOLO must not be called")
+
+    monkeypatch.setattr(detection_module, "YOLO", fail_if_called)
+    monkeypatch.setattr(
+        detection_module,
+        "settings",
+        SimpleNamespace(
+            yolo_model_path=str(missing),
+            detection_device="cpu",
+        ),
+    )
+
+    service = DetectionService()
+
+    with pytest.raises(FileNotFoundError, match="Model file not found"):
+        service.load()
+
+    assert service.model is None
+    assert "yolov8s.pt" in service.load_error
+    assert "download_models" in service.load_error
+
+
+def test_missing_segmentation_file_fails_without_calling_yolo(
+    monkeypatch,
+    tmp_path,
+):
+    def fail_if_called(*args, **kwargs):
+        raise AssertionError("YOLO must not be called")
+
+    monkeypatch.setattr(detection_module, "YOLO", fail_if_called)
+    monkeypatch.setattr(
+        detection_module,
+        "settings",
+        SimpleNamespace(
+            yolo_seg_model_path=str(tmp_path / "yolov8s-seg.pt"),
+            detection_device="cpu",
+        ),
+    )
+
+    service = DetectionService()
+
+    with pytest.raises(FileNotFoundError, match="Model file not found"):
+        service.segment(Image.new("RGB", (16, 16), "white"))
+
+
+def test_missing_classifier_file_sets_load_error(
+    monkeypatch,
+    tmp_path,
+):
+    monkeypatch.setattr(
+        model_service_module,
+        "settings",
+        SimpleNamespace(
+            classifier_weights_path=str(tmp_path / "missing.pth"),
+        ),
+    )
+
+    def fail_if_called(*args, **kwargs):
+        raise AssertionError("weights must not be downloaded")
+
+    monkeypatch.setattr(
+        model_service_module,
+        "efficientnet_b0",
+        lambda weights=None: torch.nn.Linear(1, 1),
+    )
+    monkeypatch.setattr(torch.hub, "load_state_dict_from_url", fail_if_called)
+
+    service = ImagePredictionModel()
+
+    with pytest.raises(FileNotFoundError, match="Model file not found"):
+        service.load()
+
+    assert service.model is None
+    assert "missing.pth" in service.load_error
+
+
+def test_classifier_loads_state_dict_from_local_file(
+    monkeypatch,
+    tmp_path,
+):
+    weights_file = tmp_path / "classifier.pth"
+    weights_file.write_bytes(b"placeholder")
+
+    loaded = {}
+
+    class FakeNetwork(torch.nn.Module):
+        def load_state_dict(self, state_dict, *args, **kwargs):
+            loaded["state_dict"] = state_dict
+
+    def fake_efficientnet(weights=None):
+        loaded["weights_arg"] = weights
+        return FakeNetwork()
+
+    def fake_torch_load(path, **kwargs):
+        loaded["path"] = path
+        loaded["kwargs"] = kwargs
+        return {"layer.weight": 1}
+
+    monkeypatch.setattr(
+        model_service_module,
+        "settings",
+        SimpleNamespace(classifier_weights_path=str(weights_file)),
+    )
+    monkeypatch.setattr(
+        model_service_module,
+        "efficientnet_b0",
+        fake_efficientnet,
+    )
+    monkeypatch.setattr(torch, "load", fake_torch_load)
+
+    service = ImagePredictionModel()
+    service.load()
+
+    # No pretrained download: the network is built empty and filled
+    # from the local file.
+    assert loaded["weights_arg"] is None
+    assert loaded["path"] == str(weights_file)
+    assert loaded["kwargs"]["weights_only"] is True
+    assert loaded["state_dict"] == {"layer.weight": 1}
+    assert service.is_ready is True
