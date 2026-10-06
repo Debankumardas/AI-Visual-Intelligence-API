@@ -11,9 +11,11 @@ function StatCard({ title, value, subtitle, icon: Icon }) {
             {value}
           </h3>
 
-          <p className="mt-2 text-xs text-slate-500">
-            {subtitle}
-          </p>
+          {subtitle && (
+            <p className="mt-2 text-xs text-slate-500">
+              {subtitle}
+            </p>
+          )}
         </div>
 
         <div className="rounded-lg bg-slate-800 p-2.5">
