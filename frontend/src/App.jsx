@@ -1,11 +1,10 @@
+import { lazy } from "react"
 import { Route, Routes } from "react-router"
 
 import AppShell from "./components/layout/AppShell"
 import AuthProvider from "./context/AuthProvider"
 import WorkspaceProvider from "./context/WorkspaceProvider"
 import useAuth from "./hooks/useAuth"
-import useWorkspace from "./hooks/useWorkspace"
-import Analytics from "./pages/Analytics"
 import ImageLab from "./pages/ImageLab"
 import Login from "./pages/Login"
 import NotFound from "./pages/NotFound"
@@ -19,6 +18,9 @@ import {
   RequirePage,
 } from "./routes/guards"
 
+// The charting library is large and only this page needs it.
+const Analytics = lazy(() => import("./pages/Analytics"))
+
 // Remounting per user discards one user's results when another signs in.
 function Workspace({ children }) {
   const { user } = useAuth()
@@ -28,12 +30,6 @@ function Workspace({ children }) {
       {children}
     </WorkspaceProvider>
   )
-}
-
-function AnalyticsRoute() {
-  const { videoAnalytics } = useWorkspace()
-
-  return <Analytics videoAnalytics={videoAnalytics} />
 }
 
 function App() {
@@ -75,7 +71,7 @@ function App() {
                 }
               />
 
-              <Route path="analytics" element={<AnalyticsRoute />} />
+              <Route path="analytics" element={<Analytics />} />
               <Route path="settings" element={<Settings />} />
               <Route path="*" element={<NotFound />} />
             </Route>
