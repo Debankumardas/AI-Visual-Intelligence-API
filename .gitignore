@@ -17,6 +17,10 @@ __pycache__/
 # Generated files
 annotated_sample.jpg
 
+# Local SQLite database
+app.db
+data/
+
 # Environment variables
 .env
 
@@ -25,6 +29,7 @@ annotated_sample.jpg
 Thumbs.db
 
 # Logs
-*.log.coverage
+*.log
 
+# Test coverage
 .coverage

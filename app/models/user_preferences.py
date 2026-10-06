@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy import Boolean, DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.database.connection import Base
+from app.database.connection import Base, utc_now
 
 
 class UserPreferences(Base):
@@ -53,13 +53,13 @@ class UserPreferences(Base):
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
-        default=datetime.utcnow,
+        default=utc_now,
         nullable=False,
     )
 
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
+        default=utc_now,
+        onupdate=utc_now,
         nullable=False,
     )

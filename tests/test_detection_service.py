@@ -555,11 +555,20 @@ def test_track_success(monkeypatch):
 def test_track_without_track_id(monkeypatch):
     image = create_test_image()
 
+    class MockTensor:
+        def tolist(self):
+            return [10.0, 20.0, 100.0, 200.0]
+
+    class MockXYXY:
+        def __getitem__(self, index):
+            return MockTensor()
+
     class FakeBox:
         def __init__(self):
             self.id = None
             self.cls = [0]
             self.conf = [0.92]
+            self.xyxy = MockXYXY()
 
     class FakeResult:
         boxes = [FakeBox()]
@@ -586,7 +595,22 @@ def test_track_without_track_id(monkeypatch):
 
     result = detection_service.track(image)
 
+    # Boxes without a track ID are not tracks, but they are still
+    # reported as raw detections for the frame.
     assert result["tracks"] == []
+
+    assert result["detections"] == [
+        {
+            "label": "person",
+            "confidence": 0.92,
+            "box": {
+                "x1": 10.0,
+                "y1": 20.0,
+                "x2": 100.0,
+                "y2": 200.0,
+            },
+        }
+    ]
 
 
 # ============================================================

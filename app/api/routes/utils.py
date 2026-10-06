@@ -4,6 +4,7 @@ from io import BytesIO
 
 from fastapi import UploadFile
 from PIL import Image, UnidentifiedImageError
+from starlette.concurrency import run_in_threadpool
 
 from app.core.config import settings
 from app.core.exceptions import (
@@ -40,14 +41,42 @@ async def load_uploaded_image(
         )
 
     try:
-        image = Image.open(BytesIO(contents))
-        image.load()
-        return image.convert("RGB")
+        return await run_in_threadpool(
+            _decode_image,
+            contents,
+        )
 
     except UnidentifiedImageError:
         raise InvalidImageError(
             "Invalid or corrupted image file."
         )
+
+
+def _decode_image(contents: bytes) -> Image.Image:
+    image = Image.open(BytesIO(contents))
+    image.load()
+    return image.convert("RGB")
+
+
+def encode_jpeg(
+    image: Image.Image,
+    quality: int = 95,
+) -> BytesIO:
+    """
+    Encode a PIL image as an in-memory JPEG, ready for streaming.
+    """
+
+    buffer = BytesIO()
+
+    image.save(
+        buffer,
+        format="JPEG",
+        quality=quality,
+    )
+
+    buffer.seek(0)
+
+    return buffer
 
 
 async def load_uploaded_video(

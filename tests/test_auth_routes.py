@@ -492,3 +492,28 @@ def test_token_for_inactive_user_is_rejected(client, db_session):
 
     assert response.status_code == 403
     assert response.json()["detail"] == "This account is inactive."
+
+def test_user_timestamps_are_stored_in_utc(client, db_session):
+    from datetime import datetime, timedelta, timezone
+
+    before = datetime.now(timezone.utc).replace(tzinfo=None)
+
+    response = client.post(
+        "/api/v1/auth/register",
+        json={
+            "name": "Timestamp User",
+            "email": "timestamp@example.com",
+            "password": "TestPassword123!",
+        },
+    )
+
+    assert response.status_code == 201
+
+    user = db_session.query(User).filter_by(
+        email="timestamp@example.com"
+    ).one()
+
+    # SQLite stores naive values; they must be UTC, not local time.
+    assert user.created_at.tzinfo is None
+    assert before - timedelta(seconds=1) <= user.created_at
+    assert user.created_at <= before + timedelta(seconds=5)

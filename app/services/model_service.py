@@ -1,5 +1,11 @@
+import logging
+import threading
+
 import torch
 from torchvision.models import efficientnet_b0, EfficientNet_B0_Weights
+
+
+logger = logging.getLogger(__name__)
 
 
 class ImagePredictionModel:
@@ -7,21 +13,60 @@ class ImagePredictionModel:
     def __init__(self):
         self.device = torch.device("cpu")
 
-        print("Loading EfficientNet-B0...")
-
         self.weights = EfficientNet_B0_Weights.DEFAULT
-        self.model = efficientnet_b0(weights=self.weights)
 
-        self.model = self.model.to(self.device)
-        self.model.eval()
+        # Loaded lazily (or warmed up by the application lifespan) so
+        # importing this module never downloads weights.
+        self.model = None
+        self.preprocess = None
+        self.categories: list[str] = []
+        self.load_error: str | None = None
 
-        self.preprocess = self.weights.transforms()
-        self.categories = self.weights.meta["categories"]
+        self._load_lock = threading.Lock()
 
-        print("EfficientNet-B0 loaded successfully.")
-        print(f"Device: {self.device}")
-        print(f"Classes: {len(self.categories)}")
+    def load(self):
+        """
+        Load EfficientNet-B0 if it is not loaded yet.
+        """
+
+        if self.model is not None:
+            return self.model
+
+        with self._load_lock:
+            if self.model is None:
+                logger.info("Loading EfficientNet-B0...")
+
+                try:
+                    model = efficientnet_b0(weights=self.weights)
+                except Exception as exc:
+                    self.load_error = str(exc)
+                    logger.exception(
+                        "Failed to load EfficientNet-B0."
+                    )
+                    raise
+
+                model = model.to(self.device)
+                model.eval()
+
+                self.preprocess = self.weights.transforms()
+                self.categories = self.weights.meta["categories"]
+                self.model = model
+                self.load_error = None
+
+                logger.info("EfficientNet-B0 loaded successfully.")
+                logger.info("Device: %s", self.device)
+                logger.info("Classes: %d", len(self.categories))
+
+        return self.model
+
+    @property
+    def is_ready(self) -> bool:
+        return (
+            self.model is not None
+            and self.preprocess is not None
+            and bool(self.categories)
+        )
 
 
-# Load model once when the application starts
+# Single shared instance; weights load on first use or at startup.
 model_service = ImagePredictionModel()

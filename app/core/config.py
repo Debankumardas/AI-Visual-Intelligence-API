@@ -1,4 +1,23 @@
-from dataclasses import dataclass
+import os
+from dataclasses import dataclass, field
+
+
+def _env_bool(name: str, default: bool) -> bool:
+    value = os.getenv(name)
+
+    if value is None:
+        return default
+
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _env_int(name: str, default: int) -> int:
+    value = os.getenv(name)
+
+    if value is None or not value.strip():
+        return default
+
+    return int(value)
 
 
 @dataclass(frozen=True)
@@ -18,6 +37,30 @@ class Settings:
             "image/png",
             "image/webp",
         }
+    )
+
+    # ============================================================
+    # MODEL CONFIGURATION
+    # ============================================================
+
+    # Load models during application startup instead of on the
+    # first request. Disabled in tests.
+    preload_models: bool = field(
+        default_factory=lambda: _env_bool("PRELOAD_MODELS", True)
+    )
+
+    yolo_model_path: str = field(
+        default_factory=lambda: os.getenv(
+            "YOLO_MODEL_PATH",
+            "yolo11n.pt",
+        )
+    )
+
+    yolo_seg_model_path: str = field(
+        default_factory=lambda: os.getenv(
+            "YOLO_SEG_MODEL_PATH",
+            "yolo11n-seg.pt",
+        )
     )
 
     # Object detection configuration
@@ -56,7 +99,15 @@ class Settings:
         "video/quicktime",
         "video/x-msvideo",
     )
-    video_frame_stride: int = 1
+
+    # Upper bound on frames run through the model per video. Longer
+    # videos are sampled evenly with a larger frame stride.
+    video_max_processed_frames: int = field(
+        default_factory=lambda: _env_int(
+            "VIDEO_MAX_PROCESSED_FRAMES",
+            300,
+        )
+    )
     video_device: str = "cpu"
 
 settings = Settings()

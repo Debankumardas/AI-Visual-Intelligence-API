@@ -1,6 +1,10 @@
+import logging
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 
 from app.auth.routes import router as auth_router
 from app.api.routes.health import router as health_router
@@ -10,9 +14,46 @@ from app.core.exceptions import AppException
 from app.core.logging import configure_logging
 from app.models.error import ErrorResponse
 from app.middleware.request_id import request_id_middleware
+from app.services.detection_service import detection_service
+from app.services.model_service import model_service
 
 
 configure_logging()
+
+logger = logging.getLogger(__name__)
+
+
+# ============================================================
+# APPLICATION LIFESPAN
+# ============================================================
+
+async def warm_up_models():
+    """
+    Load the AI models before serving traffic.
+
+    A failure is recorded on the service (and reported by
+    /health/ready) instead of preventing the API from starting.
+    """
+
+    for name, load in (
+        ("object detection", detection_service.load),
+        ("image classification", model_service.load),
+    ):
+        try:
+            await run_in_threadpool(load)
+        except Exception:
+            logger.error(
+                "Could not load the %s model during startup.",
+                name,
+            )
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    if settings.preload_models:
+        await warm_up_models()
+
+    yield
 
 
 # ============================================================
@@ -26,6 +67,7 @@ app = FastAPI(
         "and image analysis API."
     ),
     version=settings.app_version,
+    lifespan=lifespan,
     responses={
         400: {
             "model": ErrorResponse,

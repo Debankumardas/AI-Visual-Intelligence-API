@@ -6,6 +6,8 @@ import {
   Upload,
 } from "lucide-react"
 
+import ClassBreakdownGrid from "../components/analytics/ClassBreakdownGrid"
+import MetricTile from "../components/ui/MetricTile"
 import {
   analyzeVideo,
   getVideoMetadata,
@@ -157,22 +159,22 @@ function VideoAnalysis({ onAnalyticsComplete }) {
           </div>
 
           <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <Metric
+            <MetricTile
               label="Frames"
               value={metadata.frame_count}
             />
 
-            <Metric
+            <MetricTile
               label="FPS"
               value={metadata.fps.toFixed(2)}
             />
 
-            <Metric
+            <MetricTile
               label="Resolution"
               value={`${metadata.width} × ${metadata.height}`}
             />
 
-            <Metric
+            <MetricTile
               label="Duration"
               value={`${metadata.duration.toFixed(2)} s`}
             />
@@ -192,123 +194,63 @@ function VideoAnalysis({ onAnalyticsComplete }) {
             </div>
 
             <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <Metric
-                label="Frames Processed"
-                value={result.frames_processed}
+              <MetricTile
+                label="Frames Analysed"
+                value={
+                  result.source_frame_count
+                    ? `${result.frames_processed} of ${result.source_frame_count}`
+                    : result.frames_processed
+                }
               />
 
-              <Metric
+              <MetricTile
+                label="Sampling"
+                value={
+                  result.frame_stride > 1
+                    ? `Every ${result.frame_stride} frames`
+                    : "Every frame"
+                }
+              />
+
+              <MetricTile
                 label="Effective FPS"
                 value={result.effective_fps.toFixed(2)}
               />
 
-              <Metric
+              <MetricTile
                 label="Total Detections"
                 value={result.total_detections}
               />
 
-              <Metric
+              <MetricTile
                 label="Unique Tracks"
                 value={result.unique_track_ids}
               />
 
-              <Metric
+              <MetricTile
                 label="Processing Time"
                 value={`${result.processing_time_seconds.toFixed(2)} s`}
               />
 
-              <Metric
+              <MetricTile
                 label="Avg Inference"
                 value={`${result.average_inference_time_ms.toFixed(2)} ms`}
               />
 
-              <Metric
+              <MetricTile
                 label="Min Inference"
                 value={`${result.min_inference_time_ms.toFixed(2)} ms`}
               />
 
-              <Metric
+              <MetricTile
                 label="Max Inference"
                 value={`${result.max_inference_time_ms.toFixed(2)} ms`}
               />
             </div>
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-2">
-            <AnalyticsList
-              title="Detections by Class"
-              data={result.class_detection_counts}
-            />
-
-            <AnalyticsList
-              title="Active Frames by Class"
-              data={result.active_frames_by_class}
-            />
-
-            <AnalyticsList
-              title="Unique Tracks by Class"
-              data={result.unique_track_ids_by_class}
-            />
-
-            <AnalyticsList
-              title="Track Interaction Episodes"
-              data={result.track_interaction_episode_counts}
-            />
-          </div>
+          <ClassBreakdownGrid analytics={result} />
         </>
-      )}
-    </div>
-  )
-}
-
-function Metric({ label, value }) {
-  return (
-    <div className="rounded-lg bg-slate-950 px-4 py-4">
-      <p className="text-xs text-slate-500">
-        {label}
-      </p>
-
-      <p className="mt-1 text-lg font-semibold text-white">
-        {value}
-      </p>
-    </div>
-  )
-}
-
-function AnalyticsList({ title, data }) {
-  const entries = Object.entries(data || {})
-
-  return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900 p-6">
-      <h3 className="font-semibold text-white">
-        {title}
-      </h3>
-
-      {entries.length ? (
-        <div className="mt-4 space-y-2">
-          {entries.map(([label, value]) => (
-            <div
-              key={label}
-              className="flex items-center justify-between rounded-lg bg-slate-950 px-4 py-3"
-            >
-              <span className="text-sm text-slate-300">
-                {label}
-              </span>
-
-              <span className="text-sm font-semibold text-white">
-                {typeof value === "number"
-                  ? Number.isInteger(value)
-                    ? value
-                    : value.toFixed(2)
-                  : value}
-              </span>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p className="mt-4 text-sm text-slate-500">
-          No analytics available.
-        </p>
       )}
     </div>
   )

@@ -41,11 +41,7 @@ def readiness_check():
         detection_service.model is not None
     )
 
-    classification_ready = (
-        model_service.model is not None
-        and model_service.preprocess is not None
-        and bool(model_service.categories)
-    )
+    classification_ready = model_service.is_ready
 
     models_ready = (
         yolo_ready
@@ -71,6 +67,18 @@ def readiness_check():
             ),
         },
     }
+
+    errors = {
+        name: error
+        for name, error in (
+            ("object_detection", detection_service.load_error),
+            ("image_classification", model_service.load_error),
+        )
+        if error
+    }
+
+    if errors:
+        response["errors"] = errors
 
     if not models_ready:
         return JSONResponse(

@@ -1,8 +1,12 @@
+import math
 import os
 import time
+from itertools import islice
 
 import cv2
 from PIL import Image
+
+from app.core.config import settings
 
 from app.services.video_analytics_service import (
     video_analytics_service,
@@ -91,15 +95,68 @@ class VideoProcessingService:
                 ],
             }
 
+    def plan_frame_sampling(
+        self,
+        source_frame_count: int,
+        frame_stride: int | None = None,
+        max_frames: int | None = None,
+    ):
+        """
+        Decide which frames to run through the model.
+
+        Without an explicit stride, frames are sampled evenly so that
+        at most ``max_frames`` frames are processed across the whole
+        video. The budget is also a hard upper bound, because the
+        container-reported frame count can be inaccurate.
+
+        Returns:
+            (frame_stride, max_frames)
+        """
+
+        if frame_stride is not None and frame_stride < 1:
+            raise ValueError("Frame stride must be at least 1")
+
+        budget = (
+            settings.video_max_processed_frames
+            if max_frames is None
+            else max_frames
+        )
+
+        if budget < 1:
+            raise ValueError("Max frames must be at least 1")
+
+        if frame_stride is None:
+            frame_stride = max(
+                1,
+                math.ceil(max(source_frame_count, 0) / budget),
+            )
+
+        return frame_stride, budget
+
     def analyze_video(
         self,
         video_path: str,
-        frame_stride: int = 1,
+        frame_stride: int | None = None,
+        max_frames: int | None = None,
     ):
-        """Process a video once and calculate detection and tracking analytics."""
+        """
+        Process a video once and calculate detection and tracking analytics.
 
-        if frame_stride < 1:
+        Each sampled frame goes through a single tracking pass; the
+        per-frame detections are taken from the same result.
+        """
+
+        if frame_stride is not None and frame_stride < 1:
             raise ValueError("Frame stride must be at least 1")
+
+        metadata = video_service.get_metadata(video_path)
+        source_frame_count = metadata.get("frame_count", 0)
+
+        frame_stride, max_frames = self.plan_frame_sampling(
+            source_frame_count=source_frame_count,
+            frame_stride=frame_stride,
+            max_frames=max_frames,
+        )
 
         start_time = time.perf_counter()
 
@@ -109,46 +166,48 @@ class VideoProcessingService:
         detection_frame_indices = []
         track_ids_per_frame = []
         tracks_per_frame = []
-        for frame_index, frame in video_service.read_frames(
-            video_path,
-            frame_stride=frame_stride,
-        ):
-            image = Image.fromarray(
-                cv2.cvtColor(
-                    frame,
-                    cv2.COLOR_BGR2RGB,
+        with detection_service.tracking_session():
+            frames = video_service.read_frames(
+                video_path,
+                frame_stride=frame_stride,
+            )
+
+            for frame_index, frame in islice(frames, max_frames):
+                image = Image.fromarray(
+                    cv2.cvtColor(
+                        frame,
+                        cv2.COLOR_BGR2RGB,
+                    )
                 )
-            )
 
-            detection = detection_service.detect(image)
-            tracking = detection_service.track(image)
+                tracking = detection_service.track(image)
 
-            inference_times_ms.append(
-                detection["inference_time_ms"]
-            )
+                inference_times_ms.append(
+                    tracking["inference_time_ms"]
+                )
 
-            detection_counts.append(
-                len(detection["detections"])
-            )
+                detection_counts.append(
+                    len(tracking["detections"])
+                )
 
-            detections_per_frame.append(
-                detection["detections"]
-            )
+                detections_per_frame.append(
+                    tracking["detections"]
+                )
 
-            detection_frame_indices.append(
-                frame_index
-            )
+                detection_frame_indices.append(
+                    frame_index
+                )
 
-            tracks_per_frame.append(
-                tracking["tracks"]
-            )
+                tracks_per_frame.append(
+                    tracking["tracks"]
+                )
 
-            track_ids_per_frame.append(
-                [
-                    track["track_id"]
-                    for track in tracking["tracks"]
-                ]
-            )
+                track_ids_per_frame.append(
+                    [
+                        track["track_id"]
+                        for track in tracking["tracks"]
+                    ]
+                )
 
         processing_time_seconds = (
             time.perf_counter() - start_time
@@ -205,10 +264,18 @@ class VideoProcessingService:
             )
         )
 
+        # Persistence compares observed frames with the track's span.
+        # Measure the span in sampled frames, otherwise sampling every
+        # Nth frame would make every track look 1/N persistent.
+        sampled_frame_ordinals = [
+            frame_index // frame_stride
+            for frame_index in detection_frame_indices
+        ]
+
         track_persistence_metrics = (
             video_analytics_service.calculate_track_persistence_metrics(
                 track_ids_per_frame=track_ids_per_frame,
-                frame_indices=detection_frame_indices,
+                frame_indices=sampled_frame_ordinals,
             )
         )
 
@@ -259,6 +326,8 @@ class VideoProcessingService:
         )
 
         return {
+            "frame_stride": frame_stride,
+            "source_frame_count": source_frame_count,
             **performance_metrics,
             **detection_metrics,
             **class_detection_metrics,
@@ -280,11 +349,12 @@ class VideoProcessingService:
         self,
         video_path: str,
         output_path: str,
-        frame_stride: int = 1,
+        frame_stride: int | None = None,
+        max_frames: int | None = None,
     ):
         """Generate an annotated video with tracked objects."""
 
-        if frame_stride < 1:
+        if frame_stride is not None and frame_stride < 1:
             raise ValueError(
                 "Frame stride must be at least 1"
             )
@@ -296,6 +366,12 @@ class VideoProcessingService:
         try:
             metadata = video_service.get_metadata(
                 video_path
+            )
+
+            frame_stride, max_frames = self.plan_frame_sampling(
+                source_frame_count=metadata.get("frame_count", 0),
+                frame_stride=frame_stride,
+                max_frames=max_frames,
             )
 
             output_fps = (
@@ -314,40 +390,43 @@ class VideoProcessingService:
                 height=metadata["height"],
             )
 
-            for frame_index, frame in video_service.read_frames(
-                video_path,
-                frame_stride=frame_stride,
-            ):
-                image = Image.fromarray(
-                    cv2.cvtColor(
-                        frame,
-                        cv2.COLOR_BGR2RGB,
-                    )
+            with detection_service.tracking_session():
+                frames = video_service.read_frames(
+                    video_path,
+                    frame_stride=frame_stride,
                 )
 
-                tracking = detection_service.track(
-                    image
-                )
-
-                annotated_frame = frame.copy()
-
-                for track in tracking["tracks"]:
-                    annotated_frame = (
-                        annotation_service.draw_track(
-                            frame=annotated_frame,
-                            box=track["box"],
-                            label=track["label"],
-                            confidence=track["confidence"],
-                            track_id=track["track_id"],
+                for frame_index, frame in islice(frames, max_frames):
+                    image = Image.fromarray(
+                        cv2.cvtColor(
+                            frame,
+                            cv2.COLOR_BGR2RGB,
                         )
                     )
 
-                video_writer_service.write_frame(
-                    writer,
-                    annotated_frame,
-                )
+                    tracking = detection_service.track(
+                        image
+                    )
 
-                frames_written += 1
+                    annotated_frame = frame.copy()
+
+                    for track in tracking["tracks"]:
+                        annotated_frame = (
+                            annotation_service.draw_track(
+                                frame=annotated_frame,
+                                box=track["box"],
+                                label=track["label"],
+                                confidence=track["confidence"],
+                                track_id=track["track_id"],
+                            )
+                        )
+
+                    video_writer_service.write_frame(
+                        writer,
+                        annotated_frame,
+                    )
+
+                    frames_written += 1
 
             if frames_written == 0:
                 raise ValueError(

@@ -1,9 +1,8 @@
-from io import BytesIO
-
 from fastapi import APIRouter, File, UploadFile
 from fastapi.responses import StreamingResponse
+from starlette.concurrency import run_in_threadpool
 
-from app.api.routes.utils import load_uploaded_image
+from app.api.routes.utils import encode_jpeg, load_uploaded_image
 from app.core.exceptions import InferenceError
 from app.models.detection import (
     DetectionResponse,
@@ -44,13 +43,14 @@ async def detect(
     image = await load_uploaded_image(file)
 
     try:
-        detection_result = detection_service.detect(
-            image
+        detection_result = await run_in_threadpool(
+            detection_service.detect,
+            image,
         )
 
         return {
             "filename": file.filename or "unknown",
-            "content_type": file.content_type,
+            "content_type": file.content_type or "unknown",
             "detections": detection_result[
                 "detections"
             ],
@@ -84,13 +84,14 @@ async def count_objects(
     image = await load_uploaded_image(file)
 
     try:
-        count_result = detection_service.count_objects(
-            image
+        count_result = await run_in_threadpool(
+            detection_service.count_objects,
+            image,
         )
 
         return {
             "filename": file.filename or "unknown",
-            "content_type": file.content_type,
+            "content_type": file.content_type or "unknown",
             "total_objects": count_result[
                 "total_objects"
             ],
@@ -127,13 +128,14 @@ async def track_objects(
     image = await load_uploaded_image(file)
 
     try:
-        tracking_result = detection_service.track(
-            image
+        tracking_result = await run_in_threadpool(
+            detection_service.track_image,
+            image,
         )
 
         return {
             "filename": file.filename or "unknown",
-            "content_type": file.content_type,
+            "content_type": file.content_type or "unknown",
             "tracks": tracking_result["tracks"],
         }
 
@@ -167,15 +169,14 @@ async def segment_objects(
     image = await load_uploaded_image(file)
 
     try:
-        segmentation_result = (
-            detection_service.segment(
-                image
-            )
+        segmentation_result = await run_in_threadpool(
+            detection_service.segment,
+            image,
         )
 
         return {
             "filename": file.filename or "unknown",
-            "content_type": file.content_type,
+            "content_type": file.content_type or "unknown",
             "segmentations": (
                 segmentation_result[
                     "segmentations"
@@ -208,11 +209,14 @@ async def extract_text(
     image = await load_uploaded_image(file)
 
     try:
-        ocr_result = detection_service.ocr(image)
+        ocr_result = await run_in_threadpool(
+            detection_service.ocr,
+            image,
+        )
 
         return {
             "filename": file.filename or "unknown",
-            "content_type": file.content_type,
+            "content_type": file.content_type or "unknown",
             "results": ocr_result["results"],
         }
 
@@ -237,21 +241,15 @@ async def detect_annotated(
     image = await load_uploaded_image(file)
 
     try:
-        annotated_image = (
-            detection_service.detect_and_annotate(
-                image
-            )
+        annotated_image = await run_in_threadpool(
+            detection_service.detect_and_annotate,
+            image,
         )
 
-        image_buffer = BytesIO()
-
-        annotated_image.save(
-            image_buffer,
-            format="JPEG",
-            quality=95,
+        image_buffer = await run_in_threadpool(
+            encode_jpeg,
+            annotated_image,
         )
-
-        image_buffer.seek(0)
 
         filename = file.filename or "image.jpg"
 

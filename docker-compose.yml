@@ -6,15 +6,27 @@ services:
 
     environment:
       DATABASE_URL: sqlite:////app/data/app.db
-      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?JWT_SECRET_KEY must be set (see .env.example)}
       JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
       JWT_ACCESS_TOKEN_EXPIRE_MINUTES: ${JWT_ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+      VIDEO_MAX_PROCESSED_FRAMES: ${VIDEO_MAX_PROCESSED_FRAMES:-300}
 
     volumes:
       - database_data:/app/data
 
     expose:
       - "8000"
+
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/ready', timeout=4)"
+      interval: 15s
+      timeout: 5s
+      start_period: 60s
+      retries: 5
 
     restart: unless-stopped
 
@@ -30,7 +42,8 @@ services:
       - "80:80"
 
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
 
     restart: unless-stopped
 

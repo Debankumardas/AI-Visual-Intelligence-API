@@ -1,9 +1,8 @@
-from io import BytesIO
-
 from fastapi import APIRouter, File, UploadFile
 from fastapi.responses import StreamingResponse
+from starlette.concurrency import run_in_threadpool
 
-from app.api.routes.utils import load_uploaded_image
+from app.api.routes.utils import encode_jpeg, load_uploaded_image
 from app.core.exceptions import InferenceError
 from app.models.analysis import AnalysisResponse
 from app.services.detection_service import detection_service
@@ -30,7 +29,8 @@ async def analyze(
     image = await load_uploaded_image(file)
 
     try:
-        prediction_result = predict_image(
+        prediction_result = await run_in_threadpool(
+            predict_image,
             image,
             top_k=5,
         )
@@ -42,8 +42,9 @@ async def analyze(
         )
 
     try:
-        detection_result = detection_service.detect(
-            image
+        detection_result = await run_in_threadpool(
+            detection_service.detect,
+            image,
         )
 
         detections = detection_result.get(
@@ -64,7 +65,7 @@ async def analyze(
 
     return {
         "filename": file.filename or "unknown",
-        "content_type": file.content_type,
+        "content_type": file.content_type or "unknown",
         "predictions": prediction_result[
             "predictions"
         ],
@@ -90,21 +91,15 @@ async def analyze_annotated(
     image = await load_uploaded_image(file)
 
     try:
-        annotated_image = (
-            detection_service.detect_and_annotate(
-                image
-            )
+        annotated_image = await run_in_threadpool(
+            detection_service.detect_and_annotate,
+            image,
         )
 
-        output = BytesIO()
-
-        annotated_image.save(
-            output,
-            format="JPEG",
-            quality=95,
+        output = await run_in_threadpool(
+            encode_jpeg,
+            annotated_image,
         )
-
-        output.seek(0)
 
         original_name = file.filename or "image.jpg"
 
