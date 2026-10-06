@@ -1,5 +1,6 @@
 import os
 from collections.abc import Generator
+from datetime import datetime, timezone
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
@@ -24,6 +25,15 @@ SessionLocal = sessionmaker(
 
 class Base(DeclarativeBase):
     pass
+
+
+def utc_now() -> datetime:
+    """
+    Current time in UTC (replacement for the deprecated
+    datetime.utcnow).
+    """
+
+    return datetime.now(timezone.utc)
 
 
 def get_db() -> Generator[Session, None, None]:
