@@ -264,10 +264,18 @@ class VideoProcessingService:
             )
         )
 
+        # Persistence compares observed frames with the track's span.
+        # Measure the span in sampled frames, otherwise sampling every
+        # Nth frame would make every track look 1/N persistent.
+        sampled_frame_ordinals = [
+            frame_index // frame_stride
+            for frame_index in detection_frame_indices
+        ]
+
         track_persistence_metrics = (
             video_analytics_service.calculate_track_persistence_metrics(
                 track_ids_per_frame=track_ids_per_frame,
-                frame_indices=detection_frame_indices,
+                frame_indices=sampled_frame_ordinals,
             )
         )
 

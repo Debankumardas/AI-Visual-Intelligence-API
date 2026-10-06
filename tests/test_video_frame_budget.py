@@ -165,6 +165,64 @@ def test_analyze_video_stops_at_budget_when_frame_count_unknown():
     assert result["frames_processed"] == 4
 
 
+def test_track_persistence_is_not_diluted_by_frame_sampling():
+    service = VideoProcessingService()
+
+    # Frames 0, 3, 6 and 9 are analysed (stride 3) and the same track
+    # is visible in all of them.
+    sampled_frames = [
+        (index, np.zeros((10, 10, 3), dtype=np.uint8))
+        for index in (0, 3, 6, 9)
+    ]
+
+    box = {"x1": 0.0, "y1": 0.0, "x2": 10.0, "y2": 10.0}
+
+    def tracking_with_one_track(image):
+        track = {
+            "track_id": 1,
+            "label": "person",
+            "confidence": 0.9,
+            "box": box,
+        }
+
+        return {
+            "tracks": [track],
+            "detections": [
+                {key: value for key, value in track.items() if key != "track_id"}
+            ],
+            "inference_time_ms": 1.0,
+        }
+
+    with (
+        patch.object(
+            video_service,
+            "get_metadata",
+            return_value={"frame_count": 10},
+        ),
+        patch.object(
+            video_service,
+            "read_frames",
+            return_value=iter(sampled_frames),
+        ),
+        patch.object(
+            detection_service,
+            "track",
+            side_effect=tracking_with_one_track,
+        ),
+    ):
+        result = service.analyze_video(
+            "sampled.mp4",
+            frame_stride=3,
+        )
+
+    assert result["frame_stride"] == 3
+    assert result["track_observed_frames"] == {1: 4}
+    assert result["track_persistence_ratio"] == {1: 1.0}
+
+    # Durations stay expressed in source frames (0..9 inclusive).
+    assert result["track_duration_frames"] == {1: 10}
+
+
 def test_analyze_video_rejects_invalid_stride_before_reading():
     service = VideoProcessingService()
 
