@@ -29,8 +29,8 @@ export function formatMs(milliseconds) {
   }
 
   return milliseconds >= 1000
-    ? `${decimal.format(milliseconds / 1000)} s`
-    : `${decimal.format(milliseconds)} ms`
+    ? `${decimal.format(milliseconds / 1000)}\u00a0s`
+    : `${decimal.format(milliseconds)}\u00a0ms`
 }
 
 export function formatBytes(bytes) {
@@ -39,14 +39,14 @@ export function formatBytes(bytes) {
   }
 
   if (bytes < 1024) {
-    return `${bytes} B`
+    return `${bytes}\u00a0B`
   }
 
   if (bytes < 1024 * 1024) {
-    return `${decimal.format(bytes / 1024)} KB`
+    return `${decimal.format(bytes / 1024)}\u00a0KB`
   }
 
-  return `${decimal.format(bytes / 1024 / 1024)} MB`
+  return `${decimal.format(bytes / 1024 / 1024)}\u00a0MB`
 }
 
 /** 75 -> "1:15" */

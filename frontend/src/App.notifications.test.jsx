@@ -16,16 +16,30 @@ vi.mock("./services/api", async (importOriginal) => {
   return mockApiModule(importOriginal)
 })
 
-vi.mock("./pages/ImageAnalysis", () => ({
-  default: ({ onAnalysisComplete }) => (
-    <button
-      type="button"
-      onClick={() => onAnalysisComplete({ detections: [{}, {}] })}
-    >
-      Finish image analysis
-    </button>
-  ),
-}))
+vi.mock("./pages/ImageLab", async () => {
+  const { default: useWorkspace } = await import("./hooks/useWorkspace")
+
+  return {
+    default: function ImageLabStub() {
+      const { recordImageAnalysis } = useWorkspace()
+
+      return (
+        <button
+          type="button"
+          onClick={() =>
+            recordImageAnalysis({
+              file: null,
+              mode: "detect",
+              result: { detections: [{}, {}] },
+            })
+          }
+        >
+          Finish image analysis
+        </button>
+      )
+    },
+  }
+})
 
 vi.mock("./pages/VideoAnalysis", () => ({
   default: ({ onAnalyticsComplete }) => (

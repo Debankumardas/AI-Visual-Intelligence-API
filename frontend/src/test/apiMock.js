@@ -31,7 +31,13 @@ export const readyModels = {
 export async function mockApiModule(importOriginal) {
   return {
     ...(await importOriginal()),
+    analyzeImage: vi.fn(),
     checkHealth: vi.fn(),
+    countObjects: vi.fn(),
+    detectAnnotated: vi.fn(),
+    detectObjects: vi.fn(),
+    extractText: vi.fn(),
+    segmentImage: vi.fn(),
     getCurrentUser: vi.fn(),
     getPreferences: vi.fn(),
     getReadiness: vi.fn(),

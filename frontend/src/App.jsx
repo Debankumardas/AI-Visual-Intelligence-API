@@ -6,7 +6,7 @@ import WorkspaceProvider from "./context/WorkspaceProvider"
 import useAuth from "./hooks/useAuth"
 import useWorkspace from "./hooks/useWorkspace"
 import Analytics from "./pages/Analytics"
-import ImageAnalysis from "./pages/ImageAnalysis"
+import ImageLab from "./pages/ImageLab"
 import Login from "./pages/Login"
 import NotFound from "./pages/NotFound"
 import Overview from "./pages/Overview"
@@ -27,18 +27,6 @@ function Workspace({ children }) {
     <WorkspaceProvider key={user?.id ?? "signed-out"}>
       {children}
     </WorkspaceProvider>
-  )
-}
-
-function ImageRoute() {
-  const { recordImageAnalysis } = useWorkspace()
-
-  return (
-    <ImageAnalysis
-      onAnalysisComplete={(result) =>
-        recordImageAnalysis({ file: null, mode: "analyze", result })
-      }
-    />
   )
 }
 
@@ -79,7 +67,7 @@ function App() {
                 path="image"
                 element={
                   <RequirePage preferenceKey="image_analysis_enabled">
-                    <ImageRoute />
+                    <ImageLab />
                   </RequirePage>
                 }
               />

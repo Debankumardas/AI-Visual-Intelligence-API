@@ -17,6 +17,7 @@ function Dropzone({
   disabled = false,
   title,
   icon: Icon,
+  compact = false,
 }) {
   const inputRef = useRef(null)
   const [dragging, setDragging] = useState(false)
@@ -86,7 +87,10 @@ function Dropzone({
         disabled={disabled}
         onClick={() => inputRef.current?.click()}
         className={cn(
-          "flex min-h-40 w-full flex-col items-center justify-center gap-2 rounded-panel border border-dashed px-6 py-8 text-center transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-60",
+          "flex w-full items-center justify-center rounded-panel border border-dashed text-center transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-60",
+          compact
+            ? "min-h-14 flex-row gap-3 px-4 py-2"
+            : "min-h-40 flex-col gap-2 px-6 py-8",
           dragging
             ? "border-accent bg-accent/5"
             : "border-control bg-sunken hover:border-fg/50",
@@ -94,7 +98,7 @@ function Dropzone({
       >
         {Icon && (
           <Icon
-            size={28}
+            size={compact ? 20 : 28}
             aria-hidden="true"
             className={dragging ? "text-accent" : "text-muted"}
           />

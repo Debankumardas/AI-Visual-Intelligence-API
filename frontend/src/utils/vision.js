@@ -69,3 +69,60 @@ export function describeImageResult(mode, result) {
     }
   }
 }
+
+/**
+ * The shapes to draw on the image for a result, in image pixels.
+ * Counting has no positions, so it draws nothing.
+ *
+ * Each shape: { id, kind: "box" | "polygon", label, text?, confidence,
+ * color, box: {x1,y1,x2,y2}, polygon?: [[x,y], ...] }
+ */
+export function shapesFor(mode, result) {
+  if (!result) {
+    return []
+  }
+
+  switch (mode) {
+    case "segment":
+      return (result.segmentations ?? []).map((item, index) => ({
+        id: `segment-${index}`,
+        kind: "polygon",
+        label: item.label,
+        confidence: item.confidence,
+        color: classColor(item.label),
+        box: item.box,
+        polygon: item.mask,
+      }))
+
+    case "text":
+      return (result.results ?? []).map((item, index) => ({
+        id: `text-${index}`,
+        kind: "box",
+        label: "text",
+        text: item.text,
+        confidence: item.confidence,
+        color: CLASS_COLORS[0],
+        box: item.box,
+      }))
+
+    case "count":
+      return []
+
+    default:
+      return (result.detections ?? []).map((item, index) => ({
+        id: `detection-${index}`,
+        kind: "box",
+        label: item.label,
+        confidence: item.confidence,
+        color: classColor(item.label),
+        box: item.box,
+      }))
+  }
+}
+
+/** { x1: 129.8, y1: 105.7, x2: 1391.5, y2: 1122 } -> "130, 106 to 1392, 1122" */
+export function formatBox(box) {
+  const round = (value) => Math.round(value)
+
+  return `${round(box.x1)}, ${round(box.y1)} to ${round(box.x2)}, ${round(box.y2)}`
+}

@@ -1,6 +1,7 @@
 import { Activity, Camera, FileImage, Film } from "lucide-react"
 import { Link } from "react-router"
 
+import LatestResult from "../components/overview/LatestResult"
 import ModelStatus from "../components/overview/ModelStatus"
 import { buttonStyles } from "../components/ui/buttonStyles"
 import Card, { CardHeader } from "../components/ui/Card"
@@ -31,6 +32,41 @@ function Overview() {
         description="Your session at a glance. Totals reset when you sign out."
       />
 
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <LatestResult />
+
+        <div className="space-y-6">
+          <Card aria-labelledby="start-heading">
+            <CardHeader
+              id="start-heading"
+              title="Start an analysis"
+              description="Upload a file and see what the models find."
+            />
+
+            <div className="mt-4 flex flex-wrap gap-3">
+              {isEnabled("image_analysis_enabled", preferences) && (
+                <Link
+                  to="/image"
+                  className={buttonStyles({ variant: "primary" })}
+                >
+                  <FileImage size={16} aria-hidden="true" />
+                  Analyze an image
+                </Link>
+              )}
+
+              {isEnabled("video_analysis_enabled", preferences) && (
+                <Link to="/video" className={buttonStyles()}>
+                  <Film size={16} aria-hidden="true" />
+                  Analyze a video
+                </Link>
+              )}
+            </div>
+          </Card>
+
+          <ModelStatus />
+        </div>
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           title="Images analyzed"
@@ -59,37 +95,6 @@ function Overview() {
           subtitle="Latest video analysis"
           icon={Activity}
         />
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card aria-labelledby="start-heading">
-          <CardHeader
-            id="start-heading"
-            title="Start an analysis"
-            description="Upload a file and see what the models find."
-          />
-
-          <div className="mt-4 flex flex-wrap gap-3">
-            {isEnabled("image_analysis_enabled", preferences) && (
-              <Link
-                to="/image"
-                className={buttonStyles({ variant: "primary" })}
-              >
-                <FileImage size={16} aria-hidden="true" />
-                Analyze an image
-              </Link>
-            )}
-
-            {isEnabled("video_analysis_enabled", preferences) && (
-              <Link to="/video" className={buttonStyles()}>
-                <Film size={16} aria-hidden="true" />
-                Analyze a video
-              </Link>
-            )}
-          </div>
-        </Card>
-
-        <ModelStatus />
       </div>
     </div>
   )

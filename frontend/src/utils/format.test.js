@@ -33,16 +33,16 @@ describe("formatPercent", () => {
 
 describe("formatMs", () => {
   it("switches to seconds from 1000 ms", () => {
-    expect(formatMs(584.62)).toBe("584.62 ms")
-    expect(formatMs(34362)).toBe("34.36 s")
+    expect(formatMs(584.62)).toBe("584.62\u00a0ms")
+    expect(formatMs(34362)).toBe("34.36\u00a0s")
   })
 })
 
 describe("formatBytes", () => {
   it("picks a sensible unit", () => {
-    expect(formatBytes(512)).toBe("512 B")
-    expect(formatBytes(2048)).toBe("2 KB")
-    expect(formatBytes(5 * 1024 * 1024)).toBe("5 MB")
+    expect(formatBytes(512)).toBe("512\u00a0B")
+    expect(formatBytes(2048)).toBe("2\u00a0KB")
+    expect(formatBytes(5 * 1024 * 1024)).toBe("5\u00a0MB")
   })
 
   it("rejects negative sizes", () => {

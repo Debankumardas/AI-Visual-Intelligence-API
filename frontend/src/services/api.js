@@ -157,61 +157,47 @@ export const updatePreferences = async (token, preferences) => {
 // Image Analysis
 // ─────────────────────────────────────────────
 
-export const analyzeImage = async (file) => {
+const uploadImage = async (path, file, options = {}) => {
   const formData = new FormData()
   formData.append("file", file)
 
-  const response = await api.post(
-    "/api/v1/analyze",
-    formData,
-  )
+  const response = await api.post(path, formData, options)
 
   return response.data
 }
 
-export const detectObjects = async (file) => {
+// Each takes the file and optional axios options, e.g. { signal } to
+// cancel the request.
+export const analyzeImage = (file, options) =>
+  uploadImage("/api/v1/analyze", file, options)
+
+export const detectObjects = (file, options) =>
+  uploadImage("/api/v1/detect", file, options)
+
+export const countObjects = (file, options) =>
+  uploadImage("/api/v1/detect/count", file, options)
+
+export const trackObjects = (file, options) =>
+  uploadImage("/api/v1/detect/track", file, options)
+
+export const segmentImage = (file, options) =>
+  uploadImage("/api/v1/detect/segment", file, options)
+
+export const extractText = (file, options) =>
+  uploadImage("/api/v1/detect/ocr", file, options)
+
+export const classifyImage = (file, options) =>
+  uploadImage("/api/v1/predict", file, options)
+
+/** The image with detections drawn on it, as a JPEG blob. */
+export const detectAnnotated = async (file, options = {}) => {
   const formData = new FormData()
   formData.append("file", file)
 
   const response = await api.post(
-    "/api/v1/detect",
+    "/api/v1/detect/annotated",
     formData,
-  )
-
-  return response.data
-}
-
-export const countObjects = async (file) => {
-  const formData = new FormData()
-  formData.append("file", file)
-
-  const response = await api.post(
-    "/api/v1/detect/count",
-    formData,
-  )
-
-  return response.data
-}
-
-export const trackObjects = async (file) => {
-  const formData = new FormData()
-  formData.append("file", file)
-
-  const response = await api.post(
-    "/api/v1/detect/track",
-    formData,
-  )
-
-  return response.data
-}
-
-export const classifyImage = async (file) => {
-  const formData = new FormData()
-  formData.append("file", file)
-
-  const response = await api.post(
-    "/api/v1/predict",
-    formData,
+    { ...options, responseType: "blob" },
   )
 
   return response.data

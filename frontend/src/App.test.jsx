@@ -16,7 +16,7 @@ vi.mock("./services/api", async (importOriginal) => {
   return mockApiModule(importOriginal)
 })
 
-vi.mock("./pages/ImageAnalysis", () => ({
+vi.mock("./pages/ImageLab", () => ({
   default: () => <h1>Image Analysis Page</h1>,
 }))
 

@@ -318,7 +318,7 @@ describe("Dropzone", () => {
     drop(makeFile("huge.png", "image/png", 4096))
 
     expect(onReject).toHaveBeenCalledWith(
-      expect.stringContaining("The limit is 1 KB."),
+      expect.stringContaining("The limit is 1\u00a0KB."),
     )
   })
 
