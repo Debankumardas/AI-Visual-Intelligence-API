@@ -193,8 +193,21 @@ function VideoAnalysis({ onAnalyticsComplete }) {
 
             <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <Metric
-                label="Frames Processed"
-                value={result.frames_processed}
+                label="Frames Analysed"
+                value={
+                  result.source_frame_count
+                    ? `${result.frames_processed} of ${result.source_frame_count}`
+                    : result.frames_processed
+                }
+              />
+
+              <Metric
+                label="Sampling"
+                value={
+                  result.frame_stride > 1
+                    ? `Every ${result.frame_stride} frames`
+                    : "Every frame"
+                }
               />
 
               <Metric

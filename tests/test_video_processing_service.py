@@ -637,21 +637,6 @@ def test_analyze_video():
         (2, np.zeros((100, 100, 3), dtype=np.uint8)),
     ]
 
-    detection_results = [
-        {
-            "inference_time_ms": 10.0,
-            "detections": [{}, {}],
-        },
-        {
-            "inference_time_ms": 20.0,
-            "detections": [{}, {}, {}, {}],
-        },
-        {
-            "inference_time_ms": 30.0,
-            "detections": [{}],
-        },
-    ]
-
     tracking_results = [
         {
             "inference_time_ms": 5.0,
@@ -747,17 +732,32 @@ def test_analyze_video():
         },
     ]
 
+    # A single tracking pass also reports the frame's detections.
+    for tracking_result in tracking_results:
+        tracking_result["detections"] = [
+            {
+                key: value
+                for key, value in track.items()
+                if key != "track_id"
+            }
+            for track in tracking_result["tracks"]
+        ]
+
     with (
+        patch.object(
+            video_service,
+            "get_metadata",
+            return_value={"frame_count": 3},
+        ),
         patch.object(
             video_service,
             "read_frames",
             return_value=iter(frames),
-        ),
+        ) as read_frames_mock,
         patch.object(
             detection_service,
             "detect",
-            side_effect=detection_results,
-        ),
+        ) as detect_mock,
         patch.object(
             detection_service,
             "track",
@@ -768,11 +768,26 @@ def test_analyze_video():
             "sample.mp4",
         )
 
+    detect_mock.assert_not_called()
+
+    read_frames_mock.assert_called_once_with(
+        "sample.mp4",
+        frame_stride=1,
+    )
+
+    assert result["frame_stride"] == 1
+    assert result["source_frame_count"] == 3
+
     assert result["frames_processed"] == 3
 
     assert result["total_detections"] == 7
-    assert result["max_detections_per_frame"] == 4
+    assert result["max_detections_per_frame"] == 3
     assert result["average_detections_per_frame"] == 2.333
+
+    assert result["class_detection_counts"] == {
+        "person": 6,
+        "car": 1,
+    }
 
     assert result["total_track_observations"] == 7
     assert result["unique_track_ids"] == 3
@@ -799,19 +814,26 @@ def test_analyze_video():
         "car": 0.333,
     }
 
-    assert result["total_inference_time_ms"] == 60.0
-    assert result["average_inference_time_ms"] == 20.0
-    assert result["min_inference_time_ms"] == 10.0
-    assert result["max_inference_time_ms"] == 30.0
+    assert result["total_inference_time_ms"] == 18.0
+    assert result["average_inference_time_ms"] == 6.0
+    assert result["min_inference_time_ms"] == 5.0
+    assert result["max_inference_time_ms"] == 7.0
 
 
 def test_analyze_video_empty():
     service = VideoProcessingService()
 
-    with patch.object(
-        video_service,
-        "read_frames",
-        return_value=iter([]),
+    with (
+        patch.object(
+            video_service,
+            "get_metadata",
+            return_value={"frame_count": 0},
+        ),
+        patch.object(
+            video_service,
+            "read_frames",
+            return_value=iter([]),
+        ),
     ):
         result = service.analyze_video(
             "sample.mp4",

@@ -154,6 +154,12 @@ class VideoAnalyticsResponse(BaseModel):
 
     content_type: str
 
+    # Every frame_stride-th frame was analysed, out of
+    # source_frame_count frames reported by the video container.
+    frame_stride: int = Field(..., ge=1)
+
+    source_frame_count: int = Field(..., ge=0)
+
     frames_processed: int = Field(..., ge=0)
 
     processing_time_seconds: float = Field(..., ge=0)

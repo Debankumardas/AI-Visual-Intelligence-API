@@ -246,6 +246,8 @@ def test_video_analyze_success(monkeypatch):
         video_route.video_processing_service,
         "analyze_video",
         lambda video_path: {
+            "frame_stride": 2,
+            "source_frame_count": 200,
             "frames_processed": 100,
             "processing_time_seconds": 4.0,
             "effective_fps": 25.0,
@@ -390,6 +392,8 @@ def test_video_analyze_success(monkeypatch):
     assert data["filename"] == "test.mp4"
     assert data["content_type"] == "video/mp4"
 
+    assert data["frame_stride"] == 2
+    assert data["source_frame_count"] == 200
     assert data["frames_processed"] == 100
     assert data["processing_time_seconds"] == 4.0
     assert data["effective_fps"] == 25.0
