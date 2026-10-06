@@ -63,9 +63,36 @@ export const checkHealth = async () => {
   return response.data
 }
 
+/**
+ * Model readiness. The API answers 503 with a JSON body while models
+ * are loading or failed to load; that body is the result, not an error.
+ */
+export const getReadiness = async () => {
+  try {
+    const response = await api.get("/health/ready")
+    return response.data
+  } catch (error) {
+    if (error.response?.data?.models) {
+      return error.response.data
+    }
+
+    throw error
+  }
+}
+
 // ─────────────────────────────────────────────
 // Authentication
 // ─────────────────────────────────────────────
+
+export const registerUser = async ({ name, email, password }) => {
+  const response = await api.post("/api/v1/auth/register", {
+    name,
+    email,
+    password,
+  })
+
+  return response.data
+}
 
 export const loginUser = async (email, password) => {
   const formData = new URLSearchParams()
@@ -130,61 +157,47 @@ export const updatePreferences = async (token, preferences) => {
 // Image Analysis
 // ─────────────────────────────────────────────
 
-export const analyzeImage = async (file) => {
+const uploadImage = async (path, file, options = {}) => {
   const formData = new FormData()
   formData.append("file", file)
 
-  const response = await api.post(
-    "/api/v1/analyze",
-    formData,
-  )
+  const response = await api.post(path, formData, options)
 
   return response.data
 }
 
-export const detectObjects = async (file) => {
+// Each takes the file and optional axios options, e.g. { signal } to
+// cancel the request.
+export const analyzeImage = (file, options) =>
+  uploadImage("/api/v1/analyze", file, options)
+
+export const detectObjects = (file, options) =>
+  uploadImage("/api/v1/detect", file, options)
+
+export const countObjects = (file, options) =>
+  uploadImage("/api/v1/detect/count", file, options)
+
+export const trackObjects = (file, options) =>
+  uploadImage("/api/v1/detect/track", file, options)
+
+export const segmentImage = (file, options) =>
+  uploadImage("/api/v1/detect/segment", file, options)
+
+export const extractText = (file, options) =>
+  uploadImage("/api/v1/detect/ocr", file, options)
+
+export const classifyImage = (file, options) =>
+  uploadImage("/api/v1/predict", file, options)
+
+/** The image with detections drawn on it, as a JPEG blob. */
+export const detectAnnotated = async (file, options = {}) => {
   const formData = new FormData()
   formData.append("file", file)
 
   const response = await api.post(
-    "/api/v1/detect",
+    "/api/v1/detect/annotated",
     formData,
-  )
-
-  return response.data
-}
-
-export const countObjects = async (file) => {
-  const formData = new FormData()
-  formData.append("file", file)
-
-  const response = await api.post(
-    "/api/v1/detect/count",
-    formData,
-  )
-
-  return response.data
-}
-
-export const trackObjects = async (file) => {
-  const formData = new FormData()
-  formData.append("file", file)
-
-  const response = await api.post(
-    "/api/v1/detect/track",
-    formData,
-  )
-
-  return response.data
-}
-
-export const classifyImage = async (file) => {
-  const formData = new FormData()
-  formData.append("file", file)
-
-  const response = await api.post(
-    "/api/v1/predict",
-    formData,
+    { ...options, responseType: "blob" },
   )
 
   return response.data
@@ -194,34 +207,35 @@ export const classifyImage = async (file) => {
 // Video Analysis
 // ─────────────────────────────────────────────
 
-export const analyzeVideo = async (file) => {
+const uploadVideo = async (path, file, options) => {
   const formData = new FormData()
   formData.append("file", file)
 
-  const response = await api.post(
-    "/api/v1/video/analyze",
-    formData,
-    {
-      timeout: VIDEO_REQUEST_TIMEOUT_MS,
-    },
-  )
+  const response = await api.post(path, formData, options)
 
   return response.data
 }
 
-export const getVideoMetadata = async (file) => {
-  const formData = new FormData()
-  formData.append("file", file)
+// Video work can run for minutes on a CPU. Each takes the file and
+// optional axios options, e.g. { signal } to stop waiting.
+export const getVideoMetadata = (file, options) =>
+  uploadVideo("/api/v1/video/metadata", file, {
+    timeout: 60000,
+    ...options,
+  })
 
-  const response = await api.post(
-    "/api/v1/video/metadata",
-    formData,
-    {
-      timeout: 60000,
-    },
-  )
+export const analyzeVideo = (file, options) =>
+  uploadVideo("/api/v1/video/analyze", file, {
+    timeout: VIDEO_REQUEST_TIMEOUT_MS,
+    ...options,
+  })
 
-  return response.data
-}
+/** The video with tracked objects drawn on it, as an MP4 blob. */
+export const annotateVideo = (file, options) =>
+  uploadVideo("/api/v1/video/annotate", file, {
+    timeout: VIDEO_REQUEST_TIMEOUT_MS,
+    ...options,
+    responseType: "blob",
+  })
 
 export default api

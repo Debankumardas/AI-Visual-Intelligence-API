@@ -1,55 +1,72 @@
 import {
   act,
   fireEvent,
-  render,
   screen,
   waitFor,
   within,
 } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import App from "./App"
-import {
-  checkHealth,
-  getCurrentUser,
-  getPreferences,
-} from "./services/api"
+import * as api from "./services/api"
+import { primeApi, renderApp, signIn } from "./test/appTestUtils"
 
-vi.mock("./services/api", () => ({
-  checkHealth: vi.fn(),
-  getCurrentUser: vi.fn(),
-  getPreferences: vi.fn(),
-  loginUser: vi.fn(),
-  updatePreferences: vi.fn(),
-}))
+vi.mock("./services/api", async (importOriginal) => {
+  const { mockApiModule } = await import("./test/apiMock")
 
-vi.mock("./pages/ImageAnalysis", () => ({
-  default: ({ onAnalysisComplete }) => (
-    <button
-      type="button"
-      onClick={() =>
-        onAnalysisComplete({ detections: [{}, {}] })
-      }
-    >
-      Finish image analysis
-    </button>
-  ),
-}))
+  return mockApiModule(importOriginal)
+})
 
-vi.mock("./pages/VideoAnalysis", () => ({
-  default: ({ onAnalyticsComplete }) => (
-    <button
-      type="button"
-      onClick={() =>
-        onAnalyticsComplete({
-          total_detections: 5,
-          unique_track_ids: 2,
-        })
-      }
-    >
-      Finish video analysis
-    </button>
-  ),
+vi.mock("./pages/ImageLab", async () => {
+  const { default: useWorkspace } = await import("./hooks/useWorkspace")
+
+  return {
+    default: function ImageLabStub() {
+      const { recordImageAnalysis } = useWorkspace()
+
+      return (
+        <button
+          type="button"
+          onClick={() =>
+            recordImageAnalysis({
+              file: null,
+              mode: "detect",
+              result: { detections: [{}, {}] },
+            })
+          }
+        >
+          Finish image analysis
+        </button>
+      )
+    },
+  }
+})
+
+vi.mock("./pages/VideoLab", async () => {
+  const { default: useWorkspace } = await import("./hooks/useWorkspace")
+
+  return {
+    default: function VideoLabStub() {
+      const { recordVideoAnalysis } = useWorkspace()
+
+      return (
+        <button
+          type="button"
+          onClick={() =>
+            recordVideoAnalysis({
+              total_detections: 5,
+              unique_track_ids: 2,
+            })
+          }
+        >
+          Finish video analysis
+        </button>
+      )
+    },
+  }
+})
+
+vi.mock("./pages/Analytics", () => ({
+  default: () => <h1>Analytics Page</h1>,
 }))
 
 const preferences = {
@@ -61,42 +78,32 @@ const preferences = {
 }
 
 async function renderSignedInApp(overrides = {}) {
-  getPreferences.mockResolvedValue({ ...preferences, ...overrides })
+  signIn()
+  primeApi(api, { preferences: { ...preferences, ...overrides } })
 
-  render(<App />)
+  renderApp("/")
 
-  await screen.findByText("Computer Vision Workspace")
+  await screen.findByRole("heading", { name: "Welcome, Test" })
 }
 
 const goTo = (name) =>
   fireEvent.click(
-    within(screen.getByRole("complementary")).getByRole("button", {
-      name,
-    }),
+    within(
+      screen.getByRole("navigation", { name: "Workspace" }),
+    ).getByRole("link", { name }),
   )
 
 const openNotifications = () =>
-  fireEvent.click(
-    screen.getByRole("button", { name: "Notifications" }),
-  )
+  fireEvent.click(screen.getByRole("button", { name: /^Notifications/ }))
 
 const dashboardValue = (title) =>
-  screen.getByText(title).closest("div.rounded-xl")
+  screen.getByRole("group", { name: title })
 
 beforeEach(() => {
   localStorage.clear()
-  localStorage.setItem("access_token", "test-token")
+  sessionStorage.clear()
 
   vi.clearAllMocks()
-
-  checkHealth.mockResolvedValue({ status: "healthy" })
-  getCurrentUser.mockResolvedValue({
-    id: 1,
-    name: "Test User",
-    email: "test@example.com",
-    role: "Analyst",
-    is_active: true,
-  })
 })
 
 afterEach(() => {
@@ -107,52 +114,70 @@ describe("analysis notifications", () => {
   it("notifies and counts a completed image analysis", async () => {
     await renderSignedInApp()
 
-    goTo("Image Analysis")
+    goTo("Image lab")
     fireEvent.click(
-      screen.getByRole("button", { name: "Finish image analysis" }),
+      await screen.findByRole("button", {
+        name: "Finish image analysis",
+      }),
     )
 
     expect(screen.getByTestId("unread-badge")).toBeInTheDocument()
 
     openNotifications()
 
-    expect(
-      screen.getByText("Image analysis completed"),
-    ).toBeInTheDocument()
+    expect(screen.getByText("Image analysis completed")).toBeInTheDocument()
     expect(screen.getByText("2 objects detected.")).toBeInTheDocument()
 
-    goTo("Dashboard")
+    goTo("Overview")
 
     expect(
-      within(dashboardValue("Images Analyzed")).getByText("1"),
+      within(dashboardValue("Images analyzed")).getByText("1"),
     ).toBeInTheDocument()
   })
 
   it("notifies and counts a completed video analysis", async () => {
     await renderSignedInApp()
 
-    goTo("Video Analysis")
+    goTo("Video lab")
     fireEvent.click(
-      screen.getByRole("button", { name: "Finish video analysis" }),
+      await screen.findByRole("button", {
+        name: "Finish video analysis",
+      }),
     )
 
     openNotifications()
 
-    expect(
-      screen.getByText("Video analysis completed"),
-    ).toBeInTheDocument()
+    expect(screen.getByText("Video analysis completed")).toBeInTheDocument()
     expect(
       screen.getByText("5 detections, 2 unique tracks."),
     ).toBeInTheDocument()
 
-    goTo("Dashboard")
+    goTo("Overview")
 
     expect(
-      within(dashboardValue("Videos Processed")).getByText("1"),
+      within(dashboardValue("Videos analyzed")).getByText("1"),
     ).toBeInTheDocument()
     expect(
-      within(dashboardValue("Objects Detected")).getByText("5"),
+      within(dashboardValue("Objects detected")).getByText("5"),
     ).toBeInTheDocument()
+    expect(
+      within(dashboardValue("Unique tracks")).getByText("2"),
+    ).toBeInTheDocument()
+  })
+
+  it("keeps the latest video analysis after a reload", async () => {
+    await renderSignedInApp()
+
+    goTo("Video lab")
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: "Finish video analysis",
+      }),
+    )
+
+    expect(
+      JSON.parse(sessionStorage.getItem("vision.videoAnalytics")),
+    ).toEqual({ total_detections: 5, unique_track_ids: 2 })
   })
 
   it("respects the analysis completed preference", async () => {
@@ -160,20 +185,20 @@ describe("analysis notifications", () => {
       analysis_completed_notifications: false,
     })
 
-    goTo("Image Analysis")
+    goTo("Image lab")
     fireEvent.click(
-      screen.getByRole("button", { name: "Finish image analysis" }),
+      await screen.findByRole("button", {
+        name: "Finish image analysis",
+      }),
     )
 
-    expect(
-      screen.queryByTestId("unread-badge"),
-    ).not.toBeInTheDocument()
+    expect(screen.queryByTestId("unread-badge")).not.toBeInTheDocument()
 
     // The analysis itself is still counted.
-    goTo("Dashboard")
+    goTo("Overview")
 
     expect(
-      within(dashboardValue("Images Analyzed")).getByText("1"),
+      within(dashboardValue("Images analyzed")).getByText("1"),
     ).toBeInTheDocument()
   })
 
@@ -182,9 +207,7 @@ describe("analysis notifications", () => {
 
     openNotifications()
 
-    expect(
-      screen.getByText("No notifications yet."),
-    ).toBeInTheDocument()
+    expect(screen.getByText("No notifications yet.")).toBeInTheDocument()
   })
 })
 
@@ -192,76 +215,70 @@ describe("API health notifications", () => {
   it("shows the API as online after the first check", async () => {
     await renderSignedInApp()
 
-    expect(await screen.findByText("API Online")).toBeInTheDocument()
-    expect(checkHealth).toHaveBeenCalledTimes(1)
+    expect(await screen.findByText("API online")).toBeInTheDocument()
+    expect(api.checkHealth).toHaveBeenCalledTimes(1)
   })
 
   it("does not notify about the initial status", async () => {
-    checkHealth.mockRejectedValue(new Error("offline"))
+    signIn()
+    primeApi(api)
+    api.checkHealth.mockRejectedValue(new Error("offline"))
 
-    await renderSignedInApp()
+    renderApp("/")
 
-    expect(await screen.findByText("API Offline")).toBeInTheDocument()
-    expect(
-      screen.queryByTestId("unread-badge"),
-    ).not.toBeInTheDocument()
+    expect(await screen.findByText("API offline")).toBeInTheDocument()
+    expect(screen.queryByTestId("unread-badge")).not.toBeInTheDocument()
   })
 
   it("notifies when the connection is lost and restored", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
 
     await renderSignedInApp()
-    await screen.findByText("API Online")
+    await screen.findByText("API online")
 
-    checkHealth.mockRejectedValue(new Error("offline"))
+    api.checkHealth.mockRejectedValue(new Error("offline"))
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(30000)
     })
 
     await waitFor(() =>
-      expect(screen.getByText("API Offline")).toBeInTheDocument(),
+      expect(screen.getByText("API offline")).toBeInTheDocument(),
     )
 
     openNotifications()
 
-    expect(
-      screen.getByText("API connection lost"),
-    ).toBeInTheDocument()
+    expect(screen.getByText("API connection lost")).toBeInTheDocument()
 
-    checkHealth.mockResolvedValue({ status: "healthy" })
+    api.checkHealth.mockResolvedValue({ status: "healthy" })
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(30000)
     })
 
     await waitFor(() =>
-      expect(screen.getByText("API Online")).toBeInTheDocument(),
+      expect(screen.getByText("API online")).toBeInTheDocument(),
     )
 
-    expect(
-      screen.getByText("API connection restored"),
-    ).toBeInTheDocument()
+    expect(screen.getByText("API connection restored")).toBeInTheDocument()
   })
 
   it("respects the system notifications preference", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
 
     await renderSignedInApp({ system_notifications: false })
-    await screen.findByText("API Online")
+    await screen.findByText("API online")
 
-    checkHealth.mockRejectedValue(new Error("offline"))
+    api.checkHealth.mockRejectedValue(new Error("offline"))
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(30000)
     })
 
     await waitFor(() =>
-      expect(screen.getByText("API Offline")).toBeInTheDocument(),
+      expect(screen.getByText("API offline")).toBeInTheDocument(),
     )
 
-    expect(
-      screen.queryByTestId("unread-badge"),
-    ).not.toBeInTheDocument()
+    expect(screen.queryByTestId("unread-badge")).not.toBeInTheDocument()
   })
 })

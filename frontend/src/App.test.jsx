@@ -1,496 +1,464 @@
 import { act } from "react"
-
-import {
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest"
-
 import {
   fireEvent,
-  render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 
-import App from "./App"
+import * as api from "./services/api"
+import { primeApi, renderApp, signIn } from "./test/appTestUtils"
 
-import {
-  checkHealth,
-  getCurrentUser,
-  getPreferences,
-} from "./services/api"
+vi.mock("./services/api", async (importOriginal) => {
+  const { mockApiModule } = await import("./test/apiMock")
 
+  return mockApiModule(importOriginal)
+})
 
-vi.mock("./services/api", () => ({
-  checkHealth: vi.fn(),
-  getCurrentUser: vi.fn(),
-  getPreferences: vi.fn(),
+vi.mock("./pages/ImageLab", () => ({
+  default: () => <h1>Image Analysis Page</h1>,
 }))
 
-
-vi.mock("./components/auth/Login", () => ({
-  default: ({ onLogin }) => (
-    <div>
-      <h1>Login</h1>
-
-      <button
-        type="button"
-        onClick={() => onLogin("test-access-token")}
-      >
-        Mock Login
-      </button>
-    </div>
-  ),
+vi.mock("./pages/VideoLab", () => ({
+  default: () => <h1>Video Analysis Page</h1>,
 }))
-
-
-vi.mock("./components/layout/Sidebar", () => ({
-  default: ({ activePage, onNavigate }) => (
-    <nav>
-      <span data-testid="active-page">
-        {activePage}
-      </span>
-
-      <button
-        type="button"
-        onClick={() => onNavigate("Dashboard")}
-      >
-        Dashboard
-      </button>
-
-      <button
-        type="button"
-        onClick={() => onNavigate("Image Analysis")}
-      >
-        Image Analysis
-      </button>
-
-      <button
-        type="button"
-        onClick={() => onNavigate("Video Analysis")}
-      >
-        Video Analysis
-      </button>
-
-      <button
-        type="button"
-        onClick={() => onNavigate("Analytics")}
-      >
-        Analytics
-      </button>
-
-      <button
-        type="button"
-        onClick={() => onNavigate("Settings")}
-      >
-        Settings
-      </button>
-    </nav>
-  ),
-}))
-
-
-vi.mock("./components/layout/Topbar", () => ({
-  default: ({ user, onLogout }) => (
-    <header>
-      <span data-testid="user-name">
-        {user?.name}
-      </span>
-
-      <button
-        type="button"
-        onClick={onLogout}
-      >
-        Logout
-      </button>
-    </header>
-  ),
-}))
-
-
-vi.mock("./components/ui/StatCard", () => ({
-  default: ({ title, value }) => (
-    <div>
-      <span>{title}</span>
-      <span>{value}</span>
-    </div>
-  ),
-}))
-
-
-vi.mock("./pages/ImageAnalysis", () => ({
-  default: () => (
-    <div>Image Analysis Page</div>
-  ),
-}))
-
-
-vi.mock("./pages/VideoAnalysis", () => ({
-  default: () => (
-    <div>Video Analysis Page</div>
-  ),
-}))
-
 
 vi.mock("./pages/Analytics", () => ({
-  default: () => (
-    <div>Analytics Page</div>
-  ),
+  default: () => <h1>Analytics Page</h1>,
 }))
-
-
-vi.mock("./pages/Settings", () => ({
-  default: ({ user }) => (
-    <div>
-      <span>Settings Page</span>
-      <span>{user?.name}</span>
-    </div>
-  ),
-}))
-
-
-const mockUser = {
-  id: 1,
-  name: "Test User",
-  email: "test@example.com",
-  role: "Analyst",
-  is_active: true,
-}
-
-
-const defaultPreferences = {
-  dashboard_enabled: true,
-  image_analysis_enabled: true,
-  video_analysis_enabled: true,
-  analysis_completed_notifications: true,
-  system_notifications: true,
-}
-
 
 beforeEach(() => {
   localStorage.clear()
+  sessionStorage.clear()
 
   vi.clearAllMocks()
-
-  checkHealth.mockResolvedValue({ status: "healthy" })
-
-  getCurrentUser.mockResolvedValue(mockUser)
-
-  getPreferences.mockResolvedValue(
-    defaultPreferences,
-  )
+  primeApi(api)
 })
 
+const navigation = () =>
+  screen.getByRole("navigation", { name: "Workspace" })
 
-describe("App authentication", () => {
-  it(
-    "renders the login screen when no access token exists",
-    async () => {
-      render(<App />)
+const openUserMenu = () =>
+  fireEvent.click(screen.getByRole("button", { name: /^Open user menu/ }))
 
-      expect(
-        await screen.findByRole("heading", {
-          name: "Login",
-        }),
-      ).toBeInTheDocument()
+describe("signing in", () => {
+  it("sends signed-out visitors to the sign-in page", async () => {
+    renderApp("/")
 
-      expect(
-        getCurrentUser,
-      ).not.toHaveBeenCalled()
+    expect(
+      await screen.findByRole("heading", { name: "Sign in" }),
+    ).toBeInTheDocument()
 
-      expect(
-        getPreferences,
-      ).not.toHaveBeenCalled()
-    },
-  )
+    expect(api.getCurrentUser).not.toHaveBeenCalled()
+    expect(api.getPreferences).not.toHaveBeenCalled()
+  })
 
+  it("signs in through the form and opens the overview", async () => {
+    renderApp("/login")
 
-  it(
-    "stores the access token and restores the authenticated session after login",
-    async () => {
-      render(<App />)
+    fireEvent.change(await screen.findByLabelText("Email"), {
+      target: { value: "test@example.com" },
+    })
+    fireEvent.change(screen.getByLabelText("Password"), {
+      target: { value: "secret-password" },
+    })
+    fireEvent.click(screen.getByRole("button", { name: "Sign in" }))
 
-      fireEvent.click(
-        await screen.findByRole("button", {
-          name: "Mock Login",
-        }),
-      )
+    expect(
+      await screen.findByRole("heading", {
+        name: "Welcome, Test",
+      }),
+    ).toBeInTheDocument()
 
-      await waitFor(() => {
-        expect(
-          getCurrentUser,
-        ).toHaveBeenCalledWith(
-          "test-access-token",
-        )
-      })
+    expect(api.loginUser).toHaveBeenCalledWith(
+      "test@example.com",
+      "secret-password",
+    )
+    expect(api.getCurrentUser).toHaveBeenCalledWith("test-access-token")
+    expect(api.getPreferences).toHaveBeenCalledWith("test-access-token")
+    expect(localStorage.getItem("access_token")).toBe("test-access-token")
+  })
 
-      expect(
-        getPreferences,
-      ).toHaveBeenCalledWith(
-        "test-access-token",
-      )
+  it("returns to the page that was asked for before signing in", async () => {
+    renderApp("/analytics")
 
-      expect(
-        await screen.findByTestId("user-name"),
-      ).toHaveTextContent("Test User")
+    fireEvent.change(await screen.findByLabelText("Email"), {
+      target: { value: "test@example.com" },
+    })
+    fireEvent.change(screen.getByLabelText("Password"), {
+      target: { value: "secret-password" },
+    })
+    fireEvent.click(screen.getByRole("button", { name: "Sign in" }))
 
-      expect(
-        localStorage.getItem("access_token"),
-      ).toBe("test-access-token")
-    },
-  )
+    expect(
+      await screen.findByRole("heading", { name: "Analytics Page" }),
+    ).toBeInTheDocument()
+  })
 
+  it("restores an existing session after a refresh", async () => {
+    signIn("existing-token")
 
-  it(
-    "restores an existing session after refresh",
-    async () => {
-      localStorage.setItem(
-        "access_token",
-        "existing-token",
-      )
+    renderApp("/")
 
-      render(<App />)
+    expect(
+      await screen.findByRole("heading", {
+        name: "Welcome, Test",
+      }),
+    ).toBeInTheDocument()
 
-      expect(
-        await screen.findByTestId("user-name"),
-      ).toHaveTextContent("Test User")
+    expect(api.getCurrentUser).toHaveBeenCalledWith("existing-token")
+    expect(api.getPreferences).toHaveBeenCalledWith("existing-token")
+  })
 
-      expect(
-        getCurrentUser,
-      ).toHaveBeenCalledWith(
-        "existing-token",
-      )
+  it("shows a loading state while the session is checked", async () => {
+    signIn()
 
-      expect(
-        getPreferences,
-      ).toHaveBeenCalledWith(
-        "existing-token",
-      )
-    },
-  )
+    api.getCurrentUser.mockReturnValue(new Promise(() => {}))
 
+    renderApp("/")
 
-  it(
-    "clears an invalid stored session",
-    async () => {
-      localStorage.setItem(
-        "access_token",
-        "invalid-token",
-      )
+    expect(screen.getByText("Restoring session…")).toBeInTheDocument()
+  })
 
-      getCurrentUser.mockRejectedValueOnce(
-        new Error("Unauthorized"),
-      )
+  it("clears a stored session the server rejects", async () => {
+    signIn("invalid-token")
 
-      render(<App />)
+    api.getCurrentUser.mockRejectedValue(new Error("Unauthorized"))
 
-      expect(
-        await screen.findByRole("heading", {
-          name: "Login",
-        }),
-      ).toBeInTheDocument()
+    renderApp("/")
 
-      expect(
-        localStorage.getItem("access_token"),
-      ).toBeNull()
-    },
-  )
+    expect(
+      await screen.findByRole("heading", { name: "Sign in" }),
+    ).toBeInTheDocument()
 
+    expect(localStorage.getItem("access_token")).toBeNull()
+  })
 
-  it(
-    "logs the user out and clears the stored session",
-    async () => {
-      localStorage.setItem(
-        "access_token",
-        "valid-token",
-      )
+  it("sends a signed-in user away from the sign-in page", async () => {
+    signIn()
 
-      render(<App />)
+    renderApp("/login")
 
-      expect(
-        await screen.findByTestId("user-name"),
-      ).toHaveTextContent("Test User")
-
-      fireEvent.click(
-        screen.getByRole("button", {
-          name: "Logout",
-        }),
-      )
-
-      expect(
-        localStorage.getItem("access_token"),
-      ).toBeNull()
-
-      expect(
-        await screen.findByRole("heading", {
-          name: "Login",
-        }),
-      ).toBeInTheDocument()
-    },
-  )
-
-
-  it(
-    "shows the session expired message after a session-expired event",
-    async () => {
-      localStorage.setItem(
-        "access_token",
-        "valid-token",
-      )
-
-      render(<App />)
-
-      expect(
-        await screen.findByTestId("user-name"),
-      ).toHaveTextContent("Test User")
-
-      await act(async () => {
-        window.dispatchEvent(
-          new Event("session-expired"),
-        )
-      })
-
-      expect(
-        await screen.findByText(
-          "Your session has expired. Please log in again.",
-        ),
-      ).toBeInTheDocument()
-
-      expect(
-        await screen.findByRole("heading", {
-          name: "Login",
-        }),
-      ).toBeInTheDocument()
-
-      await waitFor(() => {
-        expect(
-          localStorage.getItem("access_token"),
-        ).toBeNull()
-      })
-    },
-  )
+    expect(
+      await screen.findByRole("heading", {
+        name: "Welcome, Test",
+      }),
+    ).toBeInTheDocument()
+  })
 })
 
+describe("signing out", () => {
+  it("signs out and clears the stored session", async () => {
+    signIn()
 
-describe("App navigation and preferences", () => {
-  it(
-    "renders the dashboard by default after authentication",
-    async () => {
-      localStorage.setItem(
-        "access_token",
-        "valid-token",
-      )
+    renderApp("/")
 
-      render(<App />)
+    await screen.findByRole("heading", { name: "Welcome, Test" })
 
-      expect(
-        await screen.findByText(
-          "Computer Vision Workspace",
-        ),
-      ).toBeInTheDocument()
+    openUserMenu()
+    fireEvent.click(screen.getByRole("button", { name: "Sign out" }))
 
-      expect(
-        screen.getByTestId("active-page"),
-      ).toHaveTextContent("Dashboard")
-    },
-  )
+    expect(
+      await screen.findByRole("heading", { name: "Sign in" }),
+    ).toBeInTheDocument()
 
+    expect(localStorage.getItem("access_token")).toBeNull()
+  })
 
-  it(
-    "navigates to the image analysis page",
-    async () => {
-      localStorage.setItem(
-        "access_token",
-        "valid-token",
-      )
+  it("explains an expired session on the sign-in page", async () => {
+    signIn()
 
-      render(<App />)
+    renderApp("/")
 
-      await screen.findByTestId("user-name")
+    await screen.findByRole("heading", { name: "Welcome, Test" })
 
-      fireEvent.click(
-        screen.getByRole("button", {
-          name: "Image Analysis",
-        }),
-      )
+    act(() => {
+      localStorage.removeItem("access_token")
+      window.dispatchEvent(new Event("session-expired"))
+    })
 
-      expect(
-        await screen.findByText(
-          "Image Analysis Page",
-        ),
-      ).toBeInTheDocument()
-    },
-  )
+    expect(
+      await screen.findByText(
+        "Your session has expired. Please log in again.",
+      ),
+    ).toBeInTheDocument()
 
+    expect(
+      screen.getByRole("heading", { name: "Sign in" }),
+    ).toBeInTheDocument()
+  })
 
-  it(
-    "falls back to Analytics when a disabled page is requested and Dashboard is disabled",
-    async () => {
-      localStorage.setItem(
-        "access_token",
-        "valid-token",
-      )
+  it("forgets the latest video analysis when signing out", async () => {
+    signIn()
+    sessionStorage.setItem(
+      "vision.videoAnalytics",
+      JSON.stringify({ total_detections: 9 }),
+    )
 
-      getPreferences.mockResolvedValueOnce({
-        ...defaultPreferences,
+    renderApp("/")
+
+    await screen.findByRole("heading", { name: "Welcome, Test" })
+
+    openUserMenu()
+    fireEvent.click(screen.getByRole("button", { name: "Sign out" }))
+
+    await screen.findByRole("heading", { name: "Sign in" })
+
+    expect(sessionStorage.getItem("vision.videoAnalytics")).toBeNull()
+  })
+})
+
+describe("navigation and preferences", () => {
+  it("opens the overview by default", async () => {
+    signIn()
+
+    renderApp("/")
+
+    expect(
+      await screen.findByRole("heading", {
+        name: "Welcome, Test",
+      }),
+    ).toBeInTheDocument()
+
+    expect(
+      within(navigation()).getByRole("link", { name: "Overview" }),
+    ).toHaveAttribute("aria-current", "page")
+  })
+
+  it("navigates between pages with the sidebar", async () => {
+    signIn()
+
+    renderApp("/")
+
+    await screen.findByRole("heading", { name: "Welcome, Test" })
+
+    fireEvent.click(
+      within(navigation()).getByRole("link", { name: "Image lab" }),
+    )
+
+    expect(
+      await screen.findByRole("heading", { name: "Image Analysis Page" }),
+    ).toBeInTheDocument()
+
+    fireEvent.click(
+      within(navigation()).getByRole("link", { name: "Video lab" }),
+    )
+
+    expect(
+      await screen.findByRole("heading", { name: "Video Analysis Page" }),
+    ).toBeInTheDocument()
+  })
+
+  it("opens a page directly from its address", async () => {
+    signIn()
+
+    renderApp("/settings")
+
+    expect(
+      await screen.findByRole("heading", { name: "Settings" }),
+    ).toBeInTheDocument()
+  })
+
+  it("hides switched-off pages from the sidebar", async () => {
+    signIn()
+
+    primeApi(api, {
+      preferences: {
+        dashboard_enabled: true,
+        image_analysis_enabled: false,
+        video_analysis_enabled: true,
+        analysis_completed_notifications: true,
+        system_notifications: true,
+      },
+    })
+
+    renderApp("/")
+
+    await screen.findByRole("heading", { name: "Welcome, Test" })
+
+    expect(
+      within(navigation()).queryByRole("link", { name: "Image lab" }),
+    ).not.toBeInTheDocument()
+
+    expect(
+      within(navigation()).getByRole("link", { name: "Video lab" }),
+    ).toBeInTheDocument()
+  })
+
+  it("redirects a switched-off page to the overview", async () => {
+    signIn()
+
+    primeApi(api, {
+      preferences: {
+        dashboard_enabled: true,
+        image_analysis_enabled: false,
+        video_analysis_enabled: true,
+        analysis_completed_notifications: true,
+        system_notifications: true,
+      },
+    })
+
+    renderApp("/image")
+
+    expect(
+      await screen.findByRole("heading", {
+        name: "Welcome, Test",
+      }),
+    ).toBeInTheDocument()
+  })
+
+  it("redirects to Analytics when the overview is switched off too", async () => {
+    signIn()
+
+    primeApi(api, {
+      preferences: {
         dashboard_enabled: false,
         image_analysis_enabled: false,
-      })
+        video_analysis_enabled: true,
+        analysis_completed_notifications: true,
+        system_notifications: true,
+      },
+    })
 
-      render(<App />)
+    renderApp("/image")
 
-      await screen.findByTestId("user-name")
+    expect(
+      await screen.findByRole("heading", { name: "Analytics Page" }),
+    ).toBeInTheDocument()
+  })
 
-      fireEvent.click(
-        screen.getByRole("button", {
-          name: "Image Analysis",
-        }),
-      )
+  it("shows a not-found page with a way back", async () => {
+    signIn()
 
+    renderApp("/no/such/page")
+
+    expect(
+      await screen.findByRole("heading", { name: "Page not found" }),
+    ).toBeInTheDocument()
+
+    fireEvent.click(
+      screen.getByRole("link", { name: "Go to the start page" }),
+    )
+
+    expect(
+      await screen.findByRole("heading", {
+        name: "Welcome, Test",
+      }),
+    ).toBeInTheDocument()
+  })
+
+  it("makes the not-found title the page's main heading", async () => {
+    signIn()
+
+    renderApp("/no/such/page")
+
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Page not found" }),
+    ).toBeInTheDocument()
+  })
+
+  it("sends signed-out visitors of unknown addresses to sign in", async () => {
+    renderApp("/no/such/page")
+
+    expect(
+      await screen.findByRole("heading", { name: "Sign in" }),
+    ).toBeInTheDocument()
+  })
+
+  it("opens Settings from the user menu", async () => {
+    signIn()
+
+    renderApp("/")
+
+    await screen.findByRole("heading", { name: "Welcome, Test" })
+
+    openUserMenu()
+    fireEvent.click(screen.getByRole("button", { name: "Preferences" }))
+
+    expect(
+      await screen.findByRole("heading", { name: "Settings" }),
+    ).toBeInTheDocument()
+  })
+})
+
+describe("mobile navigation", () => {
+  it("opens as a dialog and closes with Escape", async () => {
+    signIn()
+
+    renderApp("/")
+
+    await screen.findByRole("heading", { name: "Welcome, Test" })
+
+    const opener = screen.getByRole("button", { name: "Open navigation" })
+
+    fireEvent.click(opener)
+
+    const drawer = screen.getByRole("dialog", { name: "Navigation" })
+
+    expect(drawer).toHaveAttribute("aria-modal", "true")
+    expect(
+      within(drawer).getByRole("link", { name: "Overview" }),
+    ).toBeInTheDocument()
+
+    fireEvent.keyDown(document, { key: "Escape" })
+
+    await waitFor(() =>
       expect(
-        await screen.findByText(
-          "Analytics Page",
-        ),
-      ).toBeInTheDocument()
-    },
-  )
+        screen.queryByRole("dialog", { name: "Navigation" }),
+      ).not.toBeInTheDocument(),
+    )
+  })
 
+  it("closes after choosing a page", async () => {
+    signIn()
 
-  it(
-    "falls back to Dashboard when a disabled page is requested and Dashboard is enabled",
-    async () => {
-      localStorage.setItem(
-        "access_token",
-        "valid-token",
-      )
+    renderApp("/")
 
-      getPreferences.mockResolvedValueOnce({
-        ...defaultPreferences,
-        image_analysis_enabled: false,
-      })
+    await screen.findByRole("heading", { name: "Welcome, Test" })
 
-      render(<App />)
+    fireEvent.click(
+      screen.getByRole("button", { name: "Open navigation" }),
+    )
 
-      await screen.findByTestId("user-name")
+    fireEvent.click(
+      within(screen.getByRole("dialog", { name: "Navigation" })).getByRole(
+        "link",
+        { name: "Analytics" },
+      ),
+    )
 
-      fireEvent.click(
-        screen.getByRole("button", {
-          name: "Image Analysis",
-        }),
-      )
+    expect(
+      await screen.findByRole("heading", { name: "Analytics Page" }),
+    ).toBeInTheDocument()
 
-      expect(
-        await screen.findByText(
-          "Computer Vision Workspace",
-        ),
-      ).toBeInTheDocument()
+    expect(
+      screen.queryByRole("dialog", { name: "Navigation" }),
+    ).not.toBeInTheDocument()
+  })
 
-      expect(
-        screen.getByTestId("active-page"),
-      ).toHaveTextContent("Dashboard")
-    },
-  )
+  it("keeps keyboard focus inside while open", async () => {
+    signIn()
+
+    renderApp("/")
+
+    await screen.findByRole("heading", { name: "Welcome, Test" })
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Open navigation" }),
+    )
+
+    const drawer = screen.getByRole("dialog", { name: "Navigation" })
+    const focusable = drawer.querySelectorAll("a[href], button")
+    const last = focusable[focusable.length - 1]
+
+    last.focus()
+    fireEvent.keyDown(last, { key: "Tab" })
+
+    expect(focusable[0]).toHaveFocus()
+
+    fireEvent.keyDown(focusable[0], { key: "Tab", shiftKey: true })
+
+    expect(last).toHaveFocus()
+  })
 })

@@ -1,0 +1,74 @@
+const integer = new Intl.NumberFormat("en")
+
+const decimal = new Intl.NumberFormat("en", {
+  maximumFractionDigits: 2,
+})
+
+export function formatNumber(value) {
+  if (typeof value !== "number" || Number.isNaN(value)) {
+    return "–"
+  }
+
+  return Number.isInteger(value)
+    ? integer.format(value)
+    : decimal.format(value)
+}
+
+/** 0.9289 -> "92.9%" */
+export function formatPercent(fraction, digits = 1) {
+  if (typeof fraction !== "number" || Number.isNaN(fraction)) {
+    return "–"
+  }
+
+  return `${(fraction * 100).toFixed(digits)}%`
+}
+
+export function formatMs(milliseconds) {
+  if (typeof milliseconds !== "number" || Number.isNaN(milliseconds)) {
+    return "–"
+  }
+
+  return milliseconds >= 1000
+    ? `${decimal.format(milliseconds / 1000)}\u00a0s`
+    : `${decimal.format(milliseconds)}\u00a0ms`
+}
+
+export function formatBytes(bytes) {
+  if (typeof bytes !== "number" || bytes < 0) {
+    return "–"
+  }
+
+  if (bytes < 1024) {
+    return `${bytes}\u00a0B`
+  }
+
+  if (bytes < 1024 * 1024) {
+    return `${decimal.format(bytes / 1024)}\u00a0KB`
+  }
+
+  return `${decimal.format(bytes / 1024 / 1024)}\u00a0MB`
+}
+
+/** 75 -> "1:15" */
+export function formatClock(totalSeconds) {
+  const seconds = Math.max(0, Math.floor(totalSeconds))
+  const minutes = Math.floor(seconds / 60)
+
+  return `${minutes}:${String(seconds % 60).padStart(2, "0")}`
+}
+
+/** 13.33 -> "13.3 s"; 125 -> "2 min 5 s" */
+export function formatSeconds(totalSeconds) {
+  if (typeof totalSeconds !== "number" || Number.isNaN(totalSeconds)) {
+    return "–"
+  }
+
+  if (totalSeconds < 60) {
+    return `${Math.round(totalSeconds * 10) / 10}\u00a0s`
+  }
+
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = Math.round(totalSeconds % 60)
+
+  return `${minutes}\u00a0min ${seconds}\u00a0s`
+}
