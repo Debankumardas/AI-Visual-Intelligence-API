@@ -9,3 +9,4 @@
 *.pt binary
 *.jpg binary
 *.png binary
+*.pth binary

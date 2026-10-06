@@ -4,6 +4,9 @@ import threading
 import torch
 from torchvision.models import efficientnet_b0, EfficientNet_B0_Weights
 
+from app.core.config import settings
+from app.core.model_files import require_model_file
+
 
 logger = logging.getLogger(__name__)
 
@@ -13,6 +16,9 @@ class ImagePredictionModel:
     def __init__(self):
         self.device = torch.device("cpu")
 
+        # Only used for the preprocessing transforms and the ImageNet
+        # class names, which are bundled with torchvision. The weights
+        # themselves are loaded from a local file.
         self.weights = EfficientNet_B0_Weights.DEFAULT
 
         # Loaded lazily (or warmed up by the application lifespan) so
@@ -37,7 +43,17 @@ class ImagePredictionModel:
                 logger.info("Loading EfficientNet-B0...")
 
                 try:
-                    model = efficientnet_b0(weights=self.weights)
+                    model = efficientnet_b0(weights=None)
+
+                    model.load_state_dict(
+                        torch.load(
+                            require_model_file(
+                                settings.classifier_weights_path
+                            ),
+                            map_location=self.device,
+                            weights_only=True,
+                        )
+                    )
                 except Exception as exc:
                     self.load_error = str(exc)
                     logger.exception(

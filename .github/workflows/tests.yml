@@ -6,6 +6,7 @@ on:
       - main
       - upgrade/detection-router
       - "fix/**"
+      - "feat/**"
 
   pull_request:
     branches:

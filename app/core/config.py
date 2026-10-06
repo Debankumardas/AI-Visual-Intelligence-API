@@ -1,5 +1,8 @@
 import os
 from dataclasses import dataclass, field
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 def _env_bool(name: str, default: bool) -> bool:
@@ -18,6 +21,22 @@ def _env_int(name: str, default: int) -> int:
         return default
 
     return int(value)
+
+
+def _model_path(env_name: str, filename: str) -> str:
+    """
+    Path of a model file: an explicit env override, otherwise the file
+    inside the models folder.
+    """
+
+    override = os.getenv(env_name)
+
+    if override:
+        return override
+
+    models_dir = os.getenv("MODELS_DIR", str(REPO_ROOT / "models"))
+
+    return str(Path(models_dir) / filename)
 
 
 @dataclass(frozen=True)
@@ -49,17 +68,32 @@ class Settings:
         default_factory=lambda: _env_bool("PRELOAD_MODELS", True)
     )
 
-    yolo_model_path: str = field(
+    # All model weights are loaded from local files in this folder.
+    models_dir: str = field(
         default_factory=lambda: os.getenv(
+            "MODELS_DIR",
+            str(REPO_ROOT / "models"),
+        )
+    )
+
+    yolo_model_path: str = field(
+        default_factory=lambda: _model_path(
             "YOLO_MODEL_PATH",
-            "yolo11n.pt",
+            "yolov8s.pt",
         )
     )
 
     yolo_seg_model_path: str = field(
-        default_factory=lambda: os.getenv(
+        default_factory=lambda: _model_path(
             "YOLO_SEG_MODEL_PATH",
-            "yolo11n-seg.pt",
+            "yolov8s-seg.pt",
+        )
+    )
+
+    classifier_weights_path: str = field(
+        default_factory=lambda: _model_path(
+            "CLASSIFIER_WEIGHTS_PATH",
+            "efficientnet_b0_rwightman-7f5810bc.pth",
         )
     )
 
@@ -101,11 +135,13 @@ class Settings:
     )
 
     # Upper bound on frames run through the model per video. Longer
-    # videos are sampled evenly with a larger frame stride.
+    # videos are sampled evenly with a larger frame stride. YOLOv8s
+    # takes ~0.6 s per frame on a 2-core CPU, so 150 frames is about
+    # 90 s.
     video_max_processed_frames: int = field(
         default_factory=lambda: _env_int(
             "VIDEO_MAX_PROCESSED_FRAMES",
-            300,
+            150,
         )
     )
     video_device: str = "cpu"

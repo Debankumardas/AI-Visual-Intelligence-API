@@ -1,14 +1,15 @@
 import axios from "axios"
 
-// Use `??` so an explicit "/" (same-origin, behind Nginx) is respected.
+// Requests are same-origin by default and forwarded to the backend by
+// the Vite dev/preview proxy. Use `??` so an explicit value is respected.
 export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000"
+  import.meta.env.VITE_API_BASE_URL ?? "/"
 
 export const VIDEO_REQUEST_TIMEOUT_MS = 300000
 
 /**
  * Human-readable backend location. A relative base URL means requests
- * go to the same origin and are forwarded by the reverse proxy.
+ * go to the same origin and are forwarded to the backend by the proxy.
  */
 export const describeApiBaseUrl = (
   baseUrl = API_BASE_URL,
