@@ -90,7 +90,7 @@ function Login() {
         )}
 
         {error && (
-          <Alert tone="danger" title="Couldn't sign you in">
+          <Alert tone="danger" title="Couldn’t sign you in">
             {error}
           </Alert>
         )}

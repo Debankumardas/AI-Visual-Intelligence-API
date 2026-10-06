@@ -11,6 +11,7 @@ import {
 } from "lucide-react"
 import axios from "axios"
 import { useEffect, useRef, useState } from "react"
+import { useSearchParams } from "react-router"
 
 import ImageResults from "../components/vision/ImageResults"
 import ImageViewer from "../components/vision/ImageViewer"
@@ -90,7 +91,14 @@ function ImageLab() {
   const [previewUrl, setPreviewUrl] = useState(null)
   const [imageSize, setImageSize] = useState(null)
 
-  const [mode, setMode] = useState("analyze")
+  // The analysis type is in the address (?mode=segment), so it can be
+  // linked to and survives a reload.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const requestedMode = searchParams.get("mode")
+
+  const mode = MODES.some((candidate) => candidate.id === requestedMode)
+    ? requestedMode
+    : "analyze"
   const [results, setResults] = useState({})
 
   const [running, setRunning] = useState(false)
@@ -156,7 +164,9 @@ function ImageLab() {
   }
 
   const handleModeChange = (nextMode) => {
-    setMode(nextMode)
+    setSearchParams(nextMode === "analyze" ? {} : { mode: nextMode }, {
+      replace: true,
+    })
     setNotice("")
     setAnnouncement("")
     clearSelection()
@@ -225,7 +235,7 @@ function ImageLab() {
       setError(
         describeRequestError(
           requestError,
-          "Couldn't create the annotated image. Try again.",
+          "Couldn’t create the annotated image. Try again.",
         ),
       )
     } finally {
@@ -240,7 +250,7 @@ function ImageLab() {
       await navigator.clipboard.writeText(text)
       setNotice("Text copied.")
     } catch {
-      setError("Couldn't copy the text. Select it from the list instead.")
+      setError("Couldn’t copy the text. Select it from the list instead.")
     }
   }
 
@@ -258,7 +268,7 @@ function ImageLab() {
       />
 
       {error && (
-        <Alert tone="danger" title="That didn't work">
+        <Alert tone="danger" title="That didn’t work">
           {error}
         </Alert>
       )}
@@ -273,6 +283,19 @@ function ImageLab() {
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem] xl:grid-cols-[minmax(0,1fr)_24rem]">
         <div className="min-w-0 space-y-3">
+          {/* Above the image, so replacing it never needs a scroll. */}
+          <Dropzone
+            acceptTypes={IMAGE_TYPES}
+            acceptLabel="JPEG, PNG or WebP"
+            maxBytes={MAX_IMAGE_BYTES}
+            file={file}
+            onFile={handleFile}
+            onReject={setError}
+            title="Drop an image here or choose a file"
+            icon={ImagePlus}
+            compact={Boolean(file)}
+          />
+
           {previewUrl && (
             <ImageViewer
               key={previewUrl}
@@ -289,24 +312,12 @@ function ImageLab() {
               animateKey={entry?.runId}
             />
           )}
-
-          <Dropzone
-            acceptTypes={IMAGE_TYPES}
-            acceptLabel="JPEG, PNG or WebP"
-            maxBytes={MAX_IMAGE_BYTES}
-            file={file}
-            onFile={handleFile}
-            onReject={setError}
-            title="Drop an image here or choose a file"
-            icon={ImagePlus}
-            compact={Boolean(file)}
-          />
         </div>
 
         <TabPanel
           id="image-mode"
           value={mode}
-          className="min-w-0 outline-none lg:sticky lg:top-20 lg:self-start"
+          className="scroll-contain min-w-0 lg:sticky lg:top-20 lg:max-h-[calc(100dvh-6rem)] lg:self-start lg:overflow-y-auto"
         >
           <Card className="space-y-5">
             <p className="text-sm text-muted">

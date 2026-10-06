@@ -28,7 +28,7 @@ function Overview() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={firstName ? `Welcome back, ${firstName}` : "Overview"}
+        title={firstName ? `Welcome, ${firstName}` : "Overview"}
         description="Your session at a glance. Totals reset when you sign out."
       />
 
@@ -67,7 +67,7 @@ function Overview() {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
         <StatCard
           title="Images analyzed"
           value={formatNumber(imageAnalysesCount)}

@@ -24,7 +24,7 @@ function Card({
 export function CardHeader({ title, description, actions, id }) {
   return (
     <div className="flex flex-wrap items-start justify-between gap-3">
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1">
         <h2 id={id} className="text-base font-semibold text-fg">
           {title}
         </h2>

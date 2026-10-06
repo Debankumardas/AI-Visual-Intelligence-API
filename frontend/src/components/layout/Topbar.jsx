@@ -157,7 +157,11 @@ function Topbar({
             <button
               type="button"
               {...triggerProps}
-              aria-label="Open user menu"
+              aria-label={
+                user?.name
+                  ? `Open user menu for ${user.name}`
+                  : "Open user menu"
+              }
               className="flex min-h-11 items-center gap-2 rounded-control px-1.5 transition-colors duration-150 hover:bg-raised sm:min-h-10"
             >
               <CircleUserRound

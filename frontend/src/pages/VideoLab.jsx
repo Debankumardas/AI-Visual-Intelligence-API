@@ -158,7 +158,7 @@ function VideoLab() {
         setError(
           describeRequestError(
             requestError,
-            "The video couldn't be analyzed. Try again.",
+            "The video couldn’t be analyzed. Try again.",
           ),
         )
       }
@@ -177,7 +177,7 @@ function VideoLab() {
 
       saveBlob(blob, derivedFilename(file.name, "annotated", ".mp4"))
       setNotice(
-        "Annotated video downloaded. It is an MPEG-4 (mp4v) file, which some browsers can't play. Open it in a media player such as VLC.",
+        "Annotated video downloaded. It is an MPEG-4 (mp4v) file, which some browsers can’t play. Open it in a media player such as VLC.",
       )
       setAnnouncement("Annotated video downloaded.")
     } catch (requestError) {
@@ -187,7 +187,7 @@ function VideoLab() {
         setError(
           describeRequestError(
             requestError,
-            "Couldn't create the annotated video. Try again.",
+            "Couldn’t create the annotated video. Try again.",
           ),
         )
       }
@@ -204,13 +204,26 @@ function VideoLab() {
       />
 
       {error && (
-        <Alert tone="danger" title="That didn't work">
+        <Alert tone="danger" title="That didn’t work">
           {error}
         </Alert>
       )}
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="min-w-0 space-y-3">
+          <Dropzone
+            acceptTypes={VIDEO_TYPES}
+            acceptLabel="MP4, AVI or MOV"
+            maxBytes={MAX_VIDEO_BYTES}
+            file={file}
+            onFile={handleFile}
+            onReject={setError}
+            title="Drop a video here or choose a file"
+            icon={FileVideo}
+            compact={Boolean(file)}
+            disabled={busy}
+          />
+
           {previewUrl && !previewFailed && (
             <div className="rounded-panel border border-hairline bg-sunken p-3">
               <video
@@ -234,23 +247,10 @@ function VideoLab() {
 
           {previewFailed && (
             <Alert tone="info" title="No preview">
-              This browser can't play this video format. You can still
+              This browser can’t play this video format. You can still
               analyze it.
             </Alert>
           )}
-
-          <Dropzone
-            acceptTypes={VIDEO_TYPES}
-            acceptLabel="MP4, AVI or MOV"
-            maxBytes={MAX_VIDEO_BYTES}
-            file={file}
-            onFile={handleFile}
-            onReject={setError}
-            title="Drop a video here or choose a file"
-            icon={FileVideo}
-            compact={Boolean(file)}
-            disabled={busy}
-          />
         </div>
 
         <Card className="min-w-0 space-y-5 lg:sticky lg:top-20 lg:self-start">
@@ -367,7 +367,7 @@ function VideoLab() {
             }
           />
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <MetricTile
               label="Detections"
               value={formatNumber(result.total_detections)}

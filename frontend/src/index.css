@@ -114,6 +114,29 @@
   }
 }
 
+@layer components {
+  /* Off-screen until it receives keyboard focus. Plain CSS, because
+     Tailwind's not-sr-only resets the padding set on the same element. */
+  .skip-link {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 50;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-control);
+    background: var(--color-accent);
+    color: var(--color-on-accent);
+    font-size: 0.875rem;
+    font-weight: 500;
+    transform: translateY(-300%);
+  }
+
+  .skip-link:focus {
+    transform: translateY(0);
+    outline-color: var(--color-fg);
+  }
+}
+
 @layer utilities {
   .tnum {
     font-variant-numeric: tabular-nums;

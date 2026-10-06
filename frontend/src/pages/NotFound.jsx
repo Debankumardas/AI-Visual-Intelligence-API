@@ -15,8 +15,9 @@ function NotFound() {
   return (
     <EmptyState
       icon={Compass}
+      titleAs="h1"
       title="Page not found"
-      description="This address doesn't match a page. It may have moved, or the link may be mistyped."
+      description="This address doesn’t match a page. It may have moved, or the link may be mistyped."
       action={
         <Link
           to={fallbackPath(preferences)}

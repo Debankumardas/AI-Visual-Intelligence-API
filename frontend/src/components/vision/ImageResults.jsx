@@ -46,12 +46,6 @@ function ImageResults({
 
       <p className="text-sm font-medium text-fg">{summary}</p>
 
-      {mode === "analyze" && result.predictions?.length > 0 && (
-        <Section title="Top predictions">
-          <PredictionList predictions={result.predictions} />
-        </Section>
-      )}
-
       {mode === "count" && result.counts?.length > 0 && (
         <Section title="Objects per class">
           <CountList counts={result.counts} />
@@ -68,6 +62,12 @@ function ImageResults({
             onHover={onHover}
             onSelect={onSelect}
           />
+        </Section>
+      )}
+
+      {mode === "analyze" && result.predictions?.length > 0 && (
+        <Section title="Top predictions">
+          <PredictionList predictions={result.predictions} />
         </Section>
       )}
 

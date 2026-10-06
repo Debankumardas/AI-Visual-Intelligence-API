@@ -28,7 +28,7 @@ function AppShell() {
           event.preventDefault()
           mainRef.current?.focus()
         }}
-        className="sr-only z-50 rounded-control bg-accent px-4 py-2 text-sm font-medium text-on-accent focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
+        className="skip-link"
       >
         Skip to main content
       </a>
@@ -57,7 +57,7 @@ function AppShell() {
           id="main"
           ref={mainRef}
           tabIndex={-1}
-          className="mx-auto w-full max-w-[1280px] flex-1 px-4 py-6 outline-none sm:px-6 lg:px-8 lg:py-8"
+          className="mx-auto w-full max-w-[1280px] flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8"
         >
           <Suspense
             fallback={

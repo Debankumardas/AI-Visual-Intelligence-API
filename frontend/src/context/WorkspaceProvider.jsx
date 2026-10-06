@@ -47,6 +47,7 @@ function WorkspaceProvider({ children }) {
   // The preview URL is owned here so the latest result can be shown
   // on other pages. Release it when it is replaced or on unmount.
   const lastImageUrl = useRef(null)
+  const lastImageRef = useRef(null)
 
   useEffect(
     () => () => {
@@ -117,21 +118,36 @@ function WorkspaceProvider({ children }) {
     ({ file, mode, result, size }) => {
       setImageAnalysesCount((count) => count + 1)
 
-      if (lastImageUrl.current) {
-        URL.revokeObjectURL(lastImageUrl.current)
+      const name = file?.name ?? "image"
+      const previous = lastImageRef.current
+
+      // Counting has nothing to draw. Keep showing an earlier result
+      // for the same image that does.
+      const keepPrevious =
+        mode === "count" &&
+        previous &&
+        previous.name === name &&
+        previous.mode !== "count"
+
+      if (!keepPrevious) {
+        if (lastImageUrl.current) {
+          URL.revokeObjectURL(lastImageUrl.current)
+        }
+
+        const previewUrl = file ? createPreviewUrl(file) : null
+
+        lastImageUrl.current = previewUrl
+
+        lastImageRef.current = {
+          name,
+          previewUrl,
+          size,
+          mode,
+          result,
+        }
+
+        setLastImage(lastImageRef.current)
       }
-
-      const previewUrl = file ? createPreviewUrl(file) : null
-
-      lastImageUrl.current = previewUrl
-
-      setLastImage({
-        name: file?.name ?? "image",
-        previewUrl,
-        size,
-        mode,
-        result,
-      })
 
       addNotification({
         kind: "analysis",

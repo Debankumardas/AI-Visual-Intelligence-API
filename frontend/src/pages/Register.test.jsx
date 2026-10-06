@@ -82,7 +82,7 @@ describe("Register", () => {
     submit()
 
     expect(
-      await screen.findByRole("heading", { name: /Welcome back/ }),
+      await screen.findByRole("heading", { name: /Welcome,/ }),
     ).toBeInTheDocument()
 
     expect(api.registerUser).toHaveBeenCalledWith({
@@ -131,7 +131,7 @@ describe("Register", () => {
 
     expect(
       await screen.findByText(
-        "Couldn't create your account. Check your details and try again.",
+        "Couldn’t create your account. Check your details and try again.",
       ),
     ).toBeInTheDocument()
   })

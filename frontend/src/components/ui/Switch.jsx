@@ -34,7 +34,7 @@ function Switch({
         aria-describedby={description ? descriptionId : undefined}
         disabled={disabled}
         onClick={() => onChange(!checked)}
-        className="-m-2 inline-flex size-11 shrink-0 items-center justify-center rounded-full disabled:cursor-not-allowed disabled:opacity-50"
+        className="inline-flex size-11 shrink-0 items-center justify-center rounded-full disabled:cursor-not-allowed disabled:opacity-50"
       >
         <span
           aria-hidden="true"

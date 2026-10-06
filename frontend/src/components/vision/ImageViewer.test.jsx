@@ -133,6 +133,35 @@ describe("ImageViewer", () => {
     ).toHaveAttribute("points", "10,10 200,20 150,180")
   })
 
+  it("labels an outline at its highest point, not at its bounding box", () => {
+    render(
+      <ImageViewer
+        src="blob:dog"
+        alt="dog"
+        shapes={[
+          detection({
+            id: "s0",
+            kind: "polygon",
+            box: box(0, 0, 900, 700),
+            polygon: [
+              [300, 400],
+              [450, 250],
+              [600, 420],
+            ],
+          }),
+        ]}
+      />,
+    )
+
+    loadImage(1000, 800)
+
+    const label = document.querySelectorAll('[data-shape="s0"] rect')[0]
+
+    // 250 is the highest point; the label (20 px tall) sits just above it.
+    expect(Number(label.getAttribute("y"))).toBe(230)
+    expect(Number(label.getAttribute("x"))).toBe(450)
+  })
+
   it("only shows recognised text for the active shape", () => {
     const text = detection({ id: "t0", label: "text", text: "STOP" })
 

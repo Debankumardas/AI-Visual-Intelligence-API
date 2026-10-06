@@ -95,7 +95,7 @@ function Settings() {
       />
 
       {error && (
-        <Alert tone="danger" title="Couldn't save that change">
+        <Alert tone="danger" title="Couldn’t save that change">
           Check your connection and try again. Your previous setting
           was restored.
         </Alert>
@@ -139,7 +139,7 @@ function Settings() {
           <CardHeader
             id="account-heading"
             title="Account"
-            description="The account you're signed in with."
+            description="The account you’re signed in with."
           />
 
           <dl className="mt-4 space-y-3 text-sm">

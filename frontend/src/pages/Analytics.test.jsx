@@ -1,6 +1,6 @@
 import { fireEvent, screen, within } from "@testing-library/react"
 import { axe } from "vitest-axe"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
 
 import * as api from "../services/api"
 import { analyticsFixture } from "../test/analyticsFixture"
@@ -32,6 +32,12 @@ const openTable = (chartName) => {
 
   return within(card).getByRole("table")
 }
+
+// The page is lazy-loaded and pulls in the charting library. Load it
+// up front so the first test isn't racing the module compile.
+beforeAll(async () => {
+  await import("./Analytics")
+}, 30000)
 
 beforeEach(() => {
   localStorage.clear()
@@ -120,7 +126,7 @@ describe("Analytics with a video", () => {
     ).toBeInTheDocument()
   })
 
-  it("offers every chart's data as a table", async () => {
+  it("offers every chart’s data as a table", async () => {
     await openAnalytics()
 
     await screen.findByText(/Latest video analysis/)

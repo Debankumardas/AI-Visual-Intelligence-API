@@ -22,20 +22,27 @@ function Shape({ shape, index, scale, imageSize, active, dimmed, onActiveChange 
   const showLabel = shape.text ? active : true
   const text = labelFor(shape)
 
-  const fontSize = 12 * scale
-  const labelHeight = 18 * scale
-  const labelWidth = text.length * fontSize * 0.58 + 10 * scale
+  const fontSize = 13 * scale
+  const labelHeight = 20 * scale
+  const labelWidth = text.length * fontSize * 0.58 + 12 * scale
+
+  // Boxes are labelled at their top-left corner; outlines at their
+  // highest point, so the label touches the shape it names.
+  const [anchorX, anchorY] =
+    shape.kind === "polygon" && shape.polygon.length > 0
+      ? shape.polygon.reduce((top, point) =>
+          point[1] < top[1] ? point : top,
+        )
+      : [shape.box.x1, shape.box.y1]
 
   const x = Math.max(
     0,
-    Math.min(shape.box.x1, imageSize.width - labelWidth),
+    Math.min(anchorX, imageSize.width - labelWidth),
   )
 
-  // Sit above the box, or inside it when there is no room above.
+  // Sit above the anchor, or just inside when there is no room above.
   const y =
-    shape.box.y1 - labelHeight >= 0
-      ? shape.box.y1 - labelHeight
-      : shape.box.y1
+    anchorY - labelHeight >= 0 ? anchorY - labelHeight : anchorY
 
   const common = {
     className: "lock-on",
@@ -84,7 +91,7 @@ function Shape({ shape, index, scale, imageSize, active, dimmed, onActiveChange 
           />
 
           <text
-            x={x + 5 * scale}
+            x={x + 6 * scale}
             y={y + labelHeight * 0.72}
             fill={LABEL_TEXT_COLOR}
             fontSize={fontSize}

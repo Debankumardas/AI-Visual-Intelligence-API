@@ -23,7 +23,7 @@ beforeEach(() => {
 const openOverview = async () => {
   renderApp("/")
 
-  await screen.findByRole("heading", { name: "Welcome back, Test" })
+  await screen.findByRole("heading", { name: "Welcome, Test" })
 }
 
 describe("Overview", () => {
@@ -123,7 +123,7 @@ describe("Overview", () => {
     await openOverview()
 
     expect(
-      await screen.findByText("Can't reach the backend"),
+      await screen.findByText("Can’t reach the backend"),
     ).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole("button", { name: "Check again" }))
@@ -135,7 +135,7 @@ describe("Overview", () => {
   it("has no accessibility violations", async () => {
     const { container } = renderApp("/")
 
-    await screen.findByRole("heading", { name: "Welcome back, Test" })
+    await screen.findByRole("heading", { name: "Welcome, Test" })
     await screen.findAllByText("Ready")
 
     expect(await axe(container)).toHaveNoViolations()

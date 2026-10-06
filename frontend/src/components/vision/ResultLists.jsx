@@ -46,6 +46,7 @@ export function PredictionList({ predictions }) {
           title={prediction.label}
           value={formatPercent(prediction.confidence)}
           fraction={prediction.confidence}
+          dense
         />
       ))}
     </List>

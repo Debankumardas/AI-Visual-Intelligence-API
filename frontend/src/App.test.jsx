@@ -40,7 +40,7 @@ const navigation = () =>
   screen.getByRole("navigation", { name: "Workspace" })
 
 const openUserMenu = () =>
-  fireEvent.click(screen.getByRole("button", { name: "Open user menu" }))
+  fireEvent.click(screen.getByRole("button", { name: /^Open user menu/ }))
 
 describe("signing in", () => {
   it("sends signed-out visitors to the sign-in page", async () => {
@@ -67,7 +67,7 @@ describe("signing in", () => {
 
     expect(
       await screen.findByRole("heading", {
-        name: "Welcome back, Test",
+        name: "Welcome, Test",
       }),
     ).toBeInTheDocument()
 
@@ -103,7 +103,7 @@ describe("signing in", () => {
 
     expect(
       await screen.findByRole("heading", {
-        name: "Welcome back, Test",
+        name: "Welcome, Test",
       }),
     ).toBeInTheDocument()
 
@@ -142,7 +142,7 @@ describe("signing in", () => {
 
     expect(
       await screen.findByRole("heading", {
-        name: "Welcome back, Test",
+        name: "Welcome, Test",
       }),
     ).toBeInTheDocument()
   })
@@ -154,7 +154,7 @@ describe("signing out", () => {
 
     renderApp("/")
 
-    await screen.findByRole("heading", { name: "Welcome back, Test" })
+    await screen.findByRole("heading", { name: "Welcome, Test" })
 
     openUserMenu()
     fireEvent.click(screen.getByRole("button", { name: "Sign out" }))
@@ -171,7 +171,7 @@ describe("signing out", () => {
 
     renderApp("/")
 
-    await screen.findByRole("heading", { name: "Welcome back, Test" })
+    await screen.findByRole("heading", { name: "Welcome, Test" })
 
     act(() => {
       localStorage.removeItem("access_token")
@@ -198,7 +198,7 @@ describe("signing out", () => {
 
     renderApp("/")
 
-    await screen.findByRole("heading", { name: "Welcome back, Test" })
+    await screen.findByRole("heading", { name: "Welcome, Test" })
 
     openUserMenu()
     fireEvent.click(screen.getByRole("button", { name: "Sign out" }))
@@ -217,7 +217,7 @@ describe("navigation and preferences", () => {
 
     expect(
       await screen.findByRole("heading", {
-        name: "Welcome back, Test",
+        name: "Welcome, Test",
       }),
     ).toBeInTheDocument()
 
@@ -231,7 +231,7 @@ describe("navigation and preferences", () => {
 
     renderApp("/")
 
-    await screen.findByRole("heading", { name: "Welcome back, Test" })
+    await screen.findByRole("heading", { name: "Welcome, Test" })
 
     fireEvent.click(
       within(navigation()).getByRole("link", { name: "Image lab" }),
@@ -275,7 +275,7 @@ describe("navigation and preferences", () => {
 
     renderApp("/")
 
-    await screen.findByRole("heading", { name: "Welcome back, Test" })
+    await screen.findByRole("heading", { name: "Welcome, Test" })
 
     expect(
       within(navigation()).queryByRole("link", { name: "Image lab" }),
@@ -303,7 +303,7 @@ describe("navigation and preferences", () => {
 
     expect(
       await screen.findByRole("heading", {
-        name: "Welcome back, Test",
+        name: "Welcome, Test",
       }),
     ).toBeInTheDocument()
   })
@@ -343,8 +343,18 @@ describe("navigation and preferences", () => {
 
     expect(
       await screen.findByRole("heading", {
-        name: "Welcome back, Test",
+        name: "Welcome, Test",
       }),
+    ).toBeInTheDocument()
+  })
+
+  it("makes the not-found title the page's main heading", async () => {
+    signIn()
+
+    renderApp("/no/such/page")
+
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Page not found" }),
     ).toBeInTheDocument()
   })
 
@@ -361,7 +371,7 @@ describe("navigation and preferences", () => {
 
     renderApp("/")
 
-    await screen.findByRole("heading", { name: "Welcome back, Test" })
+    await screen.findByRole("heading", { name: "Welcome, Test" })
 
     openUserMenu()
     fireEvent.click(screen.getByRole("button", { name: "Preferences" }))
@@ -378,7 +388,7 @@ describe("mobile navigation", () => {
 
     renderApp("/")
 
-    await screen.findByRole("heading", { name: "Welcome back, Test" })
+    await screen.findByRole("heading", { name: "Welcome, Test" })
 
     const opener = screen.getByRole("button", { name: "Open navigation" })
 
@@ -405,7 +415,7 @@ describe("mobile navigation", () => {
 
     renderApp("/")
 
-    await screen.findByRole("heading", { name: "Welcome back, Test" })
+    await screen.findByRole("heading", { name: "Welcome, Test" })
 
     fireEvent.click(
       screen.getByRole("button", { name: "Open navigation" }),
@@ -432,7 +442,7 @@ describe("mobile navigation", () => {
 
     renderApp("/")
 
-    await screen.findByRole("heading", { name: "Welcome back, Test" })
+    await screen.findByRole("heading", { name: "Welcome, Test" })
 
     fireEvent.click(
       screen.getByRole("button", { name: "Open navigation" }),

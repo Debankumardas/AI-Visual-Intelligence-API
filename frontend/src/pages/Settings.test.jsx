@@ -79,7 +79,7 @@ describe("Settings", () => {
     fireEvent.click(screen.getByRole("switch", { name: "Video lab" }))
 
     expect(
-      await screen.findByText("Couldn't save that change"),
+      await screen.findByText("Couldn’t save that change"),
     ).toBeInTheDocument()
 
     expect(screen.getByRole("switch", { name: "Video lab" })).toHaveAttribute(

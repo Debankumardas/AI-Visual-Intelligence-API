@@ -17,7 +17,7 @@ describe("describeAuthError", () => {
     ).toBe("Invalid email or password.")
   })
 
-  it("uses the server's detail when it is text", () => {
+  it("uses the server’s detail when it is text", () => {
     expect(
       describeAuthError(
         { response: { status: 403, data: { detail: "This account is inactive." } } },

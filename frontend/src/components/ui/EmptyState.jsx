@@ -1,4 +1,11 @@
-function EmptyState({ icon: Icon, title, description, action }) {
+/** `titleAs` is "h1" when the empty state is the whole page. */
+function EmptyState({
+  icon: Icon,
+  title,
+  description,
+  action,
+  titleAs: Title = "h2",
+}) {
   return (
     <div className="flex flex-col items-center px-6 py-12 text-center">
       {Icon && (
@@ -9,7 +16,7 @@ function EmptyState({ icon: Icon, title, description, action }) {
         />
       )}
 
-      <h2 className="text-base font-semibold text-fg">{title}</h2>
+      <Title className="text-base font-semibold text-fg">{title}</Title>
 
       {description && (
         <p className="mt-1.5 max-w-[48ch] text-sm text-muted">

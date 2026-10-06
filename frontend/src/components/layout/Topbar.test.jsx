@@ -129,9 +129,27 @@ describe("Topbar notifications", () => {
 })
 
 describe("Topbar user menu", () => {
+  it("includes the visible name in the button's accessible name", () => {
+    renderTopbar()
+
+    // Speech-control users say what they see: "click Test User".
+    expect(
+      screen.getByRole("button", { name: "Open user menu for Test User" }),
+    ).toBeInTheDocument()
+    expect(screen.getByText("Test User")).toBeInTheDocument()
+  })
+
+  it("still has a name when no user name is known", () => {
+    renderTopbar({ user: {} })
+
+    expect(
+      screen.getByRole("button", { name: "Open user menu" }),
+    ).toBeInTheDocument()
+  })
+
   const openMenu = () =>
     fireEvent.click(
-      screen.getByRole("button", { name: "Open user menu" }),
+      screen.getByRole("button", { name: /^Open user menu/ }),
     )
 
   it("shows who is signed in", () => {

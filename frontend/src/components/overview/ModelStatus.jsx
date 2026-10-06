@@ -71,7 +71,7 @@ function ModelStatus() {
         )}
 
         {state.status === "error" && (
-          <Alert tone="danger" title="Can't reach the backend">
+          <Alert tone="danger" title="Can’t reach the backend">
             Start the API, then check again.
           </Alert>
         )}

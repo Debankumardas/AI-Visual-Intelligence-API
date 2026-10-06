@@ -10,6 +10,7 @@ function ResultRow({
   value,
   fraction,
   detail,
+  dense = false,
   active = false,
   selected = false,
   onHover,
@@ -36,7 +37,10 @@ function ResultRow({
       {typeof fraction === "number" && (
         <span
           aria-hidden="true"
-          className="mt-2 block h-1 overflow-hidden rounded-full bg-sunken"
+          className={cn(
+            "block h-1 overflow-hidden rounded-full bg-sunken",
+            dense ? "mt-1.5" : "mt-2",
+          )}
         >
           <span
             className="block h-full rounded-full"
@@ -57,7 +61,8 @@ function ResultRow({
   )
 
   const surface = cn(
-    "block w-full rounded-control px-3 py-2.5 text-left transition-colors duration-150",
+    "block w-full rounded-control px-3 text-left transition-colors duration-150",
+    dense ? "py-1.5" : "py-2.5",
     active && "bg-raised",
   )
 

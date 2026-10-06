@@ -93,7 +93,7 @@ function Register() {
         setError(
           describeAuthError(
             requestError,
-            "Couldn't create your account. Check your details and try again.",
+            "Couldn’t create your account. Check your details and try again.",
           ),
         )
         setLoading(false)
@@ -104,7 +104,7 @@ function Register() {
   return (
     <AuthLayout
       title="Create your account"
-      description="It takes a few seconds. You'll be signed in right away."
+      description="It takes a few seconds. You’ll be signed in right away."
       footer={
         <>
           Already have an account?{" "}
@@ -120,7 +120,7 @@ function Register() {
       {error && (
         <Alert
           tone="danger"
-          title="Couldn't create your account"
+          title="Couldn’t create your account"
           className="mb-4"
         >
           {error}

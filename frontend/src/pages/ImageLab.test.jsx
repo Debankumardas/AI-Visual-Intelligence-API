@@ -108,7 +108,7 @@ describe("Image lab: choosing an image", () => {
     chooseFile(makeImage("notes.pdf", "application/pdf"))
 
     expect(
-      await screen.findByText("notes.pdf isn't supported. Use JPEG, PNG or WebP."),
+      await screen.findByText("notes.pdf isn’t supported. Use JPEG, PNG or WebP."),
     ).toBeInTheDocument()
 
     expect(screen.queryByRole("img")).not.toBeInTheDocument()
@@ -152,6 +152,39 @@ describe("Image lab: analyzing", () => {
 
     expect(screen.getByText("18.5 ms")).toBeInTheDocument()
     expect(screen.getByText("42.3 ms")).toBeInTheDocument()
+  })
+
+  it("lists detections before the top predictions", async () => {
+    await openLab()
+
+    chooseFile(makeImage())
+    clickRun("Analyze image")
+
+    await screen.findByText("2 objects detected.")
+
+    const detected = screen.getByRole("list", { name: "Detected objects" })
+    const predictions = screen.getByRole("list", { name: "Top predictions" })
+
+    expect(
+      detected.compareDocumentPosition(predictions) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+  })
+
+  it("puts the replace-image control above the image", async () => {
+    await openLab()
+
+    chooseFile(makeImage())
+
+    const image = await screen.findByRole("img", { name: "dog.jpg" })
+    const replace = screen.getByRole("button", {
+      name: /dog\.jpg.*Choose a different file/,
+    })
+
+    expect(
+      replace.compareDocumentPosition(image) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
   })
 
   it("draws every detection on the image", async () => {
@@ -273,6 +306,51 @@ describe("Image lab: analyzing", () => {
   })
 })
 
+describe("Image lab: analysis type in the address", () => {
+  it("opens the type named in the address", async () => {
+    signIn()
+    renderApp("/image?mode=segment")
+
+    await screen.findByRole("heading", { name: "Image lab" })
+
+    expect(screen.getByRole("tab", { name: "Segment" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    )
+    expect(
+      screen.getByRole("button", { name: "Segment objects" }),
+    ).toBeInTheDocument()
+  })
+
+  it("falls back to analyze for an unknown type", async () => {
+    signIn()
+    renderApp("/image?mode=banana")
+
+    await screen.findByRole("heading", { name: "Image lab" })
+
+    expect(screen.getByRole("tab", { name: "Analyze" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    )
+  })
+
+  it("writes the chosen type to the address and clears it for analyze", async () => {
+    await openLab()
+
+    expect(screen.getByTestId("location")).toHaveTextContent("/image")
+    expect(screen.getByTestId("location")).not.toHaveTextContent("mode")
+
+    selectMode("Read text")
+    expect(screen.getByTestId("location")).toHaveTextContent("/image?mode=text")
+
+    selectMode("Count")
+    expect(screen.getByTestId("location")).toHaveTextContent("/image?mode=count")
+
+    selectMode("Analyze")
+    expect(screen.getByTestId("location")).toHaveTextContent(/^\/image$/)
+  })
+})
+
 describe("Image lab: analysis types", () => {
   it("keeps results per type when switching tabs", async () => {
     api.detectObjects.mockResolvedValue({
@@ -386,7 +464,7 @@ describe("Image lab: analysis types", () => {
     fireEvent.click(screen.getByRole("button", { name: "Copy all text" }))
 
     expect(
-      await screen.findByText("Couldn't copy the text. Select it from the list instead."),
+      await screen.findByText("Couldn’t copy the text. Select it from the list instead."),
     ).toBeInTheDocument()
   })
 
@@ -435,7 +513,7 @@ describe("Image lab: problems", () => {
     expect(
       await screen.findByText("Invalid or corrupted image file."),
     ).toBeInTheDocument()
-    expect(screen.getByRole("alert")).toHaveTextContent("That didn't work")
+    expect(screen.getByRole("alert")).toHaveTextContent("That didn’t work")
 
     clickRun("Analyze image")
 
@@ -452,7 +530,7 @@ describe("Image lab: problems", () => {
     clickRun("Analyze image")
 
     expect(
-      await screen.findByText("Can't reach the API. Check that the backend is running."),
+      await screen.findByText("Can’t reach the API. Check that the backend is running."),
     ).toBeInTheDocument()
   })
 
@@ -524,7 +602,7 @@ describe("Image lab: annotated image", () => {
     expect(click.mock.contexts[0].download).toBe("dog-annotated.jpg")
   })
 
-  it("explains when the annotated image can't be created", async () => {
+  it("explains when the annotated image can’t be created", async () => {
     api.detectAnnotated.mockRejectedValue({
       response: { status: 500, data: new Blob() },
     })
@@ -540,7 +618,7 @@ describe("Image lab: annotated image", () => {
     )
 
     expect(
-      await screen.findByText("Couldn't create the annotated image. Try again."),
+      await screen.findByText("Couldn’t create the annotated image. Try again."),
     ).toBeInTheDocument()
   })
 

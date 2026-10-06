@@ -14,7 +14,10 @@ function LatestResult({ showLink = true }) {
 
   if (!lastImage?.previewUrl) {
     return (
-      <Card padded={false}>
+      <Card
+        padded={false}
+        className="flex min-h-52 items-center justify-center sm:min-h-72"
+      >
         <EmptyState
           icon={ImagePlus}
           title="No image analyzed yet"

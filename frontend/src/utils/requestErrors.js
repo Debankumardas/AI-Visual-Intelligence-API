@@ -5,7 +5,7 @@
  */
 export function describeRequestError(error, fallback) {
   if (!error.response) {
-    return "Can't reach the API. Check that the backend is running."
+    return "Can’t reach the API. Check that the backend is running."
   }
 
   const { status, data } = error.response

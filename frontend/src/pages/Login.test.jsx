@@ -81,13 +81,13 @@ describe("Login", () => {
     ).toBeInTheDocument()
 
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "Couldn't sign you in",
+      "Couldn’t sign you in",
     )
     expect(screen.getByRole("button", { name: "Sign in" })).toBeEnabled()
     expect(localStorage.getItem("access_token")).toBeNull()
   })
 
-  it("explains when the backend can't be reached", async () => {
+  it("explains when the backend can’t be reached", async () => {
     api.loginUser.mockRejectedValue(new Error("Network Error"))
 
     renderApp("/login")

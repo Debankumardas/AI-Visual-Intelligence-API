@@ -24,7 +24,7 @@ function Dropzone({
 
   const validate = (candidate) => {
     if (!acceptTypes.includes(candidate.type)) {
-      return `${candidate.name} isn't supported. Use ${acceptLabel}.`
+      return `${candidate.name} isn’t supported. Use ${acceptLabel}.`
     }
 
     if (candidate.size > maxBytes) {
@@ -89,7 +89,7 @@ function Dropzone({
         className={cn(
           "flex w-full items-center justify-center rounded-panel border border-dashed text-center transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-60",
           compact
-            ? "min-h-14 flex-row gap-3 px-4 py-2"
+            ? "min-h-14 flex-col gap-0.5 px-4 py-2 sm:flex-row sm:gap-3"
             : "min-h-40 flex-col gap-2 px-6 py-8",
           dragging
             ? "border-accent bg-accent/5"

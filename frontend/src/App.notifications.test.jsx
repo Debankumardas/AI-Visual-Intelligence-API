@@ -83,7 +83,7 @@ async function renderSignedInApp(overrides = {}) {
 
   renderApp("/")
 
-  await screen.findByRole("heading", { name: "Welcome back, Test" })
+  await screen.findByRole("heading", { name: "Welcome, Test" })
 }
 
 const goTo = (name) =>

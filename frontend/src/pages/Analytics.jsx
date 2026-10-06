@@ -87,7 +87,7 @@ function Analytics() {
         description={describeAnalysis(analytics)}
       />
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         <MetricTile
           label="Detections"
           value={formatNumber(analytics.total_detections)}
@@ -145,7 +145,7 @@ function Analytics() {
           description="How long the model took on each analyzed frame."
         />
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
           <MetricTile
             label="Fastest"
             value={formatMs(analytics.min_inference_time_ms)}

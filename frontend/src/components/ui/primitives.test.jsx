@@ -306,7 +306,7 @@ describe("Dropzone", () => {
 
     expect(onFile).not.toHaveBeenCalled()
     expect(onReject).toHaveBeenCalledWith(
-      "notes.pdf isn't supported. Use JPEG or PNG.",
+      "notes.pdf isn’t supported. Use JPEG or PNG.",
     )
   })
 
@@ -348,6 +348,22 @@ describe("ElapsedTimer", () => {
     })
 
     expect(screen.getByText("1:05")).toBeInTheDocument()
+  })
+})
+
+describe("EmptyState", () => {
+  it("uses a level-two heading by default and can be the page's h1", () => {
+    const { rerender } = render(<EmptyState title="Nothing here" />)
+
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Nothing here" }),
+    ).toBeInTheDocument()
+
+    rerender(<EmptyState title="Nothing here" titleAs="h1" />)
+
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Nothing here" }),
+    ).toBeInTheDocument()
   })
 })
 

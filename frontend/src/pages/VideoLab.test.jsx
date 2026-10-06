@@ -115,7 +115,7 @@ describe("Video lab: choosing a video", () => {
     chooseFile(makeVideo("clip.webm", "video/webm"))
 
     expect(
-      await screen.findByText("clip.webm isn't supported. Use MP4, AVI or MOV."),
+      await screen.findByText("clip.webm isn’t supported. Use MP4, AVI or MOV."),
     ).toBeInTheDocument()
     expect(document.querySelector("video")).toBeNull()
   })
@@ -130,7 +130,7 @@ describe("Video lab: choosing a video", () => {
     ).toBeInTheDocument()
   })
 
-  it("says when the browser can't preview the format", async () => {
+  it("says when the browser can’t preview the format", async () => {
     await openLab()
 
     chooseFile(makeVideo("clip.avi", "video/avi"))
@@ -247,7 +247,7 @@ describe("Video lab: analyzing", () => {
     expect(screen.queryByText("Analysis results")).not.toBeInTheDocument()
   })
 
-  it("explains a video the server can't read, without analyzing", async () => {
+  it("explains a video the server can’t read, without analyzing", async () => {
     api.getVideoMetadata.mockRejectedValue({
       response: {
         status: 400,
@@ -275,7 +275,7 @@ describe("Video lab: analyzing", () => {
     clickAnalyze()
 
     expect(
-      await screen.findByText("The video couldn't be analyzed. Try again."),
+      await screen.findByText("The video couldn’t be analyzed. Try again."),
     ).toBeInTheDocument()
     expect(screen.getByText("640 × 480")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Analyze video" })).toBeEnabled()
@@ -350,7 +350,7 @@ describe("Video lab: annotated video", () => {
     expect(click.mock.contexts[0].download).toBe("clip-annotated.mp4")
   })
 
-  it("explains when it can't be created", async () => {
+  it("explains when it can’t be created", async () => {
     api.annotateVideo.mockRejectedValue({
       response: { status: 400, data: new Blob() },
     })
@@ -362,7 +362,7 @@ describe("Video lab: annotated video", () => {
     )
 
     expect(
-      await screen.findByText("Couldn't create the annotated video. Try again."),
+      await screen.findByText("Couldn’t create the annotated video. Try again."),
     ).toBeInTheDocument()
   })
 

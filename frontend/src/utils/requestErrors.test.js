@@ -7,11 +7,11 @@ describe("describeRequestError", () => {
 
   it("explains a missing connection", () => {
     expect(describeRequestError(new Error("Network Error"), fallback)).toBe(
-      "Can't reach the API. Check that the backend is running.",
+      "Can’t reach the API. Check that the backend is running.",
     )
   })
 
-  it("prefers the server's explanation", () => {
+  it("prefers the server’s explanation", () => {
     expect(
       describeRequestError(
         {

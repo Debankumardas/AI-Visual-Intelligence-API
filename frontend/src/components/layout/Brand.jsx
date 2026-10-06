@@ -20,7 +20,10 @@ function Brand() {
         <circle cx="16" cy="16" r="2.5" fill="#22d3ee" />
       </svg>
 
-      <span className="text-sm font-semibold leading-tight text-fg">
+      <span
+        translate="no"
+        className="text-sm font-semibold leading-tight text-fg"
+      >
         AI Visual
         <br />
         Intelligence
