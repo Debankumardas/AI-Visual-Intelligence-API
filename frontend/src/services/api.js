@@ -207,34 +207,35 @@ export const detectAnnotated = async (file, options = {}) => {
 // Video Analysis
 // ─────────────────────────────────────────────
 
-export const analyzeVideo = async (file) => {
+const uploadVideo = async (path, file, options) => {
   const formData = new FormData()
   formData.append("file", file)
 
-  const response = await api.post(
-    "/api/v1/video/analyze",
-    formData,
-    {
-      timeout: VIDEO_REQUEST_TIMEOUT_MS,
-    },
-  )
+  const response = await api.post(path, formData, options)
 
   return response.data
 }
 
-export const getVideoMetadata = async (file) => {
-  const formData = new FormData()
-  formData.append("file", file)
+// Video work can run for minutes on a CPU. Each takes the file and
+// optional axios options, e.g. { signal } to stop waiting.
+export const getVideoMetadata = (file, options) =>
+  uploadVideo("/api/v1/video/metadata", file, {
+    timeout: 60000,
+    ...options,
+  })
 
-  const response = await api.post(
-    "/api/v1/video/metadata",
-    formData,
-    {
-      timeout: 60000,
-    },
-  )
+export const analyzeVideo = (file, options) =>
+  uploadVideo("/api/v1/video/analyze", file, {
+    timeout: VIDEO_REQUEST_TIMEOUT_MS,
+    ...options,
+  })
 
-  return response.data
-}
+/** The video with tracked objects drawn on it, as an MP4 blob. */
+export const annotateVideo = (file, options) =>
+  uploadVideo("/api/v1/video/annotate", file, {
+    timeout: VIDEO_REQUEST_TIMEOUT_MS,
+    ...options,
+    responseType: "blob",
+  })
 
 export default api

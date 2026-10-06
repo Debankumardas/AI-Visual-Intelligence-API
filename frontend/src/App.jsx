@@ -12,7 +12,7 @@ import NotFound from "./pages/NotFound"
 import Overview from "./pages/Overview"
 import Register from "./pages/Register"
 import Settings from "./pages/Settings"
-import VideoAnalysis from "./pages/VideoAnalysis"
+import VideoLab from "./pages/VideoLab"
 import {
   PublicOnly,
   RequireAuth,
@@ -28,12 +28,6 @@ function Workspace({ children }) {
       {children}
     </WorkspaceProvider>
   )
-}
-
-function VideoRoute() {
-  const { recordVideoAnalysis } = useWorkspace()
-
-  return <VideoAnalysis onAnalyticsComplete={recordVideoAnalysis} />
 }
 
 function AnalyticsRoute() {
@@ -76,7 +70,7 @@ function App() {
                 path="video"
                 element={
                   <RequirePage preferenceKey="video_analysis_enabled">
-                    <VideoRoute />
+                    <VideoLab />
                   </RequirePage>
                 }
               />

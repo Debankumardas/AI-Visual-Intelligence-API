@@ -32,6 +32,8 @@ export async function mockApiModule(importOriginal) {
   return {
     ...(await importOriginal()),
     analyzeImage: vi.fn(),
+    analyzeVideo: vi.fn(),
+    annotateVideo: vi.fn(),
     checkHealth: vi.fn(),
     countObjects: vi.fn(),
     detectAnnotated: vi.fn(),
@@ -41,6 +43,7 @@ export async function mockApiModule(importOriginal) {
     getCurrentUser: vi.fn(),
     getPreferences: vi.fn(),
     getReadiness: vi.fn(),
+    getVideoMetadata: vi.fn(),
     loginUser: vi.fn(),
     registerUser: vi.fn(),
     updatePreferences: vi.fn(),

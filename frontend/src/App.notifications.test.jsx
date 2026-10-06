@@ -41,21 +41,29 @@ vi.mock("./pages/ImageLab", async () => {
   }
 })
 
-vi.mock("./pages/VideoAnalysis", () => ({
-  default: ({ onAnalyticsComplete }) => (
-    <button
-      type="button"
-      onClick={() =>
-        onAnalyticsComplete({
-          total_detections: 5,
-          unique_track_ids: 2,
-        })
-      }
-    >
-      Finish video analysis
-    </button>
-  ),
-}))
+vi.mock("./pages/VideoLab", async () => {
+  const { default: useWorkspace } = await import("./hooks/useWorkspace")
+
+  return {
+    default: function VideoLabStub() {
+      const { recordVideoAnalysis } = useWorkspace()
+
+      return (
+        <button
+          type="button"
+          onClick={() =>
+            recordVideoAnalysis({
+              total_detections: 5,
+              unique_track_ids: 2,
+            })
+          }
+        >
+          Finish video analysis
+        </button>
+      )
+    },
+  }
+})
 
 vi.mock("./pages/Analytics", () => ({
   default: () => <h1>Analytics Page</h1>,

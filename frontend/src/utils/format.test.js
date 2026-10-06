@@ -6,6 +6,7 @@ import {
   formatMs,
   formatNumber,
   formatPercent,
+  formatSeconds,
 } from "./format"
 
 describe("formatNumber", () => {
@@ -54,5 +55,21 @@ describe("formatClock", () => {
   it("formats minutes and padded seconds", () => {
     expect(formatClock(0)).toBe("0:00")
     expect(formatClock(75.9)).toBe("1:15")
+  })
+})
+
+describe("formatSeconds", () => {
+  it("shows short durations in seconds", () => {
+    expect(formatSeconds(13.33)).toBe("13.3\u00a0s")
+    expect(formatSeconds(0)).toBe("0\u00a0s")
+  })
+
+  it("switches to minutes from one minute", () => {
+    expect(formatSeconds(60)).toBe("1\u00a0min 0\u00a0s")
+    expect(formatSeconds(125)).toBe("2\u00a0min 5\u00a0s")
+  })
+
+  it("shows a dash for missing values", () => {
+    expect(formatSeconds(undefined)).toBe("–")
   })
 })

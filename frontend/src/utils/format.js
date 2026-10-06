@@ -56,3 +56,19 @@ export function formatClock(totalSeconds) {
 
   return `${minutes}:${String(seconds % 60).padStart(2, "0")}`
 }
+
+/** 13.33 -> "13.3 s"; 125 -> "2 min 5 s" */
+export function formatSeconds(totalSeconds) {
+  if (typeof totalSeconds !== "number" || Number.isNaN(totalSeconds)) {
+    return "–"
+  }
+
+  if (totalSeconds < 60) {
+    return `${Math.round(totalSeconds * 10) / 10}\u00a0s`
+  }
+
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = Math.round(totalSeconds % 60)
+
+  return `${minutes}\u00a0min ${seconds}\u00a0s`
+}

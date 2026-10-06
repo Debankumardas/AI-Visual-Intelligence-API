@@ -20,7 +20,7 @@ vi.mock("./pages/ImageLab", () => ({
   default: () => <h1>Image Analysis Page</h1>,
 }))
 
-vi.mock("./pages/VideoAnalysis", () => ({
+vi.mock("./pages/VideoLab", () => ({
   default: () => <h1>Video Analysis Page</h1>,
 }))
 
