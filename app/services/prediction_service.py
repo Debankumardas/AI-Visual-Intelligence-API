@@ -1,3 +1,4 @@
+import threading
 import time
 
 import torch
@@ -6,10 +7,18 @@ from PIL import Image
 from app.services.model_service import model_service
 
 
+# The classifier is shared across request threads; serialize
+# forward passes.
+_inference_lock = threading.Lock()
+
+
 def predict_image(image: Image.Image, top_k: int = 5):
     """
     Predict the contents of an image using EfficientNet-B0.
     """
+
+    if model_service.model is None:
+        model_service.load()
 
     # Make sure image is RGB
     image = image.convert("RGB")
@@ -24,7 +33,7 @@ def predict_image(image: Image.Image, top_k: int = 5):
     start_time = time.perf_counter()
 
     # Run model inference
-    with torch.inference_mode():
+    with _inference_lock, torch.inference_mode():
         output = model_service.model(input_batch)
 
     # Calculate inference time

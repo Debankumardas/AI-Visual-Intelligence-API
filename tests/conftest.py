@@ -1,9 +1,19 @@
+import os
 from types import SimpleNamespace
 
-import pytest
+# Configure the environment before the application is imported:
+# never load real model weights during tests, and provide a JWT
+# secret so a bare local `pytest` works without a .env file.
+os.environ.setdefault("PRELOAD_MODELS", "false")
+os.environ.setdefault(
+    "JWT_SECRET_KEY",
+    "test-only-jwt-secret-do-not-use-in-production",
+)
 
-from app.auth.dependencies import get_current_user
-from app.main import app
+import pytest  # noqa: E402
+
+from app.auth.dependencies import get_current_user  # noqa: E402
+from app.main import app  # noqa: E402
 
 
 PROTECTED_TEST_MODULES = {
